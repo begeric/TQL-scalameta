@@ -1,4 +1,4 @@
 TQL
 ===
 
-Combinatorial Query language for Traversable data structures in Scala.
+Combinatorial Query/Transformation language for Traversable data structures in Scala and in particular scala.meta Trees.
