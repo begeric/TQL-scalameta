@@ -10,17 +10,17 @@ package scalameta
 
 import tql._
 import scala.collection.mutable.ListBuffer
-import scala.meta.Arg.Repeated
 import scala.meta.Import.Selector
 import scala.meta._
-import meta.syntactic._
 
 object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] {
 
   import MonoidEnhencer._
   import scala.reflect.{ClassTag, classTag}
 
-  def traverse[A : Monoid](tree: Tree, f: TreeMapper[Tree, A]): MatcherResult[Tree, A] = {
+  implicit object tree2tree extends AllowedTransformation[Tree, Tree]
+
+  def traverse[U <: Tree : ClassTag, V <: Tree, A : Monoid](tree: U, f: TreeMapper[U, V, A]): MatcherResult[U, A] = {
     val m = implicitly[Monoid[A]]
     import scala.collection.immutable._
 
@@ -109,18 +109,18 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
     /*********************/
 
-    def termMatcher(t: Term): MatcherResult[Tree, A] = t match {
-      case Term.Select(qual, selector) => traverse1(qual, (a: Qual.Term) => Term.Select(a, selector))
+    def termMatcher(t: Term): MatcherResult[Term, A] = t match {
+      /*case Term.Select(qual, selector) => traverse1(qual, (a: Qual.Term) => Term.Select(a, selector))
       case Term.Interpolate(prefix, parts, args) => traverse1s(args, (a: Seq[Term]) => Term.Interpolate(prefix, parts, a))
 
       case Term.Apply(fun, args) => traverse2ts(fun, args, (a: Term, b: Seq[Arg]) => Term.Apply(a,b))
-      case Term.ApplyType(fun, args) => traverse2ts(fun, args, (a: Term, b: Seq[Type]) => Term.ApplyType(a,b))
-      case Term.ApplyInfix(lhs, op, targs, args) => for {
+      case Term.ApplyType(fun, args) => traverse2ts(fun, args, (a: Term, b: Seq[Type]) => Term.ApplyType(a,b))  */
+      case Term.ApplyInfix(lhs, op, targs, args) => (for {
         (a1: Term, a2) <- f(lhs)
         (b1, b2) <- traverseSeq(targs)
         (c1, c2) <- traverseSeq(args)
-      } yield (Term.ApplyInfix(a1, op, b1, c1), a2 + b2 + c2)
-      case Term.ApplyUnary(op, arg) => traverse1(arg, (a: Term) => Term.ApplyUnary(op, a))
+      } yield (Term.ApplyInfix(a1, op, b1, c1), a2 + b2 + c2))
+    /*  case Term.ApplyUnary(op, arg) => traverse1(arg, (a: Term) => Term.ApplyUnary(op, a))
 
       case Term.Assign(lhs, rhs) => traverse2(lhs, rhs, (a: Term.Ref, b: Term) => Term.Assign(a,b))
       case Term.Update(lhs, rhs) => traverse2(lhs, rhs, (a: Term.Apply, b: Term) => Term.Update(a,b))
@@ -131,14 +131,14 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
       case Term.Tuple(elements) => traverse1s(elements, (a: Seq[Term]) => Term.Tuple(a))
       case Term.Block(elements) => traverse1s(elements, (a: Seq[Stmt.Block]) => Term.Block(a))
-
-      case Term.If(cond, thenp, elsep) => for {
+                                                                                               */
+      case Term.If(cond, thenp, elsep) => (for {
         (a1: Term, a2) <- f(cond)
         (b1: Term, b2) <- f(thenp)
         (c1: Term, c2) <- f(elsep)
-      } yield (if ((a1 eq cond) && (b1 eq thenp) && (c1 eq elsep)) tree else Term.If(a1, b1, c1), a2 + b2 + c2)
+      } yield (if ((a1 eq cond) && (b1 eq thenp) && (c1 eq elsep)) t else Term.If(a1, b1, c1), a2 + b2 + c2))
 
-      case Term.Match(scrut, cases) => traverse2(scrut, cases, (a: Term, b: Term.Cases) => Term.Match(a,b))
+      /*case Term.Match(scrut, cases) => traverse2(scrut, cases, (a: Term, b: Term.Cases) => Term.Match(a,b))
       case Term.Try(expr, catchp, finallyp) => for {
         (a1: Term, a2) <- f(expr)
         (b1, b2) <- optional(catchp)
@@ -154,9 +154,9 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       case Term.ForYield(enums,body) => traverse2st(enums, body, (a: Seq[Enum], b: Term) => Term.ForYield(a, b))
       //@ast class New(templ: Aux.Template) extends Term ???
       case Term.Eta(term) => traverse1(term, (a: Term) => Term.Eta(a))
-      case v => Some((v, m.zero))
+      case v => Some((v, m.zero))     */
     }
-
+                 /*
     def typeMatcher(t: Type): MatcherResult[Tree, A] = t match{
       case Type.Select(qual, selector) => traverse1(qual, (a: Qual.Type) => Type.Select(a, selector))
       case Type.Project(qual, selector) => traverse1(qual, (a: Type) => Type.Project(a, selector))
@@ -318,11 +318,12 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       } yield (if ((a1 eq name) && (b1 eq decltpe)) t else Aux.Self(name, decltpe), a2 + b2)
       case Aux.TypeBounds(lo, hi) => traverse2(lo, hi, (a: Type, b: Type) => Aux.TypeBounds(a, b))
       case v => Some((v, m.zero))
-    }
+    }    */
 
-    tree match {
+    (tree match {
       case t: Term => termMatcher(t)
-      case t: Type => typeMatcher(t)
+      case v => Some((v, m.zero))
+      /*case t: Type => typeMatcher(t)
       case t: Pat => patMatcher(t)
       case t: Decl => declMatcher(t)
       case t: Defn => defnMatcher(t)
@@ -337,7 +338,10 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       case Import.Clause(ref, sels) => traverse2ts(ref, sels, (a: Term.Ref, b: Seq[Selector]) => Import.Clause(a, b))
       case Import.Rename(from, to) => traverse2(from, to, (a: Import.Name, b: Import.Name) => Import.Rename(a, b))
       case Import.Unimport(name) => traverse1(name, (a: Import.Name) => Import.Unimport(a))
-      case t => auxMatcher(t)
+      case t => auxMatcher(t)*/
+    }) match {
+      case x @ Some((a: U, b))=> Some((a, b))
+      case _ => None
     }
   }
 }

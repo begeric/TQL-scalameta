@@ -19,14 +19,16 @@ object Example extends App{
        else 2
        """
 
-  val getAllIntLits = deep(collect[Tree, Int]{
+  /*val getAllIntLits = deep(collect[Tree, Int]{
     case Lit.Int(a) => println(a);a
-  })
+  })                                               */
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(update{case Lit.Int(_) => q"17"})
+  val changeAllIntLits = deep(update[Tree, Tree]{case Lit.Int(_) => q"117"})
 
   println(changeAllIntLits(x))
   println(show.ShowOps(x).show[syntactic.show.Raw])
+
+  println(ScalaMetaTraverserHelper.build(Term.ApplyInfix) + ":2")
 
 }

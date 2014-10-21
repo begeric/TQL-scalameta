@@ -5,7 +5,7 @@ package tql
  */
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 
-  implicit class TEnhancer(t: T){
+  /*implicit class TEnhancer(t: T){
     def \[A : Monoid] (b: TreeMapper[T, A]) = children(b)(implicitly[Monoid[A]])(t)
     def \\[A : Monoid](b: TreeMapper[T, A]) = deep(b)(implicitly[Monoid[A]])(t)
 
@@ -31,6 +31,6 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   implicit class MatcherResultEnhancer[U <: T, B](a: MatcherResult[U, B]){
     def result  = a.map(_._2)
     def tree    = a.map(_._1)
-  }
+  }         */
 
 }

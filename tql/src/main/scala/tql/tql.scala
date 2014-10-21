@@ -6,41 +6,56 @@ package tql
 
 trait Traverser[T] {
 
+  import scala.reflect.{ClassTag, classTag}
+
   type MatcherResult[U, A] = Option[(U, A)]
 
-  abstract class TreeMapper[U <: T, +A] extends (U => MatcherResult[U, A]) {
-    def andThen[B](m: =>  TreeMapper[U, B]) = TreeMapper[U, B] {tree: U =>
+  abstract class TreeMapper[-U <: T : ClassTag, +V <: T, +A] extends (T => MatcherResult[V, A]) {
+
+    def andThen[Z <: T, B : Monoid](m: =>  TreeMapper[V, Z, B]) = TreeMapper[U, Z, B] { tree =>
       this(tree) match {
         case Some((v, t)) => m(v)
         case _ => None
       }
     }
 
-    def +[B >: A](m: => TreeMapper[U, B])(implicit x: Monoid[B]) = TreeMapper[U, B] { tree: U =>
-      for {
-        (a1, b1) <- this(tree)
-        (a2, b2) <- m(a1)
-      } yield (a1, x.append(b1, b2))
+    def ~[Z <: T, B : Monoid](m: =>  TreeMapper[V, Z, B]) = andThen(m)
+
+    def compose[Z <: T, B >: A](m: => TreeMapper[V, Z, B])(implicit x: Monoid[B]) = TreeMapper[U, Z, B] { tree =>
+      this(tree) match {
+        case Some((a1, a2)) => m(a1) match {
+          case Some((b1, b2)) => Some((b1, x.append(a2, b2)))
+          case t => t
+        }
+        case _ => m(tree)
+      }
     }
 
-    def map[B](f: A => B) = TreeMapper[U, B] { tree: U =>
+    def +[Z <: T, B >: A](m: => TreeMapper[V, Z, B])(implicit x: Monoid[B]) = compose(m)(x)
+
+    def map[B](f: A => B) = TreeMapper[U, V, B] { tree =>
       for {
         (v, t) <- this(tree)
       } yield ((v, f(t)))
     }
 
-    def |[B >: A](m: => TreeMapper[U, B]) = TreeMapper[U, B] { tree: U =>
+    def orElse[X <: U : ClassTag, Y >: V <: T, B >: A : Monoid](m: => TreeMapper[X, Y, B]) = TreeMapper[X, Y, B] { tree: X =>
       this(tree) match {
         case None => m(tree)
         case  s => s
       }
     }
+
+    def |[X <: U : ClassTag, Y >: V <: T, B >: A : Monoid](m: => TreeMapper[X, Y, B]) = orElse(m)
   }
 
-  def TreeMapper[U <: T, A](f: U => MatcherResult[U, A]): TreeMapper[U, A] = new TreeMapper[U, A] {
-    override def apply(tree: U): MatcherResult[U, A] = f(tree)
+  def TreeMapper[U <: T : ClassTag, V <: T, A](f: U => MatcherResult[V, A]): TreeMapper[U, V, A] = new TreeMapper[U, V, A] {
+    override def apply(tree: T): MatcherResult[V, A] = tree match {
+      case t: U => f(t)
+      case _ => None
+    }
   }
 
-  def traverse[A : Monoid](tree: T, f: TreeMapper[T, A]): MatcherResult[T, A]
+  def traverse[U <: T : ClassTag, V <: T, A : Monoid](tree: U, f: TreeMapper[U, V, A]): MatcherResult[U, A]
 
 }
