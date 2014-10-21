@@ -1,5 +1,7 @@
 package scalameta
 
+import scala.meta.Lit
+
 /**
  * Created by Eric on 20.10.2014.
  */
@@ -17,18 +19,19 @@ object Example extends App{
     q"""
        if (1 == 1) 1
        else 2
+       5
        """
 
-  /*val getAllIntLits = deep(collect[Tree, Int]{
-    case Lit.Int(a) => println(a);a
-  })                                               */
+  val getAllIntLits = deep(collect{case Lit.Int(a) => 1})
+  println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
   val changeAllIntLits = deep(update[Tree, Tree]{case Lit.Int(_) => q"117"})
 
-  println(changeAllIntLits(x))
-  println(show.ShowOps(x).show[syntactic.show.Raw])
+  println(getAllIntLits(x))
 
-  println(ScalaMetaTraverserHelper.build(Term.ApplyInfix) + ":2")
+  println(x \\ (filter[Tree]{case Term.If(_,_,_) => true} \\ update[Tree, Tree]{case Lit.Int(_) => q"118"}))
+
+  println(ScalaMetaTraverserHelper.build(Term.ApplyInfix) + "")
 
 }
