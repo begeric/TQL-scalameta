@@ -26,10 +26,10 @@ object Example extends App{
   println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(update[Tree, Tree]{case Lit.Int(_) => q"197"})
+  val changeAllIntLits = deep(update[Lit, Lit]{case Lit.Int(_) => q"197"})
 
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 
-  println(x >> filter[Tree]{case Term.If(_,_,_) => true} \\ update[Tree, Tree]{case Lit.Int(_) => q"13"})
+  //println(x >> filter[Tree]{case Term.If(_,_,_) => true} \\ update[Lit, Lit]{case Lit.Int(_) => q"13"})
 }
