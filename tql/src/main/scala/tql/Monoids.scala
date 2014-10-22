@@ -5,12 +5,13 @@ package tql
  */
 
 object Monoids {
+
   implicit def listMonoid[A] = new Monoid[List[A]] {
     def zero = Nil
     def append(a: List[A], b: List[A]) = a ++ b
   }
 
-  implicit object IntMonoid extends Monoid[Int] {
+  implicit object counterMonoid extends Monoid[Int] {
     def zero = 0
     def append(l: Int, r: Int) = l + r
   }

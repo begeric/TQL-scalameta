@@ -22,6 +22,7 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
   implicit object tree2tree extends AllowedTransformation[Tree, Tree]
 
 
+  /*Those functions won't be here anymore soon*/
   def traverseSeq[T <: Tree: ClassTag, A : Monoid](f: TreeMapper[A], seq: Seq[T]): Option[(Seq[T], A)] = {
     val m = implicitly[Monoid[A]]
     var buffer = new ListBuffer[T]()
@@ -65,6 +66,7 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] = {
+
     val m = implicitly[Monoid[A]]
 
     def termMatcher = TraverserHelper.build[Tree,A](f,
@@ -97,33 +99,19 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
     def pkgMatcher = TraverserHelper.build[Tree,A](f,Pkg)
 
-    def ctorMatcher = TraverserHelper.build[Tree,A](f,
-      Ctor.Primary, Ctor.Secondary
-    )
+    def ctorMatcher = TraverserHelper.build[Tree,A](f, Ctor.Primary, Ctor.Secondary)
 
-    def importMatcher = TraverserHelper.build[Tree,A](f,
-      Import.Clause, Import.Rename, Import.Unimport
-    )
+    def importMatcher = TraverserHelper.build[Tree,A](f,Import.Clause, Import.Rename, Import.Unimport)
 
-    def paramMatcher = TraverserHelper.build[Tree,A](f,
-      Param.Anonymous, Param.Named
-    )
+    def paramMatcher = TraverserHelper.build[Tree,A](f, Param.Anonymous, Param.Named)
 
-    def typeParamMatcher = TraverserHelper.build[Tree,A](f,
-      TypeParam.Anonymous, TypeParam.Named
-    )
+    def typeParamMatcher = TraverserHelper.build[Tree,A](f, TypeParam.Anonymous, TypeParam.Named)
 
-    def argMatcher = TraverserHelper.build[Tree,A](f,
-      Arg.Named, Arg.Repeated
-    )
+    def argMatcher = TraverserHelper.build[Tree,A](f,Arg.Named, Arg.Repeated)
 
-    def enumMatcher = TraverserHelper.build[Tree,A](f,
-      Enum.Generator, Enum.Guard, Enum.Val
-    )
+    def enumMatcher = TraverserHelper.build[Tree,A](f, Enum.Generator, Enum.Guard, Enum.Val)
 
-    def modMatcher = TraverserHelper.build[Tree,A](f,
-      Mod.Annot, Mod.Private, Mod.Protected
-    )
+    def modMatcher = TraverserHelper.build[Tree,A](f, Mod.Annot, Mod.Private, Mod.Protected)
 
     def auxMatcher = TraverserHelper.build[Tree,A](f,
       Aux.CompUnit, Aux.Case, Aux.Parent, Aux.Template,
