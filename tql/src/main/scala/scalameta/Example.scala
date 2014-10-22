@@ -29,9 +29,7 @@ object Example extends App{
   val changeAllIntLits = deep(update[Tree, Tree]{case Lit.Int(_) => q"117"})
 
   println(getAllIntLits(x))
+  println(changeAllIntLits(x))
 
-  println(x \\ (filter[Tree]{case Term.If(_,_,_) => true} \\ update[Tree, Tree]{case Lit.Int(_) => q"118"}))
-
-  println(ScalaMetaTraverserHelper.build(Term.ApplyInfix) + "")
-
+  println(x >> filter[Tree]{case Term.If(_,_,_) => true} \\ update[Tree, Tree]{case Lit.Int(_) => q"19"})
 }

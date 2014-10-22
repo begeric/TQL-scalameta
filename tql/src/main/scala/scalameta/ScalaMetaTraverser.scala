@@ -9,6 +9,7 @@ package scalameta
  */
 
 import tql._
+import scala.collection.immutable.Seq
 import scala.collection.mutable.ListBuffer
 import scala.meta.Import.Selector
 import scala.meta._
@@ -19,6 +20,51 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
   import scala.reflect.{ClassTag, classTag}
 
   implicit object tree2tree extends AllowedTransformation[Tree, Tree]
+
+
+  //def fp[T <: Tree, A](t: Tree): Option[(Tree, A)] = None
+
+  def traverseSeq[T <: Tree: ClassTag, A : Monoid](f: TreeMapper[A], seq: Seq[T]): Option[(Seq[T], A)] = {
+    val m = implicitly[Monoid[A]]
+    var buffer = new ListBuffer[T]()
+    var hasChanged = false
+    var acc = m.zero
+    for (t <- seq){
+      f(t) match {
+        case Some((a1: T, a2)) if classTag[T].runtimeClass.isInstance(a1) =>
+          buffer.append(a1)
+          acc += a2
+          hasChanged |= !(a1 eq t)
+        case _ =>
+          hasChanged = true
+      }
+    }
+    Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
+  }
+
+  def traverseSeqofSeq[T <: Tree: ClassTag, A : Monoid](f: TreeMapper[A], seq: Seq[Seq[T]]): Option[(Seq[Seq[T]], A)] = {
+    val m = implicitly[Monoid[A]]
+    var buffer = new ListBuffer[Seq[T]]()
+    var hasChanged = false
+    var acc = m.zero
+    for (t <- seq){
+      traverseSeq(f, t) match {
+        case Some((a1, a2))=>
+          buffer.append(a1)
+          acc += a2
+          hasChanged |= !(a1 eq t)
+        case _ =>
+          hasChanged = true
+      }
+    }
+    Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
+  }
+
+  def optional[T <: Tree: ClassTag, A: Monoid](f: TreeMapper[T], a: Option[T])/*: Option[Option[(T, A)]]*/ = Some(a
+    .flatMap(f(_))
+    .collect{case (x: T, y) if classTag[T].runtimeClass.isInstance(x) => (Some(x), y)}
+    .getOrElse((None, implicitly[Monoid[A]].zero)))
+
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] = {
     val m = implicitly[Monoid[A]]
@@ -320,8 +366,12 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       case v => Some((v, m.zero))
     }    */
 
+    def testTermMatcher = TraverserHelper.build[Tree,A](f,
+      Term.If, Term.Block, Term.ApplyInfix)
+
+
     (tree match {
-      case t: Term => termMatcher(t)
+      case t: Term => testTermMatcher(t)
       case v => Some((v, m.zero))
       /*case t: Type => typeMatcher(t)
       case t: Pat => patMatcher(t)

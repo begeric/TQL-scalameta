@@ -6,10 +6,12 @@ import scala.reflect.ClassTag
  * Created by Eric on 19.10.2014.
  */
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
-
+  //Convention : Operators ending with : are right assosiative
   implicit class TEnhancer(t: T){
     def \[A : Monoid] (b: TreeMapper[A]) = children(b)(implicitly[Monoid[A]])(t)
     def \\[A : Monoid](b: TreeMapper[A]) = deep(b)(implicitly[Monoid[A]])(t)
+
+    def >>[A: Monoid](a: TreeMapper[A]) = a(t)
 
   }
 
@@ -19,8 +21,8 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   def deepestAlias[A : Monoid](m: TreeMapper[A]) = deepest(m)
 
   implicit class TreeMapperEnhancer[A](a: TreeMapper[A]){
-    def \ (b: TreeMapper[A])(implicit x: Monoid[A]) = a andThen children(b)
-    def \\[B: Monoid] (b: TreeMapper[B]) = a andThen deepAlias(b)
+    def \: (b: TreeMapper[A])(implicit x: Monoid[A]) = a andThen children(b)
+    def \\[B : Monoid] (b: TreeMapper[B]) = a andThen deepAlias(b)
     def >>[B] (f: T => MatcherResult[B]) = flatMap(f)
     def apply[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: ClassTag[T], y: AllowedTransformation[I, O]) = update(f)
 
