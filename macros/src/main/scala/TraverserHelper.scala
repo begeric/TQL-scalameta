@@ -63,13 +63,13 @@ class TraverserBuilder(val c: Context) {
     val newResult = TermName(c.freshName)
     val lhs = pq"($newTree: $typ, $newResult @ _)"
     val rhs = typ match {
-      case t if t <:< typeOf[scala.meta.Tree] =>
+      case t if t <:< weakTypeOf[T] =>
         Some(q"$f($name)")
-      case t if t <:< typeOf[scala.collection.immutable.Seq[scala.meta.Tree]] =>
+      case t if t <:< weakTypeOf[scala.collection.immutable.Seq[T]] =>
         Some(q"scalameta.ScalaMetaTraverser.traverseSeq($f, $name)")
-      case t if t <:< typeOf[scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.meta.Tree]]] =>
+      case t if t <:< weakTypeOf[scala.collection.immutable.Seq[scala.collection.immutable.Seq[T]]] =>
         Some(q"scalameta.ScalaMetaTraverser.traverseSeqofSeq($f, $name)")
-      case t if t <:< typeOf[scala.Option[scala.meta.Tree]] =>
+      case t if t <:< weakTypeOf[scala.Option[T]] =>
         Some(q"scalameta.ScalaMetaTraverser.optional($f, $name)")
       case _ => None
     }

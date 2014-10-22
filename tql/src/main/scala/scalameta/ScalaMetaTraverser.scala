@@ -22,8 +22,6 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
   implicit object tree2tree extends AllowedTransformation[Tree, Tree]
 
 
-  //def fp[T <: Tree, A](t: Tree): Option[(Tree, A)] = None
-
   def traverseSeq[T <: Tree: ClassTag, A : Monoid](f: TreeMapper[A], seq: Seq[T]): Option[(Seq[T], A)] = {
     val m = implicitly[Monoid[A]]
     var buffer = new ListBuffer[T]()
@@ -70,29 +68,85 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
     val m = implicitly[Monoid[A]]
 
     def termMatcher = TraverserHelper.build[Tree,A](f,
-      Term.This, Term.Name, Term.If, Term.Block, Term.ApplyInfix)
+      Term.This, Term.Name, Term.Select, Term.Interpolate,
+      Term.Apply, Term.ApplyType, Term.ApplyInfix, Term.ApplyUnary,
+      Term.Assign, Term.Update, Term.Return, Term.Throw, Term.Ascribe, Term.Annotate,
+      Term.Tuple, Term.Block, Term.If, Term.Match, Term.Try, Term.Function, Term.Cases ,
+      Term.Cases, Term.While, Term.Do, Term.For, Term.ForYield, Term.New, Term.Eta)
 
-    def t = 1
+    def typeMatcher = TraverserHelper.build[Tree,A](f,
+      Type.Select, Type.Project, Type.Singleton,
+      Type.Apply, Type.ApplyInfix, Type.Function, Type.Tuple,
+      Type.Compound, Type.Existential, Type.Annotate, Type.Placeholder,
+      Param.Type.ByName, Param.Type.Repeated
+    )
+
+    def patMatcher = TraverserHelper.build[Tree,A](f,
+      Pat.Bind, Pat.Alternative, Pat.Tuple, Pat.Extract,
+      Pat.ExtractInfix, Pat.Interpolate, Pat.Typed
+    )
+
+    def declMatcher = TraverserHelper.build[Tree,A](f,
+      Decl.Val, Decl.Var, Decl.Def, Decl.Procedure, Decl.Type
+    )
+
+    def defnMatcher = TraverserHelper.build[Tree,A](f,
+      Defn.Val, Defn.Var, Defn.Def, Defn.Procedure,
+      Defn.Macro, Defn.Type, Defn.Class, Defn.Trait
+    )
+
+    def pkgMatcher = TraverserHelper.build[Tree,A](f,Pkg)
+
+    def ctorMatcher = TraverserHelper.build[Tree,A](f,
+      Ctor.Primary, Ctor.Secondary
+    )
+
+    def importMatcher = TraverserHelper.build[Tree,A](f,
+      Import.Clause, Import.Rename, Import.Unimport
+    )
+
+    def paramMatcher = TraverserHelper.build[Tree,A](f,
+      Param.Anonymous, Param.Named
+    )
+
+    def typeParamMatcher = TraverserHelper.build[Tree,A](f,
+      TypeParam.Anonymous, TypeParam.Named
+    )
+
+    def argMatcher = TraverserHelper.build[Tree,A](f,
+      Arg.Named, Arg.Repeated
+    )
+
+    def enumMatcher = TraverserHelper.build[Tree,A](f,
+      Enum.Generator, Enum.Guard, Enum.Val
+    )
+
+    def modMatcher = TraverserHelper.build[Tree,A](f,
+      Mod.Annot, Mod.Private, Mod.Protected
+    )
+
+    def auxMatcher = TraverserHelper.build[Tree,A](f,
+      Aux.CompUnit, Aux.Case, Aux.Parent, Aux.Template,
+      Aux.Template, Aux.Self, Aux.TypeBounds,
+      Qual.Super
+    )
+
 
     (tree match {
       case t: Term => termMatcher(t)
-      case v => Some((v, m.zero))
-      /*case t: Type => typeMatcher(t)
+      case t: Type => typeMatcher(t)
       case t: Pat => patMatcher(t)
       case t: Decl => declMatcher(t)
       case t: Defn => defnMatcher(t)
+      case t: Pkg => pkgMatcher(t)
       case t: Ctor => ctorMatcher(t)
+      case t: Import => importMatcher(t)
       case t: Param => paramMatcher(t)
       case t: TypeParam => typeParamMatcher(t)
       case t: Arg => argMatcher(t)
       case t: Enum => enumMatcher(t)
-      case Param.Type.ByName(tpe) => traverse1(tpe, (a: Param.Type) => Param.Type.ByName(a))
-      case Param.Type.Repeated(tpe) => traverse1(tpe, (a: Param.Type) => Param.Type.Repeated(a))
-      case Pkg(ref, stats) => traverse2ts(ref, stats, (a: Term.Ref, b: Seq[Stmt.TopLevel]) => Pkg(a, b))
-      case Import.Clause(ref, sels) => traverse2ts(ref, sels, (a: Term.Ref, b: Seq[Selector]) => Import.Clause(a, b))
-      case Import.Rename(from, to) => traverse2(from, to, (a: Import.Name, b: Import.Name) => Import.Rename(a, b))
-      case Import.Unimport(name) => traverse1(name, (a: Import.Name) => Import.Unimport(a))
-      case t => auxMatcher(t)*/
+      case t: Mod => modMatcher(t)
+      case t => auxMatcher(t)
     })
   }
 }
