@@ -31,5 +31,7 @@ object Example extends App{
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 
-  //println(x >> filter[Tree]{case Term.If(_,_,_) => true} \\ update[Lit, Lit]{case Lit.Int(_) => q"13"})
+  println(x \\ (filter[Term.If]{case Term.If(_,_,_) => true} \\ update[Lit, Lit]{case Lit.Int(_) => q"15"}))
+
+  println(TraverserHelper.hierarchy[Tree])
 }

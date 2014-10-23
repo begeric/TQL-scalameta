@@ -23,10 +23,18 @@ import scala.reflect.macros.whitebox.Context
 
 object TraverserHelper {
   def build[T, A](f: Any /*temporary*/, cases: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
+
+  def hierarchy[T]: Any = macro TraverserBuilder.hierarchyImpl[T]
+
 }
 
 class TraverserBuilder(val c: Context) {
   import c.universe._
+
+  def hierarchyImpl[T : c.WeakTypeTag] = {
+    val m = implicitly[c.WeakTypeTag[T]]
+    q"${show(m.tpe.typeSymbol.asClass.knownDirectSubclasses.map(x => (x, x.asClass.knownDirectSubclasses)).mkString("\n"))}"
+  }
 
   def buildImpl[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, cases: c.Tree*): c.Tree = {
     val parameter = TermName(c.freshName)
