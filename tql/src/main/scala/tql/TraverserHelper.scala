@@ -1,15 +1,14 @@
 package tql
 
-
-import scala.collection.immutable.Seq
-import scala.collection.mutable.ListBuffer
-import scala.meta.Tree
-import scala.reflect._
-
-
 /**
  * Created by Eric on 27.10.2014.
  */
+
+import scala.collection.immutable.Seq
+import scala.collection.mutable.ListBuffer
+import scala.reflect._
+
+
 object TraverserHelper {
 
   import MonoidEnhencer._

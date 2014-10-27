@@ -30,11 +30,11 @@ object Example extends App{
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
   val changeAllIntLits = downBreak(updateE[Term, Lit]{case Lit.Int(_) => q"165"})
 
-  /*val withState = multi[Int](stateful[Int](0){count: Int =>
-    updateE[Term, Lit]{case Lit.Int(_) => println(count);q"125"} map (_ => count + 1)
-  }) */
+  val withState = downBreak(stateful[List[Int]] { state =>
+    collect{ case Lit.Int(a) => println(state);2}
+  })
 
-  //println(withState(x))
+  println(withState(x))
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 

@@ -22,7 +22,7 @@ import scala.reflect.macros.whitebox.Context
 * */
 
 object TraverserHelperMacros {
-  def build[T, A](f: Any /*temporary*/, cases: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
+  def build[T, A](f: Any /*temporary*/, objs: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
 
   def buildFromTopSymbol[T, A](f: Any): (T => Option[(T, A)]) = macro TraverserBuilder.buildFromTopSymbol[T, A]
 
@@ -34,45 +34,44 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
 
 
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
     val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
-    //q"TraverserHelperMacros.build[${implicitly[c.WeakTypeTag[T]]}, ${implicitly[c.WeakTypeTag[A]]}]($f, ..$allLeafs)"
   }
 
 
-  def buildImpl[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, cases: c.Tree*): c.Tree = {
+  def buildImpl[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: c.Tree*): c.Tree = {
     val parameter = TermName(c.freshName)
-    buildFunc[T, A](parameter, buildCases[T, A](f, cases.toList, parameter))
-  }
-
-  def buildFunc[T : c.WeakTypeTag, A : c.WeakTypeTag](parameter:TermName, cases: List[c.Tree]): c.Tree =
+    val cases = buildCases[T, A](f, objs.toList, parameter)
     q"""
         ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
           case ..$cases
           case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
+  }
 
-  def buildCases[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, cases: List[c.Tree], parameter: TermName): List[c.Tree] =
+
+  def buildCases[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: List[c.Tree], parameter: TermName): List[c.Tree] =
     for {
-      cas <- cases
-      argsList <- getParamsWithTypes(cas.symbol.info)
-      parametersList = argsList._1.map(p => pq"$p @ _")
-      extractor = pq"$cas(..${parametersList})"
-      matched <- caseMatch[T, A](f, cas, parameter, argsList._1, argsList._2)
-    } yield cq"$extractor => $matched"
+      obj <- objs
+      args <- getParamsWithTypes(obj.symbol.info)
+      extractorVars = args._1.map(p => pq"$p @ _")
+      pat = pq"$obj(..${extractorVars})"
+      stat <- caseMatch[T, A](f, obj, parameter, args._1, args._2)
+    } yield cq"$pat => $stat"
 
 
-  def getParamsWithTypes(obj: c.Type): Option[(List[TermName], List[c.Type])] = {
-    val f = obj.decl(TermName("unapply"))
-    val MethodType(_, resultType) = f.typeSignatureIn(obj)
+  def getParamsWithTypes(typ: c.Type): Option[(List[TermName], List[c.Type])] = {
+    val unapply = typ.decl(TermName("unapply"))
+    val MethodType(_, resultType) = unapply.typeSignatureIn(typ)
+    /*The result type of unapply is Option[T] where T can be a TupleX containing the types by which we will pattern match
+    * and construct the type with*/
     if (!resultType.typeArgs.isEmpty){
       val tupleOrNot: c.Type = resultType.typeArgs.head
 
-      //pretty lame
-      val types = if (tupleOrNot.typeConstructor.toString.startsWith("Tuple")) tupleOrNot.typeArgs
-      else List(tupleOrNot)   /*This is disgusting, God please give me a better way to do it*/
+      val types = if (tupleOrNot.typeConstructor.toString.startsWith("Tuple") /*pretty lame*/) tupleOrNot.typeArgs
+                  else List(tupleOrNot)   /*This is disgusting, God please give me a better way to do it*/
       val newNames = types.map(_ => TermName(c.freshName))
       Some((newNames, types))
     }
@@ -80,7 +79,8 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
       None
   }
 
-  def createEnum[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, name: TermName, typ: c.Type) = {
+  def createEnum[T : c.WeakTypeTag, A : c.WeakTypeTag]
+                (f: c.Tree, name: TermName, typ: c.Type)/*: List[Option[(TermName, TermName, c.Tree)]] */= {
     val aTpe = implicitly[c.WeakTypeTag[A]]
     val newTree = TermName(c.freshName)
     val newResult = TermName(c.freshName)
@@ -100,13 +100,14 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
   }
 
 
-  def caseMatch[T : c.WeakTypeTag, A : c.WeakTypeTag](func: c.Tree, constructor: c.Tree, origin: TermName,
+  def caseMatch[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, constructor: c.Tree, origin: TermName,
                                                       names: List[TermName], types: List[c.Type]): Option[c.Tree] = {
 
-    val parameters = names.zip(types)
-    val enums = parameters.map(x => createEnum[T, A](func, x._1, x._2))
+    val parameters: List[(TermName, Type)] = names.zip(types)
+    val enums = parameters.map(x => createEnum[T, A](f, x._1, x._2))
     val forEnums: List[c.Tree] = enums.flatMap(_.map(_._3))
     val results: List[TermName] = enums.flatMap(_.map(_._2))
+
     if (results.size > 0){
       val addResults = results.tail.foldLeft[c.Tree](q"${results.head}")((a, b) => q"$a + $b")
       val paramsWithNewParams = parameters.unzip._1.zip(enums.map(_.map(_._1)))

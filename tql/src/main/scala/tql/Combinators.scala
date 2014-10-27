@@ -65,9 +65,17 @@ trait Combinators[T] { self: Traverser[T] =>
     case _ => None
   }
 
-  import Monoids._
-  def stateful[A](init: A)(f: A => TreeMapper[Stateful[A]]) = TreeMapper[Stateful[A]] { tree =>
-     f(init)(tree)
+  def stateful[A: Monoid](f: A => TreeMapper[A]) = {
+    import MonoidEnhencer._
+    var value: A = implicitly[Monoid[A]].zero
+    TreeMapper[A] { tree =>
+      f(value)(tree) match {
+        case s @ Some((v, a)) =>
+          value += a
+          s
+        case None => None
+      }
+    }
   }
 
 }
