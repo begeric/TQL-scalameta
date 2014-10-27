@@ -4,10 +4,6 @@ package scalameta
  * Created by Eric on 20.10.2014.
  */
 
-/**
- * Created by Eric on 19.10.2014.
- */
-
 import tql._
 import scala.meta._
 

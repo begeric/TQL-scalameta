@@ -23,12 +23,12 @@ object Example extends App{
        5
        """
 
-  val getAllIntLits = deep(collect{case Lit.Int(a) => 2})
+  val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
 
   println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"165"})
+  val changeAllIntLits = downBreak(updateE[Term, Lit]{case Lit.Int(_) => q"165"})
 
   /*val withState = multi[Int](stateful[Int](0){count: Int =>
     updateE[Term, Lit]{case Lit.Int(_) => println(count);q"125"} map (_ => count + 1)

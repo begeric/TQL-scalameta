@@ -15,20 +15,26 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Traverse the tree in a TopDown manner, stop when a transformation/traversal has succeeded
    * */
-  def deep[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
-    m | children(deep[A](m))
+  def downBreak[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+    m | children(downBreak[A](m))
 
   /**
    * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
    * */
-  def deepest[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
-    children(deep[A](m)) | m
+  def upBreak[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+    children(upBreak[A](m)) | m
 
   /**
-   * Same as deep, but does not sop when a transformation/traversal has succeeded
+   * Same as TopDown, but does not sop when a transformation/traversal has succeeded
    * */
-  def multi[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
-    m + children(multi[A](m))
+  def down[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+    m + children(down[A](m))
+
+  /**
+   * Same as upBreak, but does not sop when a transformation/traversal has succeeded
+   * */
+  def up[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+    children(up[A](m)) + m
 
   def flatMap[B](f: T => MatcherResult[B]) = TreeMapper[B] {tree =>
     f(tree)
