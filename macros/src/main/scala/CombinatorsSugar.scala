@@ -1,0 +1,41 @@
+/**
+ * Created by Eric on 26.10.2014.
+ */
+package tql
+import scala.language.experimental.macros
+import scala.reflect.macros.whitebox.Context
+
+object CombinatorsSugar {
+
+  def filter(f: PartialFunction[Any, Boolean]): Any = macro filterSugarImpl
+  def update(f: PartialFunction[Any, Any]): Any = macro updateSugarImpl
+
+
+  def filterSugarImpl(c: Context)(f: c.Tree): c.Tree = {
+    import c.universe._
+    val (lhs, _) =  getGLBsfromPFs(c)(f)
+    q"filterE[$lhs]($f)"
+  }
+
+  def updateSugarImpl(c: Context)(f: c.Tree): c.Tree = {
+    import c.universe._
+    val (lhs, rhs) =  getGLBsfromPFs(c)(f)
+    q"updateE[$lhs, $rhs]($f)"
+  }
+
+  def getGLBsfromPFs(c: Context)(f: c.Tree): (c.Type, c.Type) = {
+    import c.universe._
+    f match {
+      case q"{case ..$cases}" =>
+        val tpes: List[(c.Type,c.Type)] = cases.map(_ match {
+          case cq"($_ @ (_ : $tpe)) => $rhs" => (tpe.tpe, rhs.tpe)
+          case cq"(_ : $tpe) => $rhs" => (tpe.tpe, rhs.tpe)
+          case cq"$x(..$_) => $rhs" => (x.tpe, rhs.tpe)
+          case _ => c.abort(c.enclosingPosition, "Bad format in partial function")
+        })
+        val (lhs, rhs) = tpes.unzip
+        (glb(lhs), glb(rhs))
+      case _ => c.abort(c.enclosingPosition, "Expecting a partial function here")
+    }
+  }
+}

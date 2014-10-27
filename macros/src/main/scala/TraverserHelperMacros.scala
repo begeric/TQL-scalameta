@@ -21,7 +21,7 @@ import scala.reflect.macros.whitebox.Context
 * }
 * */
 
-object TraverserHelper {
+object TraverserHelperMacros {
   def build[T, A](f: Any /*temporary*/, cases: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
 
   def buildFromTopSymbol[T, A](f: Any): (T => Option[(T, A)]) = macro TraverserBuilder.buildFromTopSymbol[T, A]
@@ -37,7 +37,7 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
     val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
-    //q"TraverserHelper.build[${implicitly[c.WeakTypeTag[T]]}, ${implicitly[c.WeakTypeTag[A]]}]($f, ..$allLeafs)"
+    //q"TraverserHelperMacros.build[${implicitly[c.WeakTypeTag[T]]}, ${implicitly[c.WeakTypeTag[A]]}]($f, ..$allLeafs)"
   }
 
 
