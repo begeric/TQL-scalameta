@@ -89,11 +89,11 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
       case t if t <:< weakTypeOf[T] =>
         Some(q"$f($name)")
       case t if t <:< weakTypeOf[scala.collection.immutable.Seq[T]] =>
-        Some(q"scalameta.ScalaMetaTraverser.traverseSeq($f, $name)")
+        Some(q"tql.TraverserHelper.traverseSeq($f, $name)")
       case t if t <:< weakTypeOf[scala.collection.immutable.Seq[scala.collection.immutable.Seq[T]]] =>
-        Some(q"scalameta.ScalaMetaTraverser.traverseSeqofSeq($f, $name)")
+        Some(q"tql.TraverserHelper.traverseSeqofSeq($f, $name)")
       case t if t <:< weakTypeOf[scala.Option[T]] =>
-        Some(q"scalameta.ScalaMetaTraverser.optional($f, $name)")
+        Some(q"tql.TraverserHelper.optional($f, $name)")
       case _ => None
     }
     rhs.map(r => (newTree, newResult, fq"$lhs <- $r"))

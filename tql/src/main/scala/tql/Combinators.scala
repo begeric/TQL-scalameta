@@ -1,10 +1,9 @@
 package tql
 
-import scala.reflect.ClassTag
 
 trait Combinators[T] { self: Traverser[T] =>
 
-  import scala.reflect.{ClassTag, classTag}
+  import scala.reflect.ClassTag
 
   /**
    * Traverse the children of the tree
