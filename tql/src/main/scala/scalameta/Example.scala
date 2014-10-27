@@ -11,6 +11,7 @@ object Example extends App{
   import scala.meta._
   import syntactic._
   import ScalaMetaTraverser._
+  import CombinatorsSugar._
   import Monoids._
 
   def showTree(x: Tree) = show.ShowOps(x).show[syntactic.show.Raw]
@@ -22,16 +23,18 @@ object Example extends App{
        5
        """
 
-  val getAllIntLits = deep(collect{case Lit.Int(a) => 1})
+  val getAllIntLits = deep(collect{case Lit.Int(a) => 2})
+
   println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(update[Lit, Lit]{case Lit.Int(_) => q"197"})
+  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"195"})
 
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 
-  println(x \\ (filter[Term.If]{case Term.If(_,_,_) => true} \\ update[Lit, Lit]{case Lit.Int(_) => q"15"}))
+  //println(x \\ (filter{case i : Term.If=> true} \\ update{case Lit.Int(_) => q"15"}))
 
-  println(TraverserHelper.hierarchy[Tree])
+  //filtersugar({case i:Term.If => true; case i: Term.Apply => false})
+
 }

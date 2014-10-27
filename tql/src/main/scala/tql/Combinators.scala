@@ -38,8 +38,9 @@ trait Combinators[T] { self: Traverser[T] =>
 
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
+   * E stands for explicit. Used to distinguish it from the macro impl.
    * */
-  def filter[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = TreeMapper[U]{
+  def filterE[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = TreeMapper[U]{
     case t: U if f.isDefinedAt(t) && f(t) => Some((t, t))
     case _ => None
   }
@@ -47,14 +48,14 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = filter[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
+  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = filterE[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
-  trait AllowedTransformation[I, O]
+  trait AllowedTransformation[+I, O]
 
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
-  def update[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) = TreeMapper[Unit] {
+  def updateE[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) = TreeMapper[Unit] {
     case t: I if (f.isDefinedAt(t)) => Some((f(t), Monoids.Void.zero))
     case _ => None
   }

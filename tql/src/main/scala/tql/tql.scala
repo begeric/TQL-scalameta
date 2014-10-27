@@ -14,7 +14,7 @@ trait Traverser[T] {
    * A TreeMapper is a function or 'combinator' which takes a T and return an Option of tuple of
    * - a transformed T (or the same)
    * - a result of type A s.t Exists Monoid[A] so that results can be combined during the traversal
-   * A transformation/traversal as succeeded if the result of the application on the TreeMapper is not a None
+   * A transformation/traversal has succeeded if the result of the application on the TreeMapper is not a None
    * */
   abstract class TreeMapper[+A] extends (T => MatcherResult[A]) {
 

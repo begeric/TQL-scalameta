@@ -28,9 +28,6 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
 
 
-
-
-
   /*Those functions won't be here anymore soon*/
   def traverseSeq[T <: Tree: ClassTag, A : Monoid](f: TreeMapper[A], seq: Seq[T]): Option[(Seq[T], A)] = {
     val m = implicitly[Monoid[A]]
@@ -128,6 +125,9 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       Qual.Super
     )
 
+    def i = 3
+
+    //println(TraverserHelper.buildFromTopSymbol[Tree, A](f))
 
     (tree match {
       case t: Term => termMatcher(t)
