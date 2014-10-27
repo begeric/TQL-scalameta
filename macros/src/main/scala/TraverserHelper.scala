@@ -24,9 +24,7 @@ import scala.reflect.macros.whitebox.Context
 object TraverserHelper {
   def build[T, A](f: Any /*temporary*/, cases: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
 
-  def buildFromTopSymbol[T, A](f: Any): Any = macro TraverserBuilder.buildFromTopSymbol[T, A]
-
-  def hierarchy[T, A](f: Any): Any = macro TraverserBuilder.hierarchyImpl[T, A]
+  def buildFromTopSymbol[T, A](f: Any): (T => Option[(T, A)]) = macro TraverserBuilder.buildFromTopSymbol[T, A]
 
 }
 
@@ -36,83 +34,22 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
 
 
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-
-
-    //c.abort(c.enclosingPosition, show(u.symbolOf[T].asRoot.allLeafs))
-    //val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => c.typecheck(q"${TermName(x.sym.fullName)}", mode = c.TYPEmode))
-    /*val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => x.sym.info.companion.decl(u.TermName("unapply")))
-    val allLeafsConstructors = u.symbolOf[T].asRoot.allLeafs.map(x => c.typecheck(q"${TermName(x.sym.fullName)}", mode = c.TYPEmode).tpe.member(TermName("unapply"))  )  */
-    //c.abort(c.enclosingPosition, show(allLeafParams))
-    //val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => getParamsWithSymbol(x.sym))
-    //c.abort(c.enclosingPosition, show(allLeafs))
-    q""
-    //buildImpl[T, A](f, q"..$allLeafs")
+    val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
+    buildImpl[T, A](f, allLeafs: _*)
+    //q"TraverserHelper.build[${implicitly[c.WeakTypeTag[T]]}, ${implicitly[c.WeakTypeTag[A]]}]($f, ..$allLeafs)"
   }
 
-
-
-  def hierarchyImpl[T : c.WeakTypeTag, A: c.WeakTypeTag](f: c.Tree) = {
-    /*val m = implicitly[c.WeakTypeTag[T]]
-    val tpeSym = m.tpe.typeSymbol
-
-    def patmatFromSymbol(sym: ClassSymbol, scrut: TermName): Option[c.Tree] = {
-      val subClasses = sym.knownDirectSubclasses
-      val cases = for {
-        s <- subClasses
-        if s.isClass
-        tmpName = TermName(c.freshName)
-        mat <- patmatFromSymbol(s.asClass, tmpName)
-      } yield cq"$tmpName: $s => $mat"
-
-      if (!cases.isEmpty) {
-        Some(q"""
-            $scrut match {
-              case ..$cases
-            }
-        """)
-      }
-      else if (!subClasses.isEmpty){
-        c.abort(c.enclosingPosition, show(subClasses.map(x => c.typecheck(q"${x.companion}").tpe.member(TermName("unapply")))))
-        val cases = buildCases[T, A](f, subClasses.map(x => c.typecheck(q"${x.companion}")).toList, scrut)
-        if (cases.isEmpty)
-          None
-        else {
-        //c.abort(c.enclosingPosition, show(cases))
-          Some(q"""
-              $scrut match {
-                case ..$cases
-                case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
-              }
-          """)
-        }
-      }
-      else
-        None
-
-    }
-    val tmpName = TermName(c.freshName)
-    val tmp = patmatFromSymbol(tpeSym.asClass, tmpName)
-    q"${show(tmp)}"        */
-    q""
-  }
 
   def buildImpl[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, cases: c.Tree*): c.Tree = {
     val parameter = TermName(c.freshName)
-
-    val casesImpl = buildCases[T, A](f, cases.toList, parameter)
-
-    q"""
-        ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
-          case ..$casesImpl
-          case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
-        }
-    """
+    buildFunc[T, A](parameter, buildCases[T, A](f, cases.toList, parameter))
   }
 
-  def buildPatMat[T : c.WeakTypeTag, A : c.WeakTypeTag](scrut: c.Tree, cases: c.Tree): c.Tree =
+  def buildFunc[T : c.WeakTypeTag, A : c.WeakTypeTag](parameter:TermName, cases: List[c.Tree]): c.Tree =
     q"""
-        $scrut match {
+        ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
           case ..$cases
+          case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
 
@@ -142,40 +79,6 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
       None
   }
 
-  /*def getParamsWithTypes(obj: c.Tree): Option[(List[TermName], List[c.Type])] = {
-    //c.abort(c.enclosingPosition, show(obj.symbol.info.decl(TermName("unapply"))))
-    val f = obj.tpe.member(TermName("unapply"))
-    val MethodType(_, resultType) = f.typeSignatureIn(obj.tpe)
-    if (!resultType.typeArgs.isEmpty){
-      val tupleOrNot: c.Type = resultType.typeArgs.head
-
-      //pretty lame
-      val types = if (tupleOrNot.typeConstructor.toString.startsWith("Tuple")) tupleOrNot.typeArgs
-                  else List(tupleOrNot)   /*This is disgusting, God please give me a better way to do it*/
-      val newNames = types.map(_ => TermName(c.freshName))
-      Some((newNames, types))
-    }
-    else
-      None
-  }*/
-
-  /*def getParamsWithSymbol(sym: c.Symbol): Option[(List[TermName], List[c.Type])] = {
-    val f = sym.info.companion.decl(TermName("unapply"))
-    val MethodType(_, resultType) = f.typeSignatureIn(sym.info)
-    if (!resultType.typeArgs.isEmpty){
-      val tupleOrNot: c.Type = resultType.typeArgs.head
-
-      //pretty lame
-      val types = if (tupleOrNot.typeConstructor.toString.startsWith("Tuple")) tupleOrNot.typeArgs
-      else List(tupleOrNot)   /*This is disgusting, God please give me a better way to do it*/
-      val newNames = types.map(_ => TermName(c.freshName))
-      Some((newNames, types))
-    }
-    else
-      None
-  }  */
-
-
   def createEnum[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, name: TermName, typ: c.Type) = {
     val aTpe = implicitly[c.WeakTypeTag[A]]
     val newTree = TermName(c.freshName)
@@ -196,7 +99,7 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
   }
 
 
-  def caseMatch[T : c.WeakTypeTag, A : c.WeakTypeTag](func: c.Tree, first: c.Tree, origin: TermName,
+  def caseMatch[T : c.WeakTypeTag, A : c.WeakTypeTag](func: c.Tree, constructor: c.Tree, origin: TermName,
                                                       names: List[TermName], types: List[c.Type]): Option[c.Tree] = {
 
     val parameters = names.zip(types)
@@ -207,7 +110,7 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
       val addResults = results.tail.foldLeft[c.Tree](q"${results.head}")((a, b) => q"$a + $b")
       val paramsWithNewParams = parameters.unzip._1.zip(enums.map(_.map(_._1)))
       val reconstructParams = paramsWithNewParams.map(x => x._2.getOrElse(x._1))
-      val reconstruct = q"$first(..$reconstructParams)"
+      val reconstruct = q"$constructor(..$reconstructParams)"
       val eqList = paramsWithNewParams.foldLeft[c.Tree](q"true")((acc, x) => q"$acc && ${x._2.map(y => q"($y eq ${x._1})").get}")
 
       val doesReconstruct = q"if ($eqList) $origin else $reconstruct"

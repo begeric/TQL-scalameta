@@ -28,7 +28,7 @@ object Example extends App{
   println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"195"})
+  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"125"})
 
   println(getAllIntLits(x))
   println(changeAllIntLits(x))

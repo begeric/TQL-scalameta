@@ -73,14 +73,6 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] = {
 
-    val m = implicitly[Monoid[A]]
-
-    def termMatcher = TraverserHelper.build[Tree,A](f,
-      Term.This, Term.Name, Term.Select, Term.Interpolate,
-      Term.Apply, Term.ApplyType, Term.ApplyInfix, Term.ApplyUnary,
-      Term.Assign, Term.Update, Term.Return, Term.Throw, Term.Ascribe, Term.Annotate,
-      Term.Tuple, Term.Block, Term.If, Term.Match, Term.Try, Term.Function, Term.Cases ,
-      Term.Cases, Term.While, Term.Do, Term.For, Term.ForYield, Term.New, Term.Eta)
 
     def typeMatcher = TraverserHelper.build[Tree,A](f,
       Type.Select, Type.Project, Type.Singleton,
@@ -94,56 +86,10 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
       Pat.ExtractInfix, Pat.Interpolate, Pat.Typed
     )
 
-    def declMatcher = TraverserHelper.build[Tree,A](f,
-      Decl.Val, Decl.Var, Decl.Def, Decl.Procedure, Decl.Type
-    )
+    def argMatcher = TraverserHelper.build[Tree,A](f, Arg.Named)
 
-    def defnMatcher = TraverserHelper.build[Tree,A](f,
-      Defn.Val, Defn.Var, Defn.Def, Defn.Procedure,
-      Defn.Macro, Defn.Type, Defn.Class, Defn.Trait
-    )
 
-    def pkgMatcher = TraverserHelper.build[Tree,A](f,Pkg)
-
-    def ctorMatcher = TraverserHelper.build[Tree,A](f, Ctor.Primary, Ctor.Secondary)
-
-    def importMatcher = TraverserHelper.build[Tree,A](f,Import.Clause, Import.Rename, Import.Unimport)
-
-    def paramMatcher = TraverserHelper.build[Tree,A](f, Param.Anonymous, Param.Named)
-
-    def typeParamMatcher = TraverserHelper.build[Tree,A](f, TypeParam.Anonymous, TypeParam.Named)
-
-    def argMatcher = TraverserHelper.build[Tree,A](f,Arg.Named, Arg.Repeated)
-
-    def enumMatcher = TraverserHelper.build[Tree,A](f, Enum.Generator, Enum.Guard, Enum.Val)
-
-    def modMatcher = TraverserHelper.build[Tree,A](f, Mod.Annot, Mod.Private, Mod.Protected)
-
-    def auxMatcher = TraverserHelper.build[Tree,A](f,
-      Aux.CompUnit, Aux.Case, Aux.Parent, Aux.Template,
-      Aux.Template, Aux.Self, Aux.TypeBounds,
-      Qual.Super
-    )
-
-    def i = 3
-
-    //println(TraverserHelper.buildFromTopSymbol[Tree, A](f))
-
-    (tree match {
-      case t: Term => termMatcher(t)
-      case t: Type => typeMatcher(t)
-      case t: Pat => patMatcher(t)
-      case t: Decl => declMatcher(t)
-      case t: Defn => defnMatcher(t)
-      case t: Pkg => pkgMatcher(t)
-      case t: Ctor => ctorMatcher(t)
-      case t: Import => importMatcher(t)
-      case t: Param => paramMatcher(t)
-      case t: TypeParam => typeParamMatcher(t)
-      case t: Arg => argMatcher(t)
-      case t: Enum => enumMatcher(t)
-      case t: Mod => modMatcher(t)
-      case t => auxMatcher(t)
-    })
+    def traverser = TraverserHelper.buildFromTopSymbol[Tree, A](f)
+    traverser(tree)
   }
 }
