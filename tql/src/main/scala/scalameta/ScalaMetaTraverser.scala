@@ -72,23 +72,6 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] = {
-
-
-    def typeMatcher = TraverserHelper.build[Tree,A](f,
-      Type.Select, Type.Project, Type.Singleton,
-      Type.Apply, Type.ApplyInfix, Type.Function, Type.Tuple,
-      Type.Compound, Type.Existential, Type.Annotate, Type.Placeholder,
-      Param.Type.ByName, Param.Type.Repeated
-    )
-
-    def patMatcher = TraverserHelper.build[Tree,A](f,
-      Pat.Bind, Pat.Alternative, Pat.Tuple, Pat.Extract,
-      Pat.ExtractInfix, Pat.Interpolate, Pat.Typed
-    )
-
-    def argMatcher = TraverserHelper.build[Tree,A](f, Arg.Named)
-
-
     def traverser = TraverserHelper.buildFromTopSymbol[Tree, A](f)
     traverser(tree)
   }

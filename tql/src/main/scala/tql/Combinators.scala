@@ -60,4 +60,9 @@ trait Combinators[T] { self: Traverser[T] =>
     case _ => None
   }
 
+  import Monoids._
+  def stateful[A](init: A)(f: A => TreeMapper[Stateful[A]]) = TreeMapper[Stateful[A]] { tree =>
+     f(init)(tree)
+  }
+
 }

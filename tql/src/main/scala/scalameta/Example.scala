@@ -28,10 +28,16 @@ object Example extends App{
   println(x)
 
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"125"})
+  val changeAllIntLits = deep(updateE[Term, Lit]{case Lit.Int(_) => q"185"})
 
+  /*val withState = multi[Int](stateful[Int](0){count: Int =>
+    updateE[Term, Lit]{case Lit.Int(_) => println(count);q"125"} map (_ => count + 1)
+  }) */
+
+  //println(withState(x))
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
+
 
   //println(x \\ (filter{case i : Term.If=> true} \\ update{case Lit.Int(_) => q"15"}))
 

@@ -34,6 +34,7 @@ class TraverserBuilder(val c: Context) extends org.scalameta.adt.AdtReflection {
 
 
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
     val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
     //q"TraverserHelper.build[${implicitly[c.WeakTypeTag[T]]}, ${implicitly[c.WeakTypeTag[A]]}]($f, ..$allLeafs)"
