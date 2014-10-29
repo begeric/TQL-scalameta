@@ -55,17 +55,17 @@ trait Combinators[T] { self: Traverser[T] =>
    * */
   def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = filterE[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
-  trait AllowedTransformation[+I, O]
+  trait AllowedTransformation[I, O]
 
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
   def updateE[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) = TreeMapper[Unit] {
-    case t: I if (f.isDefinedAt(t)) => Some((f(t), Monoids.Void.zero))
+    case t: I if f.isDefinedAt(t) => Some((f(t), Monoids.Void.zero))
     case _ => None
   }
 
-  def stateful[A: Monoid](f: A => TreeMapper[A]) = {
+  /*def stateful[A: Monoid](f: A => TreeMapper[A]) = {
     import MonoidEnhencer._
     var value: A = implicitly[Monoid[A]].zero
     TreeMapper[A] { tree =>
@@ -76,6 +76,20 @@ trait Combinators[T] { self: Traverser[T] =>
         case None => None
       }
     }
+  } */
+
+  def stateful[A: Monoid](f: PartialFunction[(T, A), (T, A)]): PartialFunction[T, T] = {
+    import MonoidEnhencer._
+    var value: A = implicitly[Monoid[A]].zero
+    def retFunc: PartialFunction[T, T] = {
+      case t if f.isDefinedAt(t, value) =>
+        val (tree, v) = f(t, value)
+        value = v
+        tree
+    }
+    retFunc
   }
+
+
 
 }

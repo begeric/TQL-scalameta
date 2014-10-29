@@ -11,6 +11,7 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
 
   import MonoidEnhencer._
 
+  implicit object tree2tree extends AllowedTransformation[Tree, Tree]
   implicit object term2Term extends AllowedTransformation[Term, Term]
   implicit object type2type extends AllowedTransformation[Type, Type]
   implicit object decl2decl extends AllowedTransformation[Decl, Decl]
@@ -18,7 +19,8 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
   implicit object lit2lit extends AllowedTransformation[Lit, Lit]
   implicit object pat2pat extends AllowedTransformation[Pat, Pat]
 
+
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] =
-    TraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
+    ScalametaTraverserHelperMacors.buildFromTopSymbol[Tree, A](f)(tree)
 
 }

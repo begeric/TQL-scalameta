@@ -25,16 +25,19 @@ object Example extends App{
 
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
 
-  println(x)
-
   //val changeAllIntLits = deep(update{case q"${_ : Int}" => q"17"})
-  val changeAllIntLits = downBreak(updateE[Term, Lit]{case Lit.Int(_) => q"165"})
+  val changeAllIntLits = downBreak(updateE[Lit, Lit]{case _: Lit.Int => q"165"})
+  val updateWithStates =
+    downBreak(updateE[Tree, Tree]{stateful[List[Int]]{
+      case (_: Lit.Int, state) => println(state);(q"165", 1::state)}
+    })
 
-  val withState = downBreak(stateful[List[Int]] { state =>
+  /*val withState = downBreak(stateful[List[Int]] { state =>
     collect{ case Lit.Int(a) => println(state);2}
   })
 
-  println(withState(x))
+  println(withState(x))*/
+  println(updateWithStates(x))
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 

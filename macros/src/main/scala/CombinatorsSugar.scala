@@ -30,7 +30,7 @@ object CombinatorsSugar {
         val tpes: List[(c.Type,c.Type)] = cases.map(_ match {
           case cq"($_ @ (_ : $tpe)) => $rhs" => (tpe.tpe, rhs.tpe)
           case cq"(_ : $tpe) => $rhs" => (tpe.tpe, rhs.tpe)
-          case cq"$x(..$_) => $rhs" => (x.tpe, rhs.tpe)
+          case cq"${x: c.Tree}(..$_) => $rhs" => (x.tpe, rhs.tpe)
           case _ => c.abort(c.enclosingPosition, "Bad format in partial function")
         })
         val (lhs, rhs) = tpes.unzip
