@@ -10,22 +10,8 @@ object BuildSettings {
     libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT",
     scalacOptions ++= Seq()
   )
-}
 
-object TQLBuild extends Build {
-  import BuildSettings._
-
-  lazy val root: Project = Project(
-    "root",
-    file("."),
-    settings = buildSettings ++ Seq(
-      run <<= run in Compile in core)
-  ) aggregate(macros, core)
-
-  lazy val macros: Project = Project(
-    "macros",
-    file("macros"),
-    settings = buildSettings ++ Seq(
+  val macroSettings = Seq(
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies := {
         CrossVersion.partialVersion(scalaVersion.value) match {
@@ -40,11 +26,40 @@ object TQLBuild extends Build {
         }
       }
     )
+}
+
+object TQLBuild extends Build {
+  import BuildSettings._
+
+  lazy val root: Project = Project(
+    "root",
+    file("."),
+    settings = buildSettings ++ Seq(
+      run <<= run in Compile in tqlscalameta)
+  ) aggregate(tqlmacros, tql, tqlscalametamacros, tqlscalameta)
+
+  lazy val tqlmacros: Project = Project(
+    "tqlmacros",
+    file("tqlmacros"),
+    settings = buildSettings ++ macroSettings
   )
 
-  lazy val core: Project = Project(
+  lazy val tql: Project = Project(
     "tql",
     file("tql"),
     settings = buildSettings
-  ) dependsOn(macros)
+  ) dependsOn(tqlmacros)
+
+  lazy val tqlscalametamacros: Project = Project(
+    "tqlscalametamacros",
+    file("tqlscalametamacros"),
+    settings = buildSettings ++ macroSettings
+  ) dependsOn(tql)
+
+  lazy val tqlscalameta: Project = Project(
+    "tqlscalameta",
+    file("tqlscalameta"),
+    settings = buildSettings
+  ) dependsOn(tqlscalametamacros)
+
 }

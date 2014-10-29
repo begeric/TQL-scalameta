@@ -29,7 +29,7 @@ object Example extends App{
   val changeAllIntLits = downBreak(updateE[Lit, Lit]{case _: Lit.Int => q"165"})
   val updateWithStates =
     downBreak(updateE[Tree, Tree]{stateful[List[Int]]{
-      case (_: Lit.Int, state) => println(state);(q"165", 1::state)}
+      case (_: Lit.Int, state) => println(state);(q"164", 1::state)}
     })
 
   /*val withState = downBreak(stateful[List[Int]] { state =>
