@@ -1,7 +1,7 @@
 /**
  * Created by Eric on 29.10.2014.
  */
-package scalameta
+package tqlscalameta
 
 import tql._
 import scala.language.experimental.macros

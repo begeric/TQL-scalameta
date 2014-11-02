@@ -32,9 +32,9 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def upBreak(implicit x: Monoid[A]) = upBreakAlias(a)
   }
 
-  implicit class MatcherResultEnhancer[B](a: MatcherResult[B]){
-    def result  = a.map(_._2)
-    def tree    = a.map(_._1)
+  implicit class MatcherResultEnhancer[B : Monoid](a: MatcherResult[B]){
+    def result  = a.map(_._2).getOrElse(implicitly[Monoid[B]].zero)
+    def tree    = a.map(_._1).getOrElse(null) //doesnt look like a good idea
   }
 
 }

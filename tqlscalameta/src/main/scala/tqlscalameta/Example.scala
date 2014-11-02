@@ -1,4 +1,4 @@
-package scalameta
+package tqlscalameta
 
 import scala.meta.Lit
 
@@ -31,6 +31,7 @@ object Example extends App{
     downBreak(updateE[Tree, Tree]{stateful[List[Int]]{
       case (_: Lit.Int, state) => println(state);(q"164", 1::state)}
     })
+
 
   /*val withState = downBreak(stateful[List[Int]] { state =>
     collect{ case Lit.Int(a) => println(state);2}

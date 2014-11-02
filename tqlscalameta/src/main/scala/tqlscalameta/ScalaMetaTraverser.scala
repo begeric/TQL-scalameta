@@ -1,4 +1,4 @@
-package scalameta
+package tqlscalameta
 
 /**
  * Created by Eric on 20.10.2014.
@@ -18,6 +18,8 @@ object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with S
   implicit object defn2defn extends AllowedTransformation[Defn, Defn]
   implicit object lit2lit extends AllowedTransformation[Lit, Lit]
   implicit object pat2pat extends AllowedTransformation[Pat, Pat]
+
+  //implicit def allowed[T <: Tree, U <: T] = new AllowedTransformation[T, U] {}
 
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] =
