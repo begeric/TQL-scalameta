@@ -44,7 +44,9 @@ class TraverserBuilder(val c: Context) {
   }
 
 
-  def buildCases[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: List[c.Tree], parameter: TermName): List[c.Tree] =
+  def buildCases[T : c.WeakTypeTag, A : c.WeakTypeTag]
+                (f: c.Tree, objs: List[c.Tree],
+                 parameter: TermName): List[c.Tree] =
     for {
       obj <- objs
       args <- getParamsWithTypes(obj.symbol.info)
@@ -57,8 +59,8 @@ class TraverserBuilder(val c: Context) {
   def getParamsWithTypes(typ: c.Type): Option[(List[TermName], List[c.Type])] = {
     val unapply = typ.decl(TermName("unapply"))
     val MethodType(_, resultType) = unapply.typeSignatureIn(typ)
-    /*The result type of unapply is Option[T] where T can be a TupleX containing the types by which we will pattern match
-    * and construct the type with*/
+    /* The result type of unapply is Option[T] where T can be a TupleX containing the types by which we will
+     * pattern match and construct the type with*/
     if (!resultType.typeArgs.isEmpty){
       val tupleOrNot: c.Type = resultType.typeArgs.head
 
@@ -105,7 +107,8 @@ class TraverserBuilder(val c: Context) {
       val paramsWithNewParams = parameters.unzip._1.zip(enums.map(_.map(_._1)))
       val reconstructParams = paramsWithNewParams.map(x => x._2.getOrElse(x._1))
       val reconstruct = q"$constructor(..$reconstructParams)"
-      val eqList = paramsWithNewParams.foldLeft[c.Tree](q"true")((acc, x) => q"$acc && ${x._2.map(y => q"($y eq ${x._1})").get}")
+      val eqList = paramsWithNewParams.foldLeft[c.Tree](q"true"){
+        (acc, x) => q"$acc && ${x._2.map(y => q"($y eq ${x._1})").get}"}
 
       val doesReconstruct = q"if ($eqList) $origin else $reconstruct"
 

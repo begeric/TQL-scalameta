@@ -56,15 +56,17 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = filterE[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
+  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
+    filterE[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
-  def updateE[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) = TreeMapper[Unit] {
-    case t: I if f.isDefinedAt(t) => Some((f(t), Monoids.Void.zero))
-    case _ => None
-  }
+  def updateE[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
+    TreeMapper[Unit] {
+      case t: I if f.isDefinedAt(t) => Some((f(t), Monoids.Void.zero))
+      case _ => None
+    }
 
   /*def stateful[A: Monoid](f: A => TreeMapper[A]) = {
     import MonoidEnhencer._

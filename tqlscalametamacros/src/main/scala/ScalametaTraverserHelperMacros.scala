@@ -10,17 +10,30 @@ import scala.reflect.macros.whitebox.Context
 
 
 object ScalametaTraverserHelperMacros {
-  def build[T, A](f: Any /*temporary*/, objs: Any*): T => Option[(T, A)] = macro ScalametaTraverserBuilder.buildImpl[T, A]
+  /**
+   * Create a traverser on the types given in objs with the transformation function f
+   * See tqlmacros.TraverserHelperMacros for more info
+   * */
+  def build[T, A](f: Traverser[T]#TreeMapper[A], objs: Any*): T => Option[(T, A)] =
+    macro ScalametaTraverserBuilder.buildImpl[T, A]
 
-  def buildFromTopSymbol[T, A](f: Any): T => Option[(T, A)] = macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
+  /**
+   * Use the Adt reflexion from https://github.com/scalameta/scalameta/blob/master/foundation/adt/Reflection.scala
+   * to generate the whole traverser from a root (here root = scala.meta.Tree)
+   * */
+  def buildFromTopSymbol[T, A](f: Traverser[T]#TreeMapper[A]): T => Option[(T, A)] =
+    macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
 }
 
-class ScalametaTraverserBuilder(override val c: Context) extends TraverserBuilder(c) with org.scalameta.adt.AdtReflection {
+class ScalametaTraverserBuilder(override val c: Context)
+                    extends TraverserBuilder(c)
+                    with org.scalameta.adt.AdtReflection {
   val u: c.universe.type = c.universe
   import c.universe._
 
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
+                                                              each symbol and the buildImpl function doesn't fail*/
 
     val allBranches = u.symbolOf[T].asRoot.allBranches.map{x =>
         val parameter = TermName(c.freshName)
