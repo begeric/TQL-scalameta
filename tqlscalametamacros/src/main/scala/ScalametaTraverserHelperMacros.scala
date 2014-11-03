@@ -1,7 +1,8 @@
+package tqlscalameta
+
 /**
  * Created by Eric on 29.10.2014.
  */
-package tqlscalameta
 
 import tql._
 import scala.language.experimental.macros
@@ -9,9 +10,9 @@ import scala.reflect.macros.whitebox.Context
 
 
 object ScalametaTraverserHelperMacros {
-  def build[T, A](f: Any /*temporary*/, objs: Any*): Traverser[T]#TreeMapper[A] = macro ScalametaTraverserBuilder.buildImpl[T, A]
+  def build[T, A](f: Any /*temporary*/, objs: Any*): T => Option[(T, A)] = macro ScalametaTraverserBuilder.buildImpl[T, A]
 
-  def buildFromTopSymbol[T, A](f: Any): Traverser[T]#TreeMapper[A] = macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
+  def buildFromTopSymbol[T, A](f: Any): T => Option[(T, A)] = macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
 }
 
 class ScalametaTraverserBuilder(override val c: Context) extends TraverserBuilder(c) with org.scalameta.adt.AdtReflection {

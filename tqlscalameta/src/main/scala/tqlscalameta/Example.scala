@@ -22,9 +22,11 @@ object Example extends App{
        5
        """
 
+
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
 
   val changeAllIntLits = downBreak(update{case _: Lit.Int => q"18"})
+
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 

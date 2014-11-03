@@ -1,6 +1,8 @@
 package tql
 
-trait AllowedTransformation[I, O]
+/**
+ * Created by Eric on 20.10.2014.
+ */
 
 trait Combinators[T] { self: Traverser[T] =>
 

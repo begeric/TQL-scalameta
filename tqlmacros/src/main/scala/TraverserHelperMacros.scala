@@ -1,7 +1,8 @@
+package tql
+
 /**
  * Created by Eric on 21.10.2014.
  */
-package tql
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable.ListBuffer
