@@ -23,8 +23,8 @@ object Example extends App{
 
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
   val getAllIntInts = downBreak(
-    collect{case Lit.Int(a) if a > 1  => 1}.map((_, Nil)) +
-    collect{case Lit.Int(a) if a <= 1 => 2}.map((Nil, _))
+    collect{case Lit.Int(a) if a > 1  => 1} aggregate
+    collect{case Lit.Int(a) if a <= 1 => 3}
   )
 
   val changeAllIntLits = downBreak(update{case _: Lit.Int => q"22"})
