@@ -24,7 +24,7 @@ object Example extends App{
 
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
 
-  val changeAllIntLits = downBreak(update{case _: Lit.Int => q"15"})
+  val changeAllIntLits = downBreak(update{case _: Lit.Int => q"17"})
   println(getAllIntLits(x))
   println(changeAllIntLits(x))
 
