@@ -15,7 +15,7 @@ object CombinatorsSugar {
   def filterSugarImpl(c: Context)(f: c.Tree): c.Tree = {
     import c.universe._
     val (lhs, _) =  getGLBsfromPFs(c)(f)
-    q"filterE[$lhs]($f)"
+    q"guard[$lhs]($f)"
   }
 
   def updateSugarImpl(c: Context)(f: c.Tree): c.Tree = {
@@ -23,7 +23,7 @@ object CombinatorsSugar {
     val (lhs, rhs) =  getGLBsfromPFs(c)(f)
     f match {
       case a @ q"{case ..$cases}" =>
-        q"updateE[$lhs, $rhs]{case ..$cases}"
+        q"transform[$lhs, $rhs]{case ..$cases}"
     }
   }
 

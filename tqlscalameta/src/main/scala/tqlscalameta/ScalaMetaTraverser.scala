@@ -7,9 +7,11 @@ package tqlscalameta
 import tql._
 import scala.meta._
 
-object ScalaMetaTraverser  extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] {
+object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] {
 
   import MonoidEnhencer._
+  import Monoids._
+
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)

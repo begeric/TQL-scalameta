@@ -35,7 +35,7 @@ class ScalametaTraverserBuilder(override val c: Context)
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
                                                               each symbol and the buildImpl function doesn't fail*/
 
-    val allBranches = u.symbolOf[T].asRoot.allBranches.map{x =>
+    val allBranches = u.symbolOf[T].asRoot.allBranches.filter(_.allLeafs.size > 0).map{x =>
         val parameter = TermName(c.freshName)
         val funcName = TermName(c.freshName)
         val func = q"""val $funcName = ${buildImpl[T, A](f, x.allLeafs.map(x => q"${x.sym.companion}"): _*)}"""

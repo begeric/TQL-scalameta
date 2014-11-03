@@ -46,9 +46,9 @@ trait Traverser[T] {
      * */
     def compose[B >: A](m: => TreeMapper[B])(implicit x: Monoid[B]) = TreeMapper[B] { tree =>
       this(tree) match {
-        case Some((a1, a2)) => m(a1) match {
+        case t @ Some((a1, a2)) => m(a1) match {
           case Some((b1, b2)) => Some((b1, x.append(a2, b2)))
-          case t => t
+          case _ => t
         }
         case _ => m(tree)
       }

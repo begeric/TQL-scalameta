@@ -28,7 +28,7 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def apply[I <: T : ClassTag, O <: T]
              (f: PartialFunction[I, O])
              (implicit x: ClassTag[T], y: AllowedTransformation[I, O]) =
-      updateE[I, O](f)
+      transform[I, O](f)
 
     def collect = a.map(List(_))
     def downBreak(implicit x: Monoid[A]) = downBreakAlias(a)
