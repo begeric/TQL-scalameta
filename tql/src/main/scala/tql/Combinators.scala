@@ -1,5 +1,6 @@
 package tql
 
+trait AllowedTransformation[I, O]
 
 trait Combinators[T] { self: Traverser[T] =>
 
@@ -54,8 +55,6 @@ trait Combinators[T] { self: Traverser[T] =>
    * Same as filter but puts the results into a list
    * */
   def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = filterE[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
-
-  trait AllowedTransformation[I, O]
 
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
