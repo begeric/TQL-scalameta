@@ -97,6 +97,18 @@ trait Traverser[T] {
      * Alias for orElse
      * */
     def |[B >: A : Monoid](m: => TreeMapper[B]) = orElse(m)
+
+
+    /**
+     * a feed {resa => b}
+     * combinator b can use the result (resa) of a.
+     * */
+    def feed[B : Monoid](m: => A => TreeMapper[B]) = TreeMapper[B] {tree =>
+      this(tree) match {
+        case Some((t, v)) => m(v)(t)
+        case None => None/*what to do ?*/
+      }
+    }
   }
 
   def TreeMapper[A](f: T => MatcherResult[A]): TreeMapper[A] = new TreeMapper[A] {

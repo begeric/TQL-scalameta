@@ -27,10 +27,15 @@ object Example extends App{
     collect{case Lit.Int(a) if a <= 1 => 3}
   )
 
+  val getAllInts2 = downBreak(collect{case Lit.Int(a) if a > 1  => a}) feed { res =>
+    downBreak(collect{case Lit.Int(a) if a < 5 && res.contains(a) => a})
+  }
+
   val changeAllIntLits = downBreak(update{case _: Lit.Int => q"22"})
 
-  println(getAllIntInts(x))
-  println(getAllIntLits(x))
-  println(changeAllIntLits(x))
+  println(getAllIntInts(x).result)
+  println(getAllInts2(x).result)
+  println(getAllIntLits(x).result)
+  println(changeAllIntLits(x).tree)
 
 }
