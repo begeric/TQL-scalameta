@@ -55,7 +55,7 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
+  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]):TreeMapper[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
   /**
@@ -63,7 +63,7 @@ trait Combinators[T] { self: Traverser[T] =>
    * */
   def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
     TreeMapper[Unit] {
-      case t: I if f.isDefinedAt(t) => Some((f(t), Monoids.Void.zero))
+      case t: I if f.isDefinedAt(t) => Some((f(t), Monoid.Void.zero))
       case _ => None
     }
 

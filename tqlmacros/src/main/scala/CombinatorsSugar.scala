@@ -8,8 +8,8 @@ import scala.reflect.macros.whitebox.Context
 
 object CombinatorsSugar {
 
-  def filter(f: PartialFunction[Any, Boolean]): Any = macro filterSugarImpl
-  def update(f: PartialFunction[Any, Any]): Any = macro updateSugarImpl
+  def filter(f: PartialFunction[Any, Boolean]): Any = macro CombinatorsSugar.filterSugarImpl
+  def update(f: PartialFunction[Any, Any]): Any = macro CombinatorsSugar.updateSugarImpl
 
 
   def filterSugarImpl(c: Context)(f: c.Tree): c.Tree = {

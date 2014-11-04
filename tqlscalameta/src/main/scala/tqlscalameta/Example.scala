@@ -8,8 +8,8 @@ import ScalaMetaTraverser._
 import tql._
 import scala.meta._
 import CombinatorsSugar._
-import Monoids._
-import AllowedTransformationsMacros._
+
+import tqlscalameta._
 
 object Example extends App{
 

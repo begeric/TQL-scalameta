@@ -38,7 +38,7 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 
   implicit class MatcherResultEnhancer[B : Monoid](a: MatcherResult[B]){
     def result  = a.map(_._2).getOrElse(implicitly[Monoid[B]].zero)
-    def tree    = a.map(_._1).getOrElse(null) //doesnt look like a good idea
+    def tree    = a.map(_._1)
   }
 
 }
