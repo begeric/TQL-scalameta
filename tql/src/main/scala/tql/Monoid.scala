@@ -16,6 +16,18 @@ trait Monoid[A]{
 
 object Monoid {
 
+  import scala.collection.generic._
+
+  /*implicit def traversableMonoid[A, B[A] <: Traversable[A]] = new Monoid[B[A]] {
+    def zero = implicitly[CanBuildFrom[B[A], A, B[A]]].apply().result
+    def append(a: B[A], b: B[A]): B[A] = {
+      val x = implicitly[CanBuildFrom[B[A], A, B[A]]].apply()
+      x ++= a
+      x ++= b
+      x.result()
+    }
+  }   */
+
   //why it is that way http://stackoverflow.com/questions/15623585/why-is-list-a-semigroup-but-seq-is-not
   implicit def listMonoid[A] = new Monoid[List[A]] {
     def zero = Nil

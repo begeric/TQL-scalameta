@@ -45,7 +45,7 @@ object Example extends App{
     blockVals.down | allBlocks \ LitsInsideBlock
   }
 
-  println(x treeOf down(collect{case l: Lit => l}) ~ down(transform[Lit, Lit]{case l: Lit => Lit.Bool(true)}))
+  println(x treeOf down(collect{case l: Lit => l}) ~> down(transform[Lit, Lit]{case l: Lit => Lit.Bool(true)}))
 
   println(LitsInsideBlock(y).result)
   println(getAllIntInts(x).result)

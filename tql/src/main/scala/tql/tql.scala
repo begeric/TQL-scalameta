@@ -6,8 +6,6 @@ package tql
 
 trait Traverser[T] {
 
-  import scala.reflect.{ClassTag, classTag}
-
   type MatcherResult[A] = Option[(T, A)]
 
   /**
@@ -41,9 +39,9 @@ trait Traverser[T] {
      * */
     def aggregate[B, C >: A](m: => TreeMapper[B])(implicit x: Monoid[C], y: Monoid[B]) = TreeMapper[(C, B)] { tree =>
       this(tree) match {
-        case t @ Some((a1, a2)) => m(a1) match {
-          case Some((_, b2)) => Some((a1, (a2, b2)))
-          case _ => t map (u => (u._1, (u._2,y.zero)))
+        case s @ Some((a1, a2)) => m(a1) match {
+          case Some((b1, b2)) => Some((b1, (a2, b2)))
+          case _ => s map (u => (u._1, (u._2,y.zero)))
         }
         case _ => m(tree) map (u => (u._1, (x.zero, u._2)))
       }
