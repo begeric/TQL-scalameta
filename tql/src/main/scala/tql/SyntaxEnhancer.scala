@@ -12,7 +12,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def \[A : Monoid] (b: TreeMapper[A]) = children(b)(implicitly[Monoid[A]])(t)
     def \\[A : Monoid](b: TreeMapper[A]) = downBreak(b)(implicitly[Monoid[A]])(t)
 
-    def >>[A: Monoid](a: TreeMapper[A]) = a(t)
+    def >>[A](a: TreeMapper[A]) = a(t)
+
+    def resultOf[A : Monoid](a: TreeMapper[A]) = new MatcherResultEnhancer(a(t)).result
+    def treeOf[A : Monoid](a: TreeMapper[A]) = new MatcherResultEnhancer(a(t)).tree
 
   }
 
@@ -22,7 +25,7 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   def upBreakAlias[A : Monoid](m: TreeMapper[A]) = upBreak(m)
 
   implicit class TreeMapperEnhancer[A](a: TreeMapper[A]){
-    def \: (b: TreeMapper[A])(implicit x: Monoid[A]) = a andThen children(b)
+    def \[B : Monoid] (b: TreeMapper[B]) = a andThen children(b)
     def \\[B : Monoid] (b: TreeMapper[B]) = a andThen downBreakAlias(b)
     def >>[B] (f: T => MatcherResult[B]) = flatMap(f)
     def apply[I <: T : ClassTag, O <: T]
