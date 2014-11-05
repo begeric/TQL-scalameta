@@ -33,7 +33,7 @@ trait Traverser[T] {
     /**
      * Alias for andThen
      * */
-    def ~[B : Monoid](m: =>  TreeMapper[B]) = andThen(m)
+    def ~>[B : Monoid](m: =>  TreeMapper[B]) = andThen(m)
 
     /**
      * Combine the result of two TreeMappers in a tuple2.
@@ -48,6 +48,10 @@ trait Traverser[T] {
         case _ => m(tree) map (u => (u._1, (x.zero, u._2)))
       }
     }
+    /**
+     * Alias for aggregate
+     * */
+    def ~[B, C >: A](m: => TreeMapper[B])(implicit x: Monoid[C], y: Monoid[B]) = aggregate[B, C](m)(x, y)
 
     /**
      * a compose b
