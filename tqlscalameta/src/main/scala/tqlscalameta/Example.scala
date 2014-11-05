@@ -11,6 +11,8 @@ import CombinatorsSugar._
 
 import tqlscalameta._
 
+import scala.reflect.ClassTag
+
 object Example extends App{
 
 
@@ -27,7 +29,17 @@ object Example extends App{
        3
        """
 
+  def collectSet[A](f: PartialFunction[Tree, A]) =
+    guard[Tree]{case t => f.isDefinedAt(t)} map (x => Set(f(x)))
+
+  def collectMap[A](f: PartialFunction[Tree, A]) =
+    guard[Tree]{case t => f.isDefinedAt(t)} map (x => Map(f(x) -> x))
+
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
+
+  val getAllIntLitsSet = downBreak(collectSet{ case Lit.Int(a) => a})
+  val getAllIntLitsMap = downBreak(collectMap{ case Lit.Int(a) => a})
+
   val getAllIntInts = downBreak(
     collect{case Lit.Int(a) if a > 1  => 1} ~
     collect{case Lit.Int(a) if a <= 1 => 3}
@@ -37,7 +49,7 @@ object Example extends App{
     downBreak(collect{case Lit.Int(a) if a < 5 && res.contains(a) => a})
   }
 
-  val changeAllIntLits = downBreak(update{case _: Lit.Int => q"22"})
+  val changeAllIntLits = downBreak(update{case _: Lit.Int => q"44"})
 
   val LitsInsideBlock: TreeMapper[List[Lit]] = {
     val allBlocks = guard[Term.Block]{case t: Term.Block => true}
@@ -47,6 +59,8 @@ object Example extends App{
 
   println(x treeOf down(collect{case l: Lit => l}) ~> down(transform[Lit, Lit]{case l: Lit => Lit.Bool(true)}))
 
+  println(getAllIntLitsMap(x).result)
+  println(getAllIntLitsSet(x).result)
   println(LitsInsideBlock(y).result)
   println(getAllIntInts(x).result)
   println(getAllInts2(x).result)

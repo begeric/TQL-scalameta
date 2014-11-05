@@ -12,41 +12,36 @@ trait Monoid[A]{
   def append(a: A, b: A): A
 }
 
-
-
 object Monoid {
 
   import scala.collection.generic._
 
-  /*implicit def traversableMonoid[A, B[A] <: Traversable[A]] = new Monoid[B[A]] {
-    def zero = implicitly[CanBuildFrom[B[A], A, B[A]]].apply().result
-    def append(a: B[A], b: B[A]): B[A] = {
-      val x = implicitly[CanBuildFrom[B[A], A, B[A]]].apply()
-      x ++= a
-      x ++= b
-      x.result()
-    }
-  }   */
-
-  //why it is that way http://stackoverflow.com/questions/15623585/why-is-list-a-semigroup-but-seq-is-not
+  //note: http://stackoverflow.com/questions/15623585/why-is-list-a-semigroup-but-seq-is-not
   implicit def listMonoid[A] = new Monoid[List[A]] {
     def zero = Nil
     def append(a: List[A], b: List[A]) = a ::: b
   }
 
-  implicit def seqMonoid[A] = new Monoid[Seq[A]] {
-    def zero = Nil
-    def append(a: Seq[A], b: Seq[A]) = a ++ b
+  implicit def traversableMonoid[A, B[A] <: Traversable[A]](implicit y: CanBuildFrom[B[A], A, B[A]]) =
+    new Monoid[B[A]] {
+      def zero = y.apply.result
+      def append(a: B[A], b: B[A]): B[A] = {
+        val x = y.apply
+        x ++= a
+        x ++= b
+        x.result
+      }
   }
 
-  implicit def setMonoid[A] = new Monoid[Set[A]] {
-    def zero = Set[A]()
-    def append(a: Set[A], b: Set[A]) = a ++ b
-  }
-
-  implicit def mapMonoid[A, B] = new Monoid[Map[A, B]] {
-    def zero = Map[A, B]()
-    def append(a: Map[A, B], b: Map[A, B]) = a ++ b
+  implicit def mapMonoid[A, C, B[A, C] <: Traversable[(A, C)]](implicit y: CanBuildFrom[B[A, C], (A, C), B[A, C]]) =
+    new Monoid[B[A, C]] {
+      def zero = y.apply.result
+      def append(a: B[A, C], b: B[A, C]): B[A, C] = {
+        val x = y.apply
+        x ++= a
+        x ++= b
+        x.result
+      }
   }
 
   implicit object Void extends Monoid[Unit]{
