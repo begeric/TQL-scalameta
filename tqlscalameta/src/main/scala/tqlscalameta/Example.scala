@@ -7,6 +7,7 @@ package tqlscalameta
 import ScalaMetaTraverser._
 import tql._
 import scala.meta._
+import scala.meta.syntactic.ast._
 
 import tqlscalameta._
 
@@ -22,9 +23,9 @@ object Example extends App{
        5
        """
 
-  val getAllIntLits = downBreak(collect{case Lit.Int(a) => 3})
+  val getAllIntLits = downBreak(update{case Lit.Int(a) => Lit.Bool(false)})
 
-  println(getAllIntLits(x).result)
+  println(getAllIntLits(x).tree)
 
 
 }

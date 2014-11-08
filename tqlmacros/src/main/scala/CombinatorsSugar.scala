@@ -28,10 +28,7 @@ object CombinatorsSugar {
     f match {
       case q"{case ..$cases}" =>
         val tpes: List[(c.Type,c.Type)] = cases.map(_ match {
-          case cq"($_ @ (_ : $tpe)) => $rhs" => (tpe.tpe, rhs.tpe)
-          case cq"(_ : $tpe) => $rhs" => (tpe.tpe, rhs.tpe)
-          case cq"${x: c.Tree}(..$_) => $rhs" => (x.tpe, rhs.tpe)
-          case cq"${x: TermName} => $rhs" => (implicitly[c.WeakTypeTag[T]].tpe, rhs.tpe)
+          case cq"${lhs: c.Tree} => ${rhs:  c.Tree}" => (lhs.tpe, rhs.tpe)
           case _ => c.abort(c.enclosingPosition, "Bad format in partial function")
         })
         val (lhs, rhs) = tpes.unzip
