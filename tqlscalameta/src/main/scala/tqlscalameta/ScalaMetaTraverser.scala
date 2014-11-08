@@ -24,6 +24,7 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
    *
    *  * Branch, Leaf  in the Adt scala.meta sense of the term
    *
+   *
    */
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]

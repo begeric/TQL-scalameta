@@ -22,9 +22,9 @@ object Example extends App{
        5
        """
 
-  println(x treeOf update{
-    case _: Type => Type.Name("hey")
-  })
+  val getAllIntLits = downBreak(collect{case Lit.Int(a) => 3})
+
+  println(getAllIntLits(x).result)
 
 
 }

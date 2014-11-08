@@ -35,6 +35,7 @@ class ScalametaTraverserBuilder(override val c: Context)
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
     val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
+
     buildImpl[T, A](f, allLeafs: _*)
   }
 
@@ -42,22 +43,34 @@ class ScalametaTraverserBuilder(override val c: Context)
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
                                                               each symbol and the buildImpl function doesn't fail*/
 
-    val allBranches = u.symbolOf[T].asRoot.allBranches.filter(_.allLeafs.size > 0).map{x =>
-        val parameter = TermName(c.freshName)
-        val funcName = TermName(c.freshName)
-        val func = q"""val $funcName = ${buildImpl[T, A](f, x.allLeafs.map(x => q"${x.sym.companion}"): _*)}"""
-        val cas = cq"$parameter @ (_ : ${x.sym}) => $funcName($parameter)"
-        (func, cas)
+    def traverseBranch(branch: Branch): Option[c.Tree] = {
+      val parameter = TermName(c.freshName)
+      val leafCases = buildCases[T, A](f, branch.leafs.map(x => q"${x.sym.companion}"), parameter)
+      val branchCases: List[c.Tree] = branch.branches.flatMap(x => traverseBranch(x))
+
+      if (leafCases.size > 0 || branchCases.size > 0)
+        Some(cq"""
+          ($parameter: ${branch.sym}) => $parameter match {
+            case ..${leafCases ++ branchCases}
+            case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
+          }
+        """)
+      else None
     }
 
     val parameter = TermName(c.freshName)
-    val (funcs, cases) = allBranches.unzip
-    q"""
-        ..$funcs
+    val root = u.symbolOf[T].asRoot
+    val branchCases = root.branches.flatMap(traverseBranch(_))
+    val leafCases = buildCases[T, A](f, root.leafs.map(x => q"${x.sym.companion}"), parameter)
+
+
+    val code = q"""
         ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
-          case ..$cases
+          case ..$leafCases
+          case ..$branchCases
           case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
+    code
   }
 }
