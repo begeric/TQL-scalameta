@@ -6,6 +6,7 @@ package tqlscalameta
 
 import ScalaMetaTraverser._
 import tql._
+import scala.collection.generic.CanBuildFrom
 import scala.meta._
 import CombinatorsSugar._
 
@@ -29,16 +30,11 @@ object Example extends App{
        3
        """
 
-  def collectSet[A](f: PartialFunction[Tree, A]) =
-    guard[Tree]{case t => f.isDefinedAt(t)} map (x => Set(f(x)))
-
-  def collectMap[A](f: PartialFunction[Tree, A]) =
-    guard[Tree]{case t => f.isDefinedAt(t)} map (x => Map(f(x) -> x))
 
   val getAllIntLits = downBreak(collect{case Lit.Int(a) => 2})
 
-  val getAllIntLitsSet = downBreak(collectSet{ case Lit.Int(a) => a})
-  val getAllIntLitsMap = downBreak(collectMap{ case Lit.Int(a) => a})
+  val getAllIntLitsSet = downBreak(collectIn[Set]{ case Lit.Int(a) => a})
+  val getAllIntLitsMap = downBreak(collectIn2[Map]{ case Lit.Int(a) => a -> 1})
 
   val getAllIntInts = downBreak(
     collect{case Lit.Int(a) if a > 1  => 1} ~
@@ -66,5 +62,6 @@ object Example extends App{
   println(getAllInts2(x).result)
   println(getAllIntLits(x).result)
   println(changeAllIntLits(x).tree)
+
 
 }

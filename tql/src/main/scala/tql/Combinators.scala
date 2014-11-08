@@ -1,5 +1,7 @@
 package tql
 
+import scala.collection.generic.CanBuildFrom
+
 /**
  * Created by Eric on 20.10.2014.
  */
@@ -58,6 +60,21 @@ trait Combinators[T] { self: Traverser[T] =>
   def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]): TreeMapper[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
+  def collectIn[V[_]] = new {
+    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[V[A], A, V[A]]) =
+      TreeMapper[V[A]] {
+        case t: T if f.isDefinedAt(t) => Some(t, (y() += f(t)).result)
+        case _ => None
+      }
+  }
+
+  def collectIn2[V[_, _]] = new {
+    def apply[A, B](f: PartialFunction[T, (A, B)])(implicit  x: ClassTag[T], y: CanBuildFrom[V[A, B], (A, B), V[A, B]]) =
+      TreeMapper[V[A, B]] {
+        case t: T if f.isDefinedAt(t) => Some(t, (y() += f(t)).result)
+        case _ => None
+      }
+  }
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
