@@ -84,4 +84,9 @@ trait Combinators[T] { self: Traverser[T] =>
       case _ => None
     }
 
+  import scala.language.experimental.macros
+
+  def filter(f: PartialFunction[Any, Boolean]): Any = macro CombinatorsSugar.filterSugarImpl[T]
+  def update(f: PartialFunction[Any, Any]): Any = macro CombinatorsSugar.updateSugarImpl[T]
+
 }
