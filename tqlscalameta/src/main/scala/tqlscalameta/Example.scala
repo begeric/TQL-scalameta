@@ -13,7 +13,7 @@ object Example extends App{
 
   val x =
     q"""
-       if (3 == 17) 3
+       if (3 == 17) 8
        else 2
        5
        """

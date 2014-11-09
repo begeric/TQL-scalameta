@@ -52,13 +52,9 @@ trait Combinators[T] { self: Traverser[T] =>
 
   def stateful[A, B](init: => A)(f: (=>A) => TreeMapper[(B, A)]): TreeMapper[B] = {
     var state = init
-    TreeMapper[B] {tree =>
-      f(state)(tree) match {
-        case Some((t, (res, s))) =>
-          state = s
-          Some((t, res))
-        case _ => None
-      }
+    f(state) map {case (res, s) =>
+      state = s
+      res
     }
   }
 
