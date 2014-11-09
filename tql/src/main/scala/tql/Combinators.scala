@@ -45,10 +45,9 @@ trait Combinators[T] { self: Traverser[T] =>
     f(tree)
   }
 
-  def visit[A](f: PartialFunction[T, A]) = TreeMapper[A] {
-    case t if f.isDefinedAt(t) => Some((t, f(t)))
-    case _ => None
-  }
+  def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
+    guard[T]{case t => f.isDefinedAt(t)} map(f(_))
+
 
   def stateful[A, B](init: => A)(f: (=>A) => TreeMapper[(B, A)]): TreeMapper[B] = {
     var state = init
@@ -57,7 +56,6 @@ trait Combinators[T] { self: Traverser[T] =>
       res
     }
   }
-
 
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
