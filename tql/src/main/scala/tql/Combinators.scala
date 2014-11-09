@@ -1,6 +1,5 @@
 package tql
 
-import scala.collection.generic.CanBuildFrom
 
 /**
  * Created by Eric on 20.10.2014.
@@ -9,6 +8,7 @@ import scala.collection.generic.CanBuildFrom
 trait Combinators[T] { self: Traverser[T] =>
 
   import scala.reflect.ClassTag
+  import scala.collection.generic.CanBuildFrom
 
   /**
    * Traverse the children of the tree
@@ -45,6 +45,23 @@ trait Combinators[T] { self: Traverser[T] =>
     f(tree)
   }
 
+  def visit[A](f: PartialFunction[T, A]) = TreeMapper[A] {
+    case t if f.isDefinedAt(t) => Some((t, f(t)))
+    case _ => None
+  }
+
+  def stateful[A, B](init: => A)(f: (=>A) => TreeMapper[(B, A)]): TreeMapper[B] = {
+    var state = init
+    TreeMapper[B] {tree =>
+      f(state)(tree) match {
+        case Some((t, (res, s))) =>
+          state = s
+          Some((t, res))
+        case _ => None
+      }
+    }
+  }
+
 
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
@@ -60,10 +77,11 @@ trait Combinators[T] { self: Traverser[T] =>
   def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]): TreeMapper[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
-  def collectIn[V[_]] = new {
-    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[V[A], A, V[A]]) =
-      TreeMapper[V[A]] {
-        case t: T if f.isDefinedAt(t) => Some(t, (y() += f(t)).result)
+  def collectIn[C[_]] = new {
+    //type C[_] = V[_]
+    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]]) =
+      TreeMapper[C[A]] {
+        case t: T if f.isDefinedAt(t) => Some((t, (y() += f(t)).result))
         case _ => None
       }
   }
@@ -71,7 +89,7 @@ trait Combinators[T] { self: Traverser[T] =>
   def collectIn2[V[_, _]] = new {
     def apply[A, B](f: PartialFunction[T, (A, B)])(implicit  x: ClassTag[T], y: CanBuildFrom[V[A, B], (A, B), V[A, B]]) =
       TreeMapper[V[A, B]] {
-        case t: T if f.isDefinedAt(t) => Some(t, (y() += f(t)).result)
+        case t: T if f.isDefinedAt(t) => Some((t, (y() += f(t)).result))
         case _ => None
       }
   }

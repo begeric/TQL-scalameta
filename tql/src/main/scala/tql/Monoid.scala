@@ -8,7 +8,7 @@ package tql
  * https://en.wikipedia.org/wiki/Monoid
  * */
 trait Monoid[A]{
-  def zero: A
+  def zero : A
   def append(a: A, b: A): A
 }
 
