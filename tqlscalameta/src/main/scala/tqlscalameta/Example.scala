@@ -8,14 +8,12 @@ import ScalaMetaTraverser._
 import scala.meta._
 import scala.meta.syntactic.ast._
 
-import tqlscalameta._
-
 object Example extends App{
 
 
   val x =
     q"""
-       if (3 == 17) 8
+       if (3 == 17) 3
        else 2
        5
        """
@@ -30,5 +28,8 @@ object Example extends App{
     }
   })
 
+  val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
+
   println(getAvg(x).result.map(_()))
+  println(getAllInts(x).result)
 }

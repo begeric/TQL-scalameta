@@ -34,7 +34,10 @@ class TraverserBuilder(val c: Context) {
   def buildImpl[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: c.Tree*): c.Tree = {
     val parameter = TermName(c.freshName)
     val cases = buildCases[T, A](f, objs.toList, parameter)
-    new Transformer {}
+    buildFuncWith(cases, parameter)
+  }
+
+  def buildFuncWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
     q"""
         ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
           case ..$cases

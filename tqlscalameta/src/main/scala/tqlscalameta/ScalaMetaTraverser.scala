@@ -30,5 +30,4 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
 
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
-
 }

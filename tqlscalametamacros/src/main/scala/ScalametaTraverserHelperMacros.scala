@@ -42,29 +42,49 @@ class ScalametaTraverserBuilder(override val c: Context)
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
                                                               each symbol and the buildImpl function doesn't fail*/
 
-    def traverseBranch(branch: Branch): (c.Tree, List[c.Tree]) = {
+
+    def buildFuncMaybe(f: c.Tree, objs: List[c.Tree]): Option[c.Tree] = {
+      val parameter = TermName(c.freshName)
+      val cases = buildCases[T, A](f, objs, parameter)
+      if (cases.size > 0)
+        Some(buildFuncWith[T, A](cases, parameter))
+      else
+        None
+    }
+
+    def traverseBranch(branch: Branch): (Option[c.Tree], List[c.Tree]) = {
       branch.leafs.foreach(_.sym.owner.info)
       val parameter = TermName(c.freshName)
-      val funcName = TermName(c.freshName)
-      val func = q"""val $funcName = ${buildImpl[T, A](f, branch.leafs.map(x => q"${x.sym.companion}"): _*)}"""
-      val leafsCase = cq"$parameter => $funcName($parameter)"
+
+      val leafsStuff = buildFuncMaybe(f, branch.leafs.map(x => q"${x.sym.companion}")).map{funcCode =>
+        val funcName = TermName(c.freshName)
+        val func = q"val $funcName = $funcCode"
+        val leafsCase = cq"$parameter => $funcName($parameter)"
+        (List(leafsCase), List(func))
+      }.getOrElse((Nil, Nil))
+
       val branches = branch.branches.map(x => traverseBranch(x)).unzip
-      val branchCases = branches._1
+      val branchCases = branches._1.flatten
       val otherFuncs = branches._2.flatten
 
-      val cas = cq"""
+      val allcases = branchCases ++ leafsStuff._1
+
+      if (allcases.size > 0){
+        val cas = cq"""
           ($parameter: ${branch.sym}) => $parameter match {
-            case ..$branchCases
-            case $leafsCase
+            case ..$allcases
           }
        """
-      (cas, func :: otherFuncs)
+        (Some(cas), otherFuncs ++ leafsStuff._2)
+      }
+      else
+        (None, otherFuncs)
     }
 
     val parameter = TermName(c.freshName)
     val root = u.symbolOf[T].asRoot
     val branches = root.branches.map(x => traverseBranch(x)).unzip
-    val branchCases = branches._1
+    val branchCases = branches._1.flatten
     val funcs = branches._2.flatten
     val leafCases = buildCases[T, A](f, root.leafs.map(x => q"${x.sym.companion}"), parameter)
 
@@ -77,7 +97,6 @@ class ScalametaTraverserBuilder(override val c: Context)
           case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
-    c.echo(c.enclosingPosition, show(code))
     code
   }
 }

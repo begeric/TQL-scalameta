@@ -78,21 +78,15 @@ trait Combinators[T] { self: Traverser[T] =>
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
   def collectIn[C[_]] = new {
-    //type C[_] = V[_]
     def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]]) =
-      TreeMapper[C[A]] {
-        case t: T if f.isDefinedAt(t) => Some((t, (y() += f(t)).result))
-        case _ => None
-      }
+      guard[T]{case t => f.isDefinedAt(t)} map(t => (y() += f(t)).result)
   }
 
   def collectIn2[V[_, _]] = new {
     def apply[A, B](f: PartialFunction[T, (A, B)])(implicit  x: ClassTag[T], y: CanBuildFrom[V[A, B], (A, B), V[A, B]]) =
-      TreeMapper[V[A, B]] {
-        case t: T if f.isDefinedAt(t) => Some((t, (y() += f(t)).result))
-        case _ => None
-      }
+      guard[T]{case t => f.isDefinedAt(t)} map(t => (y() += f(t)).result)
   }
+
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
