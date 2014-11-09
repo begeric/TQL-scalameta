@@ -19,11 +19,11 @@ trait Traverser[T] {
     /**
      * a andThen b
      * b is 'executed' only if a succeeded
-     * We discard the transformation and result of a
+     * We discard the result of a
      * */
     def andThen[B : Monoid](m: => TreeMapper[B]) = TreeMapper[B] { tree =>
       this(tree) match {
-        case Some((v, t)) => m(v)
+        case Some((t, v)) => m(t)
         case _ => None
       }
     }
@@ -34,8 +34,26 @@ trait Traverser[T] {
     def ~>[B : Monoid](m: =>  TreeMapper[B]) = andThen(m)
 
     /**
+     * a andThenLeft b
+     * b is 'executed' only if a succeeded
+     * We discard the result of b and only keep the result of a
+     * */
+    def andThenLeft[B](m: => TreeMapper[B]) = TreeMapper[A] { tree =>
+      this(tree) match {
+        case Some((t, v)) => m(t) map (x => (x._1, v))
+        case _ => None
+      }
+    }
+
+    /**
+     * Alias for andThenLeft
+     * */
+    def <~[B : Monoid](m: =>  TreeMapper[B]) = andThenLeft(m)
+
+    /**
      * Combine the result of two TreeMappers in a tuple2.
-     * Both TreeMapper are applied on the same T
+     * The order is important, as the the second transformation is applied on the
+     * result of the first one.
      * */
     def aggregate[B, C >: A](m: => TreeMapper[B])(implicit x: Monoid[C], y: Monoid[B]) = TreeMapper[(C, B)] { tree =>
       this(tree) match {
