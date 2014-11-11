@@ -22,10 +22,10 @@ trait Traverser[T] {
      * We discard the result of a
      * */
     def andThen[B : Monoid](m: => TreeMapper[B]) = TreeMapper[B] { tree =>
-      this(tree) match {
-        case Some((t, v)) => m(t)
-        case _ => None
-      }
+      for {
+        (t, v) <- this(tree)
+        t2 <- m(t)
+      } yield t2
     }
 
     /**
@@ -39,10 +39,10 @@ trait Traverser[T] {
      * We discard the result of b and only keep the result of a
      * */
     def andThenLeft[B](m: => TreeMapper[B]) = TreeMapper[A] { tree =>
-      this(tree) match {
-        case Some((t, v)) => m(t) map (x => (x._1, v))
-        case _ => None
-      }
+     for {
+        (t, v) <- this(tree)
+        (t2, v2) <- m(t)
+     } yield (t2, v)
     }
 
     /**
@@ -123,11 +123,10 @@ trait Traverser[T] {
      * a feed {resa => b}
      * combinator b can use the result (resa) of a.
      * */
-    def feed[B : Monoid](m: => A => TreeMapper[B]) = TreeMapper[B] {tree =>
-      this(tree) match {
-        case Some((t, v)) => m(v)(t)
-        case None => None/*what to do ?*/
-      }
+    def feed[B : Monoid](m: => A => TreeMapper[B]) = TreeMapper[B] {tree =>for {
+        (t, v) <- this(tree)
+        t2     <- m(v)(t)
+      } yield t2
     }
   }
 

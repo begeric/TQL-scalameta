@@ -22,7 +22,6 @@ object Example extends App{
        """
   }
 
-
   val getMin = down(stateful(Int.MaxValue){state =>
     visit{case Lit.Int(a) => (List(() => state), Math.min(state,a))}
   })

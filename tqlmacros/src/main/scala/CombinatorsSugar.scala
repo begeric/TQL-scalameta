@@ -21,6 +21,7 @@ object CombinatorsSugar {
       case a @ q"{case ..$cases}" =>
         //this is horrible, one should use c.untypecheck, but it doesn't work with extractors in pattern matchin
         //see https://issues.scala-lang.org/browse/SI-8825
+        //c.untypecheck(q"transform[$lhs, $rhs]{case ..$cases}")
         q"transform[$lhs, $rhs]{$a.asInstanceOf[PartialFunction[$lhs, $rhs]]}"
     }
   }

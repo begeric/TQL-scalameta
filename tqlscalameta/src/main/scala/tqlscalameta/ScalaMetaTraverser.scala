@@ -28,6 +28,7 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
+
   def traverse[A : Monoid](tree: Tree, f: TreeMapper[A]): MatcherResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
 }

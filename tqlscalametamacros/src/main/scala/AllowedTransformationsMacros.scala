@@ -14,7 +14,6 @@ class AllowedTransformationsMaterializer(val c: Context) extends org.scalameta.a
   import c.universe._
 
   def materialize[T : c.WeakTypeTag, I : c.WeakTypeTag, O : c.WeakTypeTag]: c.Expr[tql.AllowedTransformation[I, O]] = {
-
     val brlhs = getBranch[I]
     val brrhs = getBranch[O]
     if (brrhs.exists(x => brlhs.exists(y => x.info <:< y.info))) {
