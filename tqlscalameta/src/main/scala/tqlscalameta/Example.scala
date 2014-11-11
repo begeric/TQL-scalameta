@@ -32,15 +32,20 @@ object Example extends App{
     }
   })
 
-  val find = downBreak(
-    update{
-      case  Defn.Val(mod, n, None, Term.Select(Term.Apply(Term.Name("List"), l), Term.Name("toSet")))=>
-        Defn.Val(mod, n, None, Term.Apply(Term.Name("Set"), l))
-    })
-
   val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
 
   println(getAvg(x).result.map(_()))
   println(getAllInts(x).result)
+
+  def format = {
+    collectIn[Set] {
+      case Term.Assign(b: Term.Name, _) => b
+    }.down feed { assign =>
+      update{
+        case Defn.Var(a, (b: Term.Name)::Nil, c, Some(d)) if (!assign.contains(b)) =>
+          Defn.Val(a, b::Nil, c, d)
+      }.down
+    }
+  }
 
 }

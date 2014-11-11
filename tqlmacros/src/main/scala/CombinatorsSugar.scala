@@ -19,10 +19,10 @@ object CombinatorsSugar {
     val (lhs, rhs) =  getGLBsfromPFs[T](c)(f)
     f match {
       case a @ q"{case ..$cases}" =>
-        //this is horrible, one should use c.untypecheck, but it doesn't work with extractors in pattern matchin
+        //this is horrible, one should use c.untypecheck, but it doesn't work with extractors in pattern matching
         //see https://issues.scala-lang.org/browse/SI-8825
         //c.untypecheck(q"transform[$lhs, $rhs]{case ..$cases}")
-        q"transform[$lhs, $rhs]{$a.asInstanceOf[PartialFunction[$lhs, $rhs]]}"
+        q"transform[$lhs, $rhs](PartialFunction[$lhs, $rhs](($a).asInstanceOf[PartialFunction[$lhs, $rhs]]))"
     }
   }
 
@@ -32,7 +32,8 @@ object CombinatorsSugar {
       case q"{case ..$cases}" =>
         val tpes: List[(c.Type,c.Type)] = cases.map(_ match {
           case cq"${lhs: c.Tree} => ${rhs:  c.Tree}" => (lhs.tpe, rhs.tpe)
-          case _ => c.abort(c.enclosingPosition, "Bad format in partial function")
+          case cq"${lhs: c.Tree} if $_ => ${rhs:  c.Tree}" => (lhs.tpe, rhs.tpe)
+          case p => c.abort(c.enclosingPosition, "Bad format in partial function at: " + show(p))
         })
         val (lhs, rhs) = tpes.unzip
         (lub(lhs), lub(rhs))
