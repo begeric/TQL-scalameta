@@ -13,32 +13,32 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Traverse the children of the tree
    * */
-  def children[A : Monoid](f: TreeMapper[A]) =  TreeMapper[A]{ tree =>
+  def children[A : Monoid](f: Matcher[A]) =  TreeMapper[A]{ tree =>
     traverse(tree, f)
   }
 
   /**
    * Traverse the tree in a TopDown manner, stop when a transformation/traversal has succeeded
    * */
-  def downBreak[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+  def downBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
     m | children(downBreak[A](m))
 
   /**
    * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
    * */
-  def upBreak[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+  def upBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
     children(upBreak[A](m)) | m
 
   /**
    * Same as TopDown, but does not sop when a transformation/traversal has succeeded
    * */
-  def down[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+  def down[A : Monoid](m: Matcher[A]): Matcher[A] =
     m + children(down[A](m))
 
   /**
    * Same as upBreak, but does not sop when a transformation/traversal has succeeded
    * */
-  def up[A : Monoid](m: TreeMapper[A]): TreeMapper[A] =
+  def up[A : Monoid](m: Matcher[A]): Matcher[A] =
     children(up[A](m)) + m
 
   def flatMap[B](f: T => MatcherResult[B]) = TreeMapper[B] {tree =>
@@ -49,7 +49,7 @@ trait Combinators[T] { self: Traverser[T] =>
     guard[T]{case t => f.isDefinedAt(t)} map(f(_))
 
 
-  def stateful[A, B](init: => A)(f: (=>A) => TreeMapper[(B, A)]): TreeMapper[B] = {
+  def stateful[A, B](init: => A)(f: (=>A) => Matcher[(B, A)]): Matcher[B] = {
     var state = init
     f(state) map {case (res, s) =>
       state = s
@@ -68,7 +68,7 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]): TreeMapper[List[A]] =
+  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]): Matcher[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
   def collectIn[C[_]] = new {
@@ -92,7 +92,7 @@ trait Combinators[T] { self: Traverser[T] =>
 
   import scala.language.experimental.macros
 
-  def filter(f: PartialFunction[T, Boolean]): TreeMapper[T] = macro CombinatorsSugar.filterSugarImpl[T]
-  def update(f: PartialFunction[T, T]): TreeMapper[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
+  def filter(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
+  def update(f: PartialFunction[T, T]): Matcher[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
 
 }

@@ -14,14 +14,14 @@ object ScalametaTraverserHelperMacros {
    * Create a traverser on the types given in objs with the transformation function f
    * See tqlmacros.TraverserHelperMacros for more info
    * */
-  def build[T, A](f: Traverser[T]#TreeMapper[A], objs: Any*): T => Option[(T, A)] =
+  def build[T, A](f: Traverser[T]#Matcher[A], objs: Any*): T => Option[(T, A)] =
     macro ScalametaTraverserBuilder.buildImpl[T, A]
 
   /**
    * Use the Adt reflexion from https://github.com/scalameta/scalameta/blob/master/foundation/adt/Reflection.scala
    * to generate the whole traverser from a root (here root = scala.meta.Tree)
    * */
-  def buildFromTopSymbol[T, A](f: Traverser[T]#TreeMapper[A]): T => Option[(T, A)] =
+  def buildFromTopSymbol[T, A](f: Traverser[T]#Matcher[A]): T => Option[(T, A)] =
     macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
 }
 

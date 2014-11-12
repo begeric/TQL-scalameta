@@ -14,7 +14,7 @@ object TraverserHelper {
   import MonoidEnhencer._
 
   def traverseSeq[U, T  <: U with AnyRef : ClassTag, A : Monoid](
-                 f: Traverser[U]#TreeMapper[A],
+                 f: Traverser[U]#Matcher[A],
                  seq: Seq[T]): Option[(Seq[T], A)] = {
     val m = implicitly[Monoid[A]]
     var buffer = new ListBuffer[T]()
@@ -34,7 +34,7 @@ object TraverserHelper {
   }
 
   def traverseSeqofSeq[U, T <: U with AnyRef: ClassTag, A : Monoid](
-                      f:  Traverser[U]#TreeMapper[A],
+                      f:  Traverser[U]#Matcher[A],
                       seq: Seq[Seq[T]]): Option[(Seq[Seq[T]], A)] = {
     val m = implicitly[Monoid[A]]
     var buffer = new ListBuffer[Seq[T]]()
@@ -54,7 +54,7 @@ object TraverserHelper {
   }
 
   def optional[U, T <: U with AnyRef: ClassTag, A: Monoid](
-              f:  Traverser[U]#TreeMapper[A],
+              f:  Traverser[U]#Matcher[A],
               a: Option[T])/*: Option[Option[(T, A)]]*/ = Some(a
     .flatMap(f(_))
     .collect{case (x: T, y) if classTag[T].runtimeClass.isInstance(x) => (Some(x), y)}

@@ -9,24 +9,24 @@ import scala.reflect.ClassTag
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   //Convention : Operators ending with : are right assosiative
   implicit class TEnhancer(t: T){
-    def \[A : Monoid] (b: TreeMapper[A]) = children(b)(implicitly[Monoid[A]])(t)
-    def \\[A : Monoid](b: TreeMapper[A]) = downBreak(b)(implicitly[Monoid[A]])(t)
+    def \[A : Monoid] (b: Matcher[A]) = children(b)(implicitly[Monoid[A]])(t)
+    def \\[A : Monoid](b: Matcher[A]) = downBreak(b)(implicitly[Monoid[A]])(t)
 
-    def >>[A](a: TreeMapper[A]) = a(t)
+    def >>[A](a: Matcher[A]) = a(t)
 
-    def resultOf[A : Monoid](a: TreeMapper[A]) = new MatcherResultEnhancer(a(t)).result
-    def treeOf[A : Monoid](a: TreeMapper[A]) = new MatcherResultEnhancer(a(t)).tree
+    def resultOf[A : Monoid](a: Matcher[A]) = new MatcherResultEnhancer(a(t)).result
+    def treeOf[A : Monoid](a: Matcher[A]) = new MatcherResultEnhancer(a(t)).tree
 
   }
 
   /*Required for things inside TreeMapperEnhancer*/
-  def downBreakAlias[A : Monoid](m: TreeMapper[A]) = downBreak(m)
-  def downAlias[A : Monoid](m: TreeMapper[A]) = down(m)
-  def upBreakAlias[A : Monoid](m: TreeMapper[A]) = upBreak(m)
+  def downBreakAlias[A : Monoid](m: Matcher[A]) = downBreak(m)
+  def downAlias[A : Monoid](m: Matcher[A]) = down(m)
+  def upBreakAlias[A : Monoid](m: Matcher[A]) = upBreak(m)
 
-  implicit class TreeMapperEnhancer[A](a: TreeMapper[A]){
-    def \[B : Monoid] (b: TreeMapper[B]) = a andThen children(b)
-    def \\[B : Monoid] (b: TreeMapper[B]) = a andThen downBreakAlias(b)
+  implicit class TreeMapperEnhancer[A](a: Matcher[A]){
+    def \[B : Monoid] (b: Matcher[B]) = a andThen children(b)
+    def \\[B : Monoid] (b: Matcher[B]) = a andThen downBreakAlias(b)
     def >>[B] (f: T => MatcherResult[B]) = flatMap(f)
     def apply[I <: T : ClassTag, O <: T]
              (f: PartialFunction[I, O])

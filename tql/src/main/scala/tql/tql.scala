@@ -9,19 +9,19 @@ trait Traverser[T] {
   type MatcherResult[A] = Option[(T, A)]
 
   /**
-   * A TreeMapper is a function or 'combinator' which takes a T and return an Option of tuple of
+   * A Matcher is a function or 'combinator' which takes a T and return an Option of tuple of
    * - a transformed T (or the same)
    * - a result of type A s.t Exists Monoid[A] so that results can be combined during the traversal
-   * A transformation/traversal has succeeded if the result of the application on the TreeMapper is not a None
+   * A transformation/traversal has succeeded if the result of the application on the Matcher is not a None
    * */
-  abstract class TreeMapper[+A] extends (T => MatcherResult[A]) {
+  abstract class Matcher[+A] extends (T => MatcherResult[A]) {
 
     /**
      * a andThen b
      * b is 'executed' only if a succeeded
      * We discard the result of a
      * */
-    def andThen[B : Monoid](m: => TreeMapper[B]) = TreeMapper[B] { tree =>
+    def andThen[B : Monoid](m: => Matcher[B]) = TreeMapper[B] { tree =>
       for {
         (t, v) <- this(tree)
         t2 <- m(t)
@@ -31,14 +31,14 @@ trait Traverser[T] {
     /**
      * Alias for andThen
      * */
-    def ~>[B : Monoid](m: =>  TreeMapper[B]) = andThen(m)
+    def ~>[B : Monoid](m: =>  Matcher[B]) = andThen(m)
 
     /**
      * a andThenLeft b
      * b is 'executed' only if a succeeded
      * We discard the result of b and only keep the result of a
      * */
-    def andThenLeft[B](m: => TreeMapper[B]) = TreeMapper[A] { tree =>
+    def andThenLeft[B](m: => Matcher[B]) = TreeMapper[A] { tree =>
      for {
         (t, v) <- this(tree)
         (t2, v2) <- m(t)
@@ -48,14 +48,14 @@ trait Traverser[T] {
     /**
      * Alias for andThenLeft
      * */
-    def <~[B : Monoid](m: =>  TreeMapper[B]) = andThenLeft(m)
+    def <~[B : Monoid](m: =>  Matcher[B]) = andThenLeft(m)
 
     /**
      * Combine the result of two TreeMappers in a tuple2.
      * The order is important, as the the second transformation is applied on the
      * result of the first one.
      * */
-    def aggregate[B, C >: A](m: => TreeMapper[B])(implicit x: Monoid[C], y: Monoid[B]) = TreeMapper[(C, B)] { tree =>
+    def aggregate[B, C >: A](m: => Matcher[B])(implicit x: Monoid[C], y: Monoid[B]) = TreeMapper[(C, B)] { tree =>
       this(tree) match {
         case s @ Some((a1, a2)) => m(a1) match {
           case Some((b1, b2)) => Some((b1, (a2, b2)))
@@ -67,7 +67,7 @@ trait Traverser[T] {
     /**
      * Alias for aggregate
      * */
-    def ~[B, C >: A](m: => TreeMapper[B])(implicit x: Monoid[C], y: Monoid[B]) = aggregate[B, C](m)(x, y)
+    def ~[B, C >: A](m: => Matcher[B])(implicit x: Monoid[C], y: Monoid[B]) = aggregate[B, C](m)(x, y)
 
     /**
      * a compose b
@@ -78,7 +78,7 @@ trait Traverser[T] {
      * If a fails then b is applied
      * If b fails then only the result of a is used
      * */
-    def compose[B >: A](m: => TreeMapper[B])(implicit x: Monoid[B]) = TreeMapper[B] { tree =>
+    def compose[B >: A](m: => Matcher[B])(implicit x: Monoid[B]) = TreeMapper[B] { tree =>
       this(tree) match {
         case t @ Some((a1, a2)) => m(a1) match {
           case Some((b1, b2)) => Some((b1, x.append(a2, b2)))
@@ -91,10 +91,10 @@ trait Traverser[T] {
     /**
      * Alias for compose
      * */
-    def +[B >: A](m: => TreeMapper[B])(implicit x: Monoid[B]) = compose(m)(x)
+    def +[B >: A](m: => Matcher[B])(implicit x: Monoid[B]) = compose(m)(x)
 
     /**
-     * Transform the result of the TreeMapper, will probably change
+     * Transform the result of the Matcher, will probably change
      * */
     def map[B](f: A => B) = TreeMapper[B] { tree =>
       for {
@@ -106,7 +106,7 @@ trait Traverser[T] {
      * a orElse b
      * Apply b only if a failed
      * */
-    def orElse[B >: A : Monoid](m: => TreeMapper[B]) = TreeMapper[B] { tree  =>
+    def orElse[B >: A : Monoid](m: => Matcher[B]) = TreeMapper[B] { tree  =>
       this(tree) match {
         case None => m(tree)
         case  s => s
@@ -116,24 +116,24 @@ trait Traverser[T] {
     /**
      * Alias for orElse
      * */
-    def |[B >: A : Monoid](m: => TreeMapper[B]) = orElse(m)
+    def |[B >: A : Monoid](m: => Matcher[B]) = orElse(m)
 
 
     /**
      * a feed {resa => b}
      * combinator b can use the result (resa) of a.
      * */
-    def feed[B : Monoid](m: => A => TreeMapper[B]) = TreeMapper[B] {tree =>for {
+    def feed[B : Monoid](m: => A => Matcher[B]) = TreeMapper[B] {tree =>for {
         (t, v) <- this(tree)
         t2     <- m(v)(t)
       } yield t2
     }
   }
 
-  def TreeMapper[A](f: T => MatcherResult[A]): TreeMapper[A] = new TreeMapper[A] {
+  def TreeMapper[A](f: T => MatcherResult[A]): Matcher[A] = new Matcher[A] {
     override def apply(tree: T): MatcherResult[A] = f(tree)
   }
 
-  def traverse[A : Monoid](tree: T, f: TreeMapper[A]): MatcherResult[A]
+  def traverse[A : Monoid](tree: T, f: Matcher[A]): MatcherResult[A]
 
 }

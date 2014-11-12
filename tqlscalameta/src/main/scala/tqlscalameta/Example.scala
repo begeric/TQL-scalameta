@@ -36,5 +36,4 @@ object Example extends App{
 
   println(getAvg(x).result.map(_()))
   println(getAllInts(x).result)
-
 }
