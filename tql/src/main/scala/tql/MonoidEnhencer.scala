@@ -8,7 +8,7 @@ package tql
 * implicitly[Monoid[A]].append(a, b)
 * */
 object MonoidEnhencer {
-  implicit class MonoidEnhencer[A](a: A)(implicit m: Monoid[A]){
-    def + (b: A) = m.append(a, b)
+  implicit class MonoidEnhencer[A : Monoid](a: A){
+    def + (b: A) = implicitly[Monoid[A]].append(a, b)
   }
 }

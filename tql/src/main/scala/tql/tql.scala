@@ -55,19 +55,19 @@ trait Traverser[T] {
      * The order is important, as the the second transformation is applied on the
      * result of the first one.
      * */
-    def aggregate[B, C >: A](m: => Matcher[B])(implicit x: Monoid[C], y: Monoid[B]) = TreeMapper[(C, B)] { tree =>
+    def aggregate[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = TreeMapper[(C, B)] { tree =>
       this(tree) match {
         case s @ Some((a1, a2)) => m(a1) match {
           case Some((b1, b2)) => Some((b1, (a2, b2)))
-          case _ => s map (u => (u._1, (u._2,y.zero)))
+          case _ => s map (u => (u._1, (u._2, implicitly[Monoid[B]].zero)))
         }
-        case _ => m(tree) map (u => (u._1, (x.zero, u._2)))
+        case _ => m(tree) map (u => (u._1, (implicitly[Monoid[C]].zero, u._2)))
       }
     }
     /**
      * Alias for aggregate
      * */
-    def ~[B, C >: A](m: => Matcher[B])(implicit x: Monoid[C], y: Monoid[B]) = aggregate[B, C](m)(x, y)
+    def ~[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = aggregate[B, C](m)
 
     /**
      * a compose b
@@ -78,10 +78,10 @@ trait Traverser[T] {
      * If a fails then b is applied
      * If b fails then only the result of a is used
      * */
-    def compose[B >: A](m: => Matcher[B])(implicit x: Monoid[B]) = TreeMapper[B] { tree =>
+    def compose[B >: A : Monoid](m: => Matcher[B]) = TreeMapper[B] { tree =>
       this(tree) match {
         case t @ Some((a1, a2)) => m(a1) match {
-          case Some((b1, b2)) => Some((b1, x.append(a2, b2)))
+          case Some((b1, b2)) => Some((b1, implicitly[Monoid[B]].append(a2, b2)))
           case _ => t
         }
         case _ => m(tree)
@@ -91,7 +91,7 @@ trait Traverser[T] {
     /**
      * Alias for compose
      * */
-    def +[B >: A](m: => Matcher[B])(implicit x: Monoid[B]) = compose(m)(x)
+    def +[B >: A : Monoid](m: => Matcher[B]) = compose(m)
 
     /**
      * Transform the result of the Matcher, will probably change

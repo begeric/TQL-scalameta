@@ -13,7 +13,7 @@ object TraverserHelper {
 
   import MonoidEnhencer._
 
-  def traverseSeq[U, T  <: U with AnyRef : ClassTag, A : Monoid](
+  def traverseSeq[U, T <: U with AnyRef : ClassTag, A : Monoid](
                  f: Traverser[U]#Matcher[A],
                  seq: Seq[T]): Option[(Seq[T], A)] = {
     val m = implicitly[Monoid[A]]
@@ -33,7 +33,7 @@ object TraverserHelper {
     Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
   }
 
-  def traverseSeqofSeq[U, T <: U with AnyRef: ClassTag, A : Monoid](
+  def traverseSeqofSeq[U, T <: U with AnyRef : ClassTag, A : Monoid](
                       f:  Traverser[U]#Matcher[A],
                       seq: Seq[Seq[T]]): Option[(Seq[Seq[T]], A)] = {
     val m = implicitly[Monoid[A]]
@@ -53,9 +53,9 @@ object TraverserHelper {
     Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
   }
 
-  def optional[U, T <: U with AnyRef: ClassTag, A: Monoid](
+  def optional[U, T <: U with AnyRef : ClassTag, A: Monoid](
               f:  Traverser[U]#Matcher[A],
-              a: Option[T])/*: Option[Option[(T, A)]]*/ = Some(a
+              a: Option[T]): Option[(Option[T], A)] = Some(a
     .flatMap(f(_))
     .collect{case (x: T, y) if classTag[T].runtimeClass.isInstance(x) => (Some(x), y)}
     .getOrElse((None, implicitly[Monoid[A]].zero)))

@@ -9,6 +9,7 @@ trait Combinators[T] { self: Traverser[T] =>
 
   import scala.reflect.ClassTag
   import scala.collection.generic.CanBuildFrom
+  import scala.language.experimental.macros
 
   /**
    * Traverse the children of the tree
@@ -41,22 +42,6 @@ trait Combinators[T] { self: Traverser[T] =>
   def up[A : Monoid](m: Matcher[A]): Matcher[A] =
     children(up[A](m)) + m
 
-  def flatMap[B](f: T => MatcherResult[B]) = TreeMapper[B] {tree =>
-    f(tree)
-  }
-
-  def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
-    guard[T]{case t => f.isDefinedAt(t)} map(f(_))
-
-
-  def stateful[A, B](init: => A)(f: (=>A) => Matcher[(B, A)]): Matcher[B] = {
-    var state = init
-    f(state) map {case (res, s) =>
-      state = s
-      res
-    }
-  }
-
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
    * */
@@ -66,9 +51,34 @@ trait Combinators[T] { self: Traverser[T] =>
   }
 
   /**
+   *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
+   * */
+  def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
+    TreeMapper[Unit] {
+      case t: I if f.isDefinedAt(t) => Some((f(t), Monoid.Void.zero))
+      case _ => None
+    }
+
+  def flatMap[B](f: T => MatcherResult[B]) = TreeMapper[B] {tree =>
+    f(tree)
+  }
+
+  def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
+    guard[T]{case t => f.isDefinedAt(t)} map(f(_))
+
+
+  def stateful[A, B](init: => A)(f: ( => A) => Matcher[(B, A)]): Matcher[B] = {
+    var state = init
+    f(state) map {case (res, s) =>
+      state = s
+      res
+    }
+  }
+
+  /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]): Matcher[List[A]] =
+  def collect[A : ClassTag](f: PartialFunction[T, A])(implicit x: ClassTag[T]): Matcher[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
   def collectIn[C[_]] = new {
@@ -82,17 +92,13 @@ trait Combinators[T] { self: Traverser[T] =>
   }
 
   /**
-   *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
+   * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
    * */
-  def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
-    TreeMapper[Unit] {
-      case t: I if f.isDefinedAt(t) => Some((f(t), Monoid.Void.zero))
-      case _ => None
-    }
-
-  import scala.language.experimental.macros
-
   def filter(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
+
+  /**
+  * Syntactic sugar for transform combinator so that one doesn't need to type the type parameter
+    * */
   def update(f: PartialFunction[T, T]): Matcher[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
 
 }

@@ -26,6 +26,7 @@ object Example extends App{
     visit{case Lit.Int(a) => (List(() => state), Math.min(state,a))}
   })
 
+
   val getAvg = down(stateful((0, 0)){state => {
       lazy val avg = state._1 / state._2
       visit{case Lit.Int(a) => (List(() => avg), (state._1 + a, state._2 + 1))}

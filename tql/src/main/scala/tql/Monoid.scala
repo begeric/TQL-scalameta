@@ -50,7 +50,7 @@ object Monoid {
   }
 
   //TODO create a macro ?
-  implicit def tupleMonoid[A : Monoid, B: Monoid] = new Monoid[(A, B)] {
+  implicit def tupleMonoid[A : Monoid, B : Monoid] = new Monoid[(A, B)] {
     import MonoidEnhencer._
 
     def zero = (implicitly[Monoid[A]].zero,  implicitly[Monoid[B]].zero)
