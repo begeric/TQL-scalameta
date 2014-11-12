@@ -123,7 +123,7 @@ object TQLBuild extends Build {
   lazy val tqlmacros: Project = Project(
     "tqlmacros",
     file("tqlmacros"),
-    settings = buildSettings ++ macroSettings
+    settings = buildSettings ++ publishableSettings ++ macroSettings
   )
 
   lazy val tql: Project = Project(
@@ -135,7 +135,7 @@ object TQLBuild extends Build {
   lazy val tqlscalametamacros: Project = Project(
     "tqlscalametamacros",
     file("tqlscalametamacros"),
-    settings = buildSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
+    settings = buildSettings ++ publishableSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
   ) dependsOn(tql)
 
   lazy val tqlscalameta: Project = Project(
