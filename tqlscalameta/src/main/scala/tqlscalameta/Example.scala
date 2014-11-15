@@ -33,6 +33,11 @@ object Example extends App{
     }
   })
 
+
+  val stuff = down $ visit2{
+    case t @ Lit.Int(a) => List(a) get
+  }
+
   val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
 
   println(getAvg(x).result.map(_()))
