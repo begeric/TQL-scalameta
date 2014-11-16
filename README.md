@@ -9,7 +9,7 @@ The library comprise a set of combinators that you can compose in order to trave
 Get all different variable names in a scala.meta AST
 ```scala
 q"""
- var a = 5
+ val a = 5
  val c = 3
  if (3 == 17) {
   val c = 1
@@ -17,7 +17,7 @@ q"""
  else 2
 """
 val getAllVals = down(collectIn[Set]{case x: Defn.Val => x.pats.head.toString})
-println(getAllVals(x).result) //Set(c)
+println(getAllVals(x).result) //Set(a, c)
 ```
 
 ### How to use
