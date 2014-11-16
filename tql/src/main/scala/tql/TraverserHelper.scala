@@ -20,16 +20,15 @@ object TraverserHelper {
     var buffer = new ListBuffer[T]()
     var hasChanged = false
     var acc = m.zero
-    for (t <- seq){
-      f(t) match {
-        case Some((a1: T, a2)) if classTag[T].runtimeClass.isInstance(a1) =>
-          buffer.append(a1)
-          acc += a2
-          hasChanged |= !(a1 eq t)
-        case _ =>
-          hasChanged = true
-      }
+    for {t <- seq
+         (a1 : T, a2) <- f(t)
+         if classTag[T].runtimeClass.isInstance(a1)
+    } {
+        buffer.append(a1)
+        acc += a2
+        hasChanged |= !(a1 eq t)
     }
+    hasChanged |= seq.size != buffer.size //TODO this should be an error
     Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
   }
 
@@ -40,16 +39,14 @@ object TraverserHelper {
     var buffer = new ListBuffer[Seq[T]]()
     var hasChanged = false
     var acc = m.zero
-    for (t <- seq){
-      traverseSeq(f, t) match {
-        case Some((a1, a2))=>
-          buffer.append(a1)
-          acc += a2
-          hasChanged |= !(a1 eq t)
-        case _ =>
-          hasChanged = true
-      }
+    for {t <- seq
+         (a1, a2) <- traverseSeq(f, t)
+    }{
+        buffer.append(a1)
+        acc += a2
+        hasChanged |= !(a1 eq t)
     }
+    hasChanged |= seq.size != buffer.size //TODO this should be an error
     Some((if (hasChanged) collection.immutable.Seq(buffer: _*) else seq, acc))
   }
 
