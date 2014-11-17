@@ -21,7 +21,7 @@ trait Traverser[T] {
      * b is 'executed' only if a succeeded
      * We discard the result of a
      * */
-    def andThen[B : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
+    def andThen[B](m: => Matcher[B]) = Matcher[B] { tree =>
       for {
         (t, v) <- this(tree)
         t2 <- m(t)
@@ -31,7 +31,7 @@ trait Traverser[T] {
     /**
      * Alias for andThen
      * */
-    def ~>[B : Monoid](m: =>  Matcher[B]) = andThen(m)
+    def ~>[B](m: =>  Matcher[B]) = andThen(m)
 
     /**
      * a andThenLeft b
@@ -153,6 +153,7 @@ trait Traverser[T] {
   def Matcher[A](f: T => MatcherResult[A]): Matcher[A] = new Matcher[A] {
     override def apply(tree: T): MatcherResult[A] = f(tree)
   }
+
 
   def traverse[A : Monoid](tree: T, f: Matcher[A]): MatcherResult[A]
 

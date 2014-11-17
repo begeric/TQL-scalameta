@@ -13,10 +13,12 @@ object Example extends App{
   val x = {
     import scala.meta._
     q"""
-       var a = 5
-       var c = 3
+       val a = 5
+       val c = 3
        c = 5
-       if (3 == 17) 8
+       if (3 == 17) {
+        val c = 1
+       }
        else 2
        5
        """
@@ -33,13 +35,14 @@ object Example extends App{
     }
   })
 
-
-  val stuff = down $ visit2{
-    case t @ Lit.Int(a) => List(a) get
-  }
-
   val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
+  val getAllVals = down(collectIn[Set]{case x: Defn.Val => x.pats.head.toString})
 
+  val t1 = x.collect{case Lit.Int(a) if a > 10 => a}.result
+  val t2 = x.guard[Term.If]({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}.result
+  val t3 = x.transform[Defn.Val, Defn.Var]{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))}.tree
+
+  println(t3)
   println(getAvg(x).result.map(_()))
-  println(getAllInts(x).result)
+  println(getAllVals(x).result)
 }

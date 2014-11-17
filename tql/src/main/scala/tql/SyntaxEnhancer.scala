@@ -7,6 +7,7 @@ package tql
 import scala.reflect.ClassTag
 
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
+
   //Convention : Operators ending with : are right assosiative
   implicit class TEnhancer(t: T){
     def \[A : Monoid] (b: Matcher[A]) = children(b)(implicitly[Monoid[A]])(t)
@@ -16,7 +17,6 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 
     def resultOf[A : Monoid](a: Matcher[A]) = new MatcherResultEnhancer(a(t)).result
     def treeOf[A : Monoid](a: Matcher[A]) = new MatcherResultEnhancer(a(t)).tree
-
   }
 
   /*Required for things inside TreeMapperEnhancer*/
