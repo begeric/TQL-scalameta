@@ -37,6 +37,9 @@ object CombinatorsSugar {
         })
         val (lhs, rhs) = tpes.unzip
         (lub(lhs), lub(rhs))
+      case func if func.tpe <:< weakTypeOf[PartialFunction[_, _]] =>
+        val lhs :: rhs :: Nil = func.tpe.typeArgs
+        (implicitly[c.WeakTypeTag[T]].tpe, rhs)
       case _ => c.abort(c.enclosingPosition, "Expecting a partial function here")
     }
   }
