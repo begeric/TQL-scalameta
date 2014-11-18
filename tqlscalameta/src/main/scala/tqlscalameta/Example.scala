@@ -39,13 +39,13 @@ object Example extends App{
   val getAllVals = down(collectIn[Set]{case x: Defn.Val => x.pats.head.toString})
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}.result
-  val t2 = x.guard[Term.If]({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}.result
-  val t3 = x.transform[Defn.Val, Defn.Var]{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))}.tree
-  //val t4 = x.filter{case Lit.Int(a) => true}.transform[Lit.Int, Lit.Int]{case x: Lit.Int => Lit.Int(1)}
+  val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}.result
+  val t3 = x.update{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))}.tree
+  val t4 = x.filter{case Lit.Int(a) => true}.update{case x: Lit.Int => Lit.Int(1)}.tree
   val t5 = x.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}.result
-  val t6 = x.guard[Term.If]({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
+  val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
-  println(t6)
+  println(t4)
   println(getAvg(x).result.map(_()))
   println(getAllVals(x).result)
 }

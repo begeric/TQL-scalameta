@@ -11,7 +11,7 @@ object CombinatorsSugar {
   def filterSugarImpl[T : c.WeakTypeTag](c: Context)(f: c.Tree): c.Tree = {
     import c.universe._
     val (lhs, _) =  getGLBsfromPFs[T](c)(f)
-    q"guard[$lhs]($f)"
+    q"${c.prefix}.guard[$lhs]($f)"
   }
 
   def updateSugarImpl[T : c.WeakTypeTag](c: Context)(f: c.Tree): c.Tree = {
@@ -22,7 +22,7 @@ object CombinatorsSugar {
         //this is horrible, one should use c.untypecheck, but it doesn't work with extractors in pattern matching
         //see https://issues.scala-lang.org/browse/SI-8825
         //c.untypecheck(q"transform[$lhs, $rhs]{case ..$cases}")
-        q"transform[$lhs, $rhs](PartialFunction[$lhs, $rhs](($a).asInstanceOf[PartialFunction[$lhs, $rhs]]))"
+        q"${c.prefix}.transform[$lhs, $rhs](PartialFunction[$lhs, $rhs](($a).asInstanceOf[PartialFunction[$lhs, $rhs]]))"
     }
   }
 

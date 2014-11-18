@@ -27,6 +27,8 @@ import scala.reflect.ClassTag
  * */
 trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhancer[T] =>
 
+  import scala.language.experimental.macros
+
   /**Abstract class used to delay delay the time when the type parameter of
     * a meta combinator is decided*/
   abstract class DelayedMeta{
@@ -49,13 +51,16 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = down.guard(f)
 
-    /*def filter(f: PartialFunction[T, Boolean])(implicit x: ClassTag[T]) =
-      down.filter(f)   */
+    def filter(f: PartialFunction[T, Boolean]): LazyEvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
     def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
       down.transform(f)
 
+    def update(f: PartialFunction[T, T]): LazyEvaluatorAndThen[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
+
     def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
+
+    def flatMap[B](f: T => MatcherResult[B]) = down.flatMap(f)
 
     def down      = new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.down(x)})
     def downBreak = new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.downBreak(x)})
@@ -63,7 +68,6 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
     def upBreak   = new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.upBreak(x)})
     def children  = new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.children(x)})
   }
-
 
   class LazyEvaluatorMeta(t: T, meta: DelayedMeta){
 
@@ -78,15 +82,19 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new LazyEvaluatorAndThen(t, self.guard(f), meta)
 
-    /*def filter(f: PartialFunction[T, Boolean])(implicit x: ClassTag[T]) =
-      new LazyEvaluatorAndThen(t, self.filter(f), meta)   */
-
+    def filter(f: PartialFunction[T, Boolean]): LazyEvaluatorAndThen[T] =
+      macro CombinatorsSugar.filterSugarImpl[T]
 
     def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
       new LazyEvaluatorAndThen(t, self.transform(f), meta)
 
+    def update(f: PartialFunction[T, T]): LazyEvaluatorAndThen[Unit] =
+      macro CombinatorsSugar.updateSugarImpl[T]
+
     def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       new LazyEvaluatorAndThen[A](t, self.visit(f), meta)
+
+    def flatMap[B](f: T => MatcherResult[B]) = new LazyEvaluatorAndThen[B](t, self.flatMap(f), meta)
 
     /**
      * Allows to use other combinators which are not defined in the LazyEvaluator framework
@@ -95,9 +103,14 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
   }
 
 
-  class LazyEvaluatorAndThen[A](t: T, m: Matcher[A], meta: DelayedMeta){
 
-    def collect[B](f: PartialFunction[T, B])(implicit x: ClassTag[T], y : ClassTag[A], z : ClassTag[B]) =
+  class LazyEvaluatorAndThen[+A](private[LazyEvaluator] val t: T,
+                                 private[LazyEvaluator] val m: Matcher[A],
+                                 private[LazyEvaluator] val meta: DelayedMeta){
+
+    def map[B](f: A => B) = new LazyEvaluatorAndThen[B](t, m map f, meta)
+
+    def collect[B >: A](f: PartialFunction[T, B])(implicit x: ClassTag[T], z : ClassTag[B]) =
       new LazyEvaluatorAndThen(t, m ~> self.collect(f), meta)
 
     def collectIn[C[_]] = new {
@@ -108,15 +121,21 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new LazyEvaluatorAndThen(t, m ~> self.guard(f), meta)
 
+    def filter(f: PartialFunction[T, Boolean]): LazyEvaluatorAndThen[T] =
+      macro CombinatorsSugar.filterSugarImpl[T]
+
     def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
       new LazyEvaluatorAndThen(t, m ~> self.transform(f), meta)
+
+    def update(f: PartialFunction[T, T]): LazyEvaluatorAndThen[Unit] =
+      macro CombinatorsSugar.updateSugarImpl[T]
 
     def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       new LazyEvaluatorAndThen[A](t, m ~> self.visit(f), meta)
 
     def combine[B](x: Matcher[B]) = new LazyEvaluatorAndThen[B](t, m ~> x, meta)
 
-    def map[B](f: A => B) = new LazyEvaluatorAndThen[B](t, m map f, meta)
+    def flatMap[B](f: T => MatcherResult[B]) = new LazyEvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
 
     def down =
       new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.down(x))})
@@ -128,11 +147,19 @@ trait LazyEvaluator[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhan
       new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.upBreak(x))})
     def children =
       new LazyEvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.children(x))})
+  }
 
-
-    def force(implicit x: Monoid[A]) = meta(m).apply(t)
-    def result(implicit x: Monoid[A]) = force.result
-    def tree(implicit x: Monoid[A]) = force.tree
+  /**
+   * This has to be outside of LazyEvaluatorAndThen because of covarience stuff it is not possible to write
+   * def force(implicit x: Monoid[A]) = ...inside LazyEvaluatorAndThen[A]
+   * We should write def force[B >: A](implicit x: Monoid[B]) but Monoid should be made contravarient in A,
+   * which is not possible (in part because it is not logical and because contravarient stuff does not work well
+   * with implicits)
+   * */
+  implicit class ForceResult[A : Monoid](x : LazyEvaluatorAndThen[A]){
+    def force = x.meta(x.m).apply(x.t)
+    def result = force.result
+    def tree = force.tree
   }
 
 
