@@ -66,31 +66,6 @@ trait Combinators[T] { self: Traverser[T] =>
   def visit[A](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
     guard[T]{case t => f.isDefinedAt(t)} map(f(_))
 
-  case class Maybe[T, +A](a: Option[T], b: Option[A])
-
-  implicit def TToMaybe(t: T): Maybe[T, Nothing] = Maybe(Some(t), None)
-  implicit class TMaybeEnhencer(t: T){
-    def get[A](a: A) = Maybe(Some(t), Some(a))
-  }
-  implicit class ResultMaybeEnhencer[A](a: A){
-    def get = Maybe[T, A](None, Some(a))
-  }
-
-  object get {
-    def apply[A](a: A) = Maybe[T, A](None, Some(a))
-  }
-
-  def visit2[A : Monoid](f: PartialFunction[T, Maybe[T, A]]) = Matcher[A]{
-    case tree if f.isDefinedAt(tree) => f(tree) match {
-      case Maybe(Some(a), Some(b)) => Some((a, b))
-      case Maybe(Some(a), None) => Some((a, implicitly[Monoid[A]].zero))
-      case Maybe(None, Some(b)) => Some((tree, b))
-      case _ => None
-    }
-    case _ => None
-  }
-
-
   def stateful[A, B](init: => A)(f: ( => A) => Matcher[(B, A)]): Matcher[B] = {
     var state = init
     f(state) map {case (res, s) =>

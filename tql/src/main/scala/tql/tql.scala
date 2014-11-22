@@ -56,13 +56,11 @@ trait Traverser[T] {
      * result of the first one.
      * */
     def aggregate[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
-      this(tree) match {
-        case s @ Some((a1, a2)) => m(a1) match {
-          case Some((b1, b2)) => Some((b1, (a2, b2)))
-          case _ => s map (u => (u._1, (u._2, implicitly[Monoid[B]].zero)))
-        }
-        case _ => m(tree) map (u => (u._1, (implicitly[Monoid[C]].zero, u._2)))
-      }
+      this(tree).map {
+        case u @ (a1, a2) => m(a1)
+          .map {case (b1, b2) => (b1, (a2, b2))}
+          .getOrElse((u._1, (u._2, implicitly[Monoid[B]].zero)))
+      } orElse(m(tree).map (u => (u._1, (implicitly[Monoid[C]].zero, u._2))))
     }
     /**
      * Alias for aggregate
@@ -79,13 +77,11 @@ trait Traverser[T] {
      * If b fails then only the result of a is used
      * */
     def compose[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
-      this(tree) match {
-        case t @ Some((a1, a2)) => m(a1) match {
-          case Some((b1, b2)) => Some((b1, implicitly[Monoid[B]].append(a2, b2)))
-          case _ => t
-        }
-        case _ => m(tree)
-      }
+      this(tree) map {
+        case t @ (a1, a2)  => m(a1)
+          .map{case (b1, b2) => (b1, implicitly[Monoid[B]].append(a2, b2))}
+          .getOrElse(t)
+      } orElse(m(tree))
     }
 
     /**
@@ -99,13 +95,11 @@ trait Traverser[T] {
      * b operates on the origin tree, not the one transformed by a
      */
     def composeResults[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
-      this(tree) match {
-        case t @ Some((_, a2)) => m(tree) match {
-          case Some((_, b2)) => Some((tree, implicitly[Monoid[B]].append(a2, b2)))
-          case _ => t
-        }
-        case _ => m(tree)
-      }
+      this(tree) map {
+        case t @ (_, a2) => m(tree)
+          .map{case (_, b2) => (tree, implicitly[Monoid[B]].append(a2, b2))}
+          .getOrElse(t)
+      } orElse(m(tree))
     }
     
     /**
@@ -127,10 +121,7 @@ trait Traverser[T] {
      * Apply b only if a failed
      * */
     def orElse[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree  =>
-      this(tree) match {
-        case None => m(tree)
-        case  s => s
-      }
+      this(tree) orElse m(tree)
     }
 
     /**
