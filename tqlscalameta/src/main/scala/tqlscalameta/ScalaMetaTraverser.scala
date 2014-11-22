@@ -7,7 +7,7 @@ package tqlscalameta
 import tql._
 import scala.meta._
 
-object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with LazyEvaluator[Tree]{
+object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with CollectionLikeUI[Tree]{
 
   import MonoidEnhencer._
   import scala.language.experimental.macros
