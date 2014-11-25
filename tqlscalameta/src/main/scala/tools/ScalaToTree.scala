@@ -104,7 +104,7 @@ object ScalaToTree {
 	def loadCompiler: CompilerProxy = {
 
     val classPathDefault = Thread.currentThread().getContextClassLoader().getParent.asInstanceOf[URLClassLoader].getURLs.toList.map(_.getFile)
-    val classPathFromSBT = System.getProperty("sbt.paths.tqlscalameta.classpath").split(";")
+    val classPathFromSBT = Some(System.getProperty("sbt.paths.tqlscalameta.classpath")).filter(_ != null).map(_.split(";")).getOrElse(Array[String]())
     val fullClassPath = classPathDefault ++ classPathFromSBT
 
     val scalahostPluginJar = fullClassPath.find(_.contains("scalahost")) match {
