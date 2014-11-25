@@ -100,4 +100,6 @@ trait Combinators[T] { self: Traverser[T] =>
     * */
   def update(f: PartialFunction[T, T]): Matcher[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
 
+  def update2(f: PartialFunction[T, T]): Matcher[Unit] = macro CombinatorsSugar.update2Impl[T]
+
 }

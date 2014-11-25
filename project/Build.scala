@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 
 object BuildSettings {
+
   val buildSettings = Defaults.defaultSettings ++ Seq(
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.11.2",
@@ -138,10 +139,34 @@ object TQLBuild extends Build {
     settings = buildSettings ++ publishableSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
   ) dependsOn(tql)
 
+  lazy val paradise ="org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full
+
+  def exposeClasspaths(projectName: String) = Seq(
+    fullClasspath in Compile := {
+      val defaultValue = (fullClasspath in Compile).value
+      val classpath = defaultValue.files.map(_.getAbsolutePath)
+      System.setProperty("sbt.paths." + tqlscalameta + ".classpath", classpath.mkString(java.io.File.pathSeparatorChar.toString))
+      defaultValue
+    }
+  )
+
   lazy val tqlscalameta: Project = Project(
     "tqlscalameta",
     file("tqlscalameta"),
-    settings = buildSettings ++ publishableSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
+    settings = buildSettings ++ publishableSettings ++ Seq(
+        libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+        libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+        libraryDependencies += "org.scalameta" % "scalahost_2.11.2" % "0.1.0-SNAPSHOT",
+        libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT",
+        libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.6",
+        testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"),
+        parallelExecution in Test := false,
+        logBuffered := false,
+        initialCommands in console := """
+          import tools.ScalaToTree._
+          import tqlscalameta.ScalaMetaTraverser._
+          import scala.meta.syntactic.ast._
+          """) ++ exposeClasspaths("tqlscalameta")
   ) dependsOn(tqlscalametamacros)
 
 }

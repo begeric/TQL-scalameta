@@ -38,6 +38,11 @@ object Example extends App{
   val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
   val getAllVals = down(collectIn[Set]{case x: Defn.Val => x.pats.head.toString})
 
+  /*val test = update2{
+    case Lit.Int(a) => Lit.Int(a)
+    case x: Defn.Val => x
+  } */
+
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
   val t3 = x.update{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))}
