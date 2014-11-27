@@ -15,6 +15,7 @@ import scala.meta.syntactic.ast._
 
 object CompleteBenchmark extends PerformanceTest {
 
+
 	lazy val executor = LocalExecutor(
 					new Executor.Warmer.Default, 
 					Aggregator.min, 
@@ -25,7 +26,8 @@ object CompleteBenchmark extends PerformanceTest {
 	val range = Gen.enumeration("size")(10)
 
 	val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource("tqlscalameta\\src\\test\\resources\\SimpleTest.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/GenSeqLike.scala"))
+
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
 	performance of "Variable name Collection" in {
@@ -72,7 +74,7 @@ object CompleteBenchmark extends PerformanceTest {
 
     measure method "TQL  CollectIn[Set]" in {
       using(range) in { j =>
-        def collectVals = collectIn[Set]{case x:Term.Param if !x.name.isEmpty => x.name.get.toString}.down
+        def collectVals = down(collectIn[Set]{case x:Term.Param if !x.name.isEmpty => x.name.get.toString})
         collectVals(scalaMetaTree)
       }
     }

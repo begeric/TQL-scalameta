@@ -33,8 +33,18 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as TopDown, but does not sop when a transformation/traversal has succeeded
    * */
-  def down[A : Monoid](m: Matcher[A]): Matcher[A] =
-    m + children(down[A](m))
+  /*def down[A : Monoid](m: Matcher[A]): Matcher[A] =
+    m + children(down[A](m))  */
+
+  def down[A : Monoid](m: => Matcher[A]): Matcher[A] = Matcher[A] { tree =>
+    m(tree) match {
+      case t @ Some((a1, a2)) => traverse(a1, down[A](m)) match {
+        case Some((b1, b2)) => Some((b1, implicitly[Monoid[A]].append(a2, b2)))
+        case _ => t
+      }
+      case _ => traverse(tree, down[A](m))
+    }
+  }
 
   /**
    * Same as upBreak, but does not sop when a transformation/traversal has succeeded
