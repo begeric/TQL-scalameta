@@ -23,10 +23,10 @@ object CompleteBenchmark extends PerformanceTest {
 	lazy val reporter = new LoggingReporter
 	lazy val persistor = Persistor.None
 
-	val range = Gen.enumeration("size")(10)
+	val range = Gen.enumeration("size")(50)
 
 	val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/GenSeqLike.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
@@ -38,7 +38,7 @@ object CompleteBenchmark extends PerformanceTest {
 				val result = new compiler.compiler.Traverser {
 					var varNames = Set[String]()
 					override def traverse(tree: Tree): Unit = tree match {
-						case ValDef(_, name, _, _) => varNames += name.toString
+            case Literal(Constant(v: String)) => varNames += v
 						case _ => super.traverse(tree)
 					}
 
@@ -48,7 +48,6 @@ object CompleteBenchmark extends PerformanceTest {
 						varNames
 					}
 				}.run(scalaTree)
-        assert(result == Set("args"))
 			}
 		}
 
@@ -57,8 +56,22 @@ object CompleteBenchmark extends PerformanceTest {
 
         val result = new Traverser {
           var varNames = Set[String]()
-          override def traverse(tree: scala.meta.Tree): Unit = tree match {
-            case x:Term.Param if !x.name.isEmpty => varNames += x.name.get.toString
+          override def traverse(tree: scala.meta.Tree) = tree match {
+            case _: Term.Name | _ : Lit.Char | _ : Lit.Int | _ : Type.Name | _: Term.Param | _: Type.Apply =>
+            case Term.ApplyInfix(lhs, op, targs, args) =>
+              traverse(lhs)
+              traverse(op)
+              targs.foreach(traverse(_))
+              args.foreach(traverse(_))
+            case Term.Select(qual, selector) =>
+              traverse(qual)
+              traverse(selector)
+            case _ : Pat.Wildcard =>
+            case Case(pat, conds, stats) =>
+              traverse(pat)
+              conds.foreach(traverse(_))
+              stats.foreach(traverse(_))
+            case Lit.String(v) => varNames += v
             case _ => super.traverse(tree)
           }
 
@@ -68,27 +81,25 @@ object CompleteBenchmark extends PerformanceTest {
             varNames
           }
         }.run(scalaMetaTree)
-        assert(result == Set("args"))
 			}
 		}
 
     measure method "TQL  CollectIn[Set]" in {
       using(range) in { j =>
-        def collectVals = down(collectIn[Set]{case x:Term.Param if !x.name.isEmpty => x.name.get.toString})
+        def collectVals = down(collectIn[Set]{case Lit.String(v) => v})
         collectVals(scalaMetaTree)
       }
     }
 
     measure method "TQL CollectionLikeUI Collect" in {
       using(range) in { j =>
-        scalaMetaTree.collect{case x:Term.Param if !x.name.isEmpty => x.name.get.toString}.toSet
+        scalaMetaTree.collect{case Lit.String(v) => v}.toSet
       }
     }
 
 		measure method "TQL CollectionLikeUI CollectIn[Set]" in {
 			using(range) in { j =>
-        val result = scalaMetaTree.collectIn[Set]{case x:Term.Param if !x.name.isEmpty => x.name.get.toString}
-        assert(result == Set("args"))
+        val result = scalaMetaTree.collectIn[Set]{case Lit.String(v) => v}
 			}
 		}
 	}

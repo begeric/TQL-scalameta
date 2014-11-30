@@ -11,6 +11,7 @@ import scala.reflect.macros.whitebox.Context //TODO change to blackbox
 abstract class TraverserBuilder[T] {
 
 	protected def traverseAdt: Unit = macro TraverserMacros.buildTraverserMatcher[T]
+  protected def traverseAdt2: Unit = macro TraverserMacros.buildTraverserMatcher2[T]
 
 }
 
@@ -39,6 +40,26 @@ class TraverserMacros(val c: Context) extends AdtReflection {
     """
     res
 	}
+
+  def buildTraverserMatcher2[T : c.WeakTypeTag]: c.Tree = {
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+    val (methodName, paramName) = ensureOwnerIsDelegateWithOneParam[T]
+    q"""
+    $paramName match {
+      case ..${u.symbolOf[T].asRoot.branches.map(x => buildCases[T](x.sym, methodName))}
+     }
+    """
+  }
+
+  def buildCases[T : c.WeakTypeTag](sym: Symbol, methodName: TermName): c.Tree = {
+    val parameter = TermName(c.freshName)
+    cq"""
+      ($parameter: $sym) => $parameter match {
+        case ..${sym.asBranch.allLeafs.flatMap(buildCase[T](_, methodName))}
+        case _ => ()
+      }
+     """
+  }
 
   def buildCases[T : c.WeakTypeTag](methodName: TermName): List[c.Tree] = {
     val sym = u.symbolOf[T]

@@ -8,4 +8,5 @@ import org.scalameta.adt._
 
 class Traverser extends TraverserBuilder[Tree]{
 	def traverse(tree: Tree):Unit = traverseAdt
+  def traverse2(tree: Tree):Unit = traverseAdt2
 }

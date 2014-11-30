@@ -87,12 +87,25 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Same as filter but puts the results into a list
    * */
-  def collect[A : ClassTag](f: PartialFunction[T, A])(implicit x: ClassTag[T]): Matcher[List[A]] =
+  def collect2[A : ClassTag](f: PartialFunction[T, A])(implicit x: ClassTag[T]): Matcher[List[A]] =
     guard[T]{case t => f.isDefinedAt(t)} map (x => List(f(x)))
 
-  def collectIn[C[_]] = new {
+  def collect[A : ClassTag](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = Matcher[List[A]]{ tree =>
+    if (f.isDefinedAt(tree)) Some((tree, List(f(tree))))
+    else None
+  }
+
+  def collectIn22[C[_]] = new {
     def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]]) =
       guard[T]{case t => f.isDefinedAt(t)} map(t => (y() += f(t)).result)
+  }
+
+  def collectIn[C[_]] = new {
+    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]]) = Matcher[C[A]]{
+      tree =>
+      if (f.isDefinedAt(tree)) Some((tree, (y() += f(tree)).result))
+      else None
+    }
   }
 
   def collectIn2[V[_, _]] = new {

@@ -22,15 +22,24 @@ object Monoid {
     def append(a: List[A], b: List[A]) = a ::: b
   }
 
+  implicit def setMonoid[A] = new Monoid[Set[A]] {
+    def zero = Set.empty[A]
+    def append(a: Set[A], b: Set[A]) = a ++ b
+  }
+
+
   implicit def traversableMonoid[A, B[A] <: Traversable[A]](implicit y: CanBuildFrom[B[A], A, B[A]]) =
     new Monoid[B[A]] {
       def zero = y.apply.result
-      def append(a: B[A], b: B[A]): B[A] = {
-        val x = y.apply
-        x ++= a
-        x ++= b
-        x.result
-      }
+      def append(a: B[A], b: B[A]): B[A] =
+        if (a.size == 0) b
+        else if (b.size == 0) a
+        else {
+          val x = y.apply
+          x ++= a
+          x ++= b
+          x.result
+        }
   }
 
   implicit def mapMonoid[A, C, B[A, C] <: Traversable[(A, C)]](implicit y: CanBuildFrom[B[A, C], (A, C), B[A, C]]) =
