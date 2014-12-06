@@ -6,6 +6,7 @@ package tqlscalameta
 
 import ScalaMetaTraverser._
 import scala.meta.internal.ast._
+import scala.meta.syntactic.show._
 import scala.language.reflectiveCalls
 
 object Example extends App{
@@ -36,7 +37,8 @@ object Example extends App{
     }
   })
 
-  val getAllInts = down(collectIn[Set]{case Lit.Int(a) => a})
+  //println(x.show[Raw])
+  //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collectIn[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
   /*val test = update2{

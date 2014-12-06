@@ -1,6 +1,9 @@
 package tql
 
 
+import scala.reflect.ClassTag
+import scala.collection.generic.CanBuildFrom
+import scala.language.experimental.macros
 import scala.language.higherKinds
 /**
  * Created by Eric on 20.10.2014.
@@ -8,9 +11,6 @@ import scala.language.higherKinds
 
 trait Combinators[T] { self: Traverser[T] =>
 
-  import scala.reflect.ClassTag
-  import scala.collection.generic.CanBuildFrom
-  import scala.language.experimental.macros
 
   /**
    * Traverse the children of the tree

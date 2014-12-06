@@ -35,6 +35,7 @@ class TraverserBuilder(val c: Context) {
     val parameter = TermName(c.freshName)
     val cases = buildCases[T, A](f, objs.toList, parameter)
     buildFuncWith[T, A](cases, parameter)
+    //c.abort(c.enclosingPosition, show("yo"))
   }
 
   def buildFuncWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
@@ -72,8 +73,16 @@ class TraverserBuilder(val c: Context) {
       val newNames = types.map(_ => TermName(c.freshName))
       Some((newNames, types))
     }
-    else
-      None
+    else {
+      val apply = typ.decl(TermName("apply"))
+      val MethodType(args, _) = apply.typeSignatureIn(typ)
+      if (!args.isEmpty){
+        val newNames = args.map(_ => TermName(c.freshName))
+        Some((newNames, args.map(_.info)))
+      }
+      else
+        None
+    }
   }
 
   def createEnum[T : c.WeakTypeTag, A : c.WeakTypeTag]
@@ -105,13 +114,13 @@ class TraverserBuilder(val c: Context) {
     val forEnums: List[c.Tree] = enums.flatMap(_.map(_._3))
     val results: List[TermName] = enums.flatMap(_.map(_._2))
 
-    if (results.size > 0){
+    if (!results.isEmpty){
       val addResults = results.tail.foldLeft[c.Tree](q"${results.head}")((a, b) => q"$a + $b")
       val paramsWithNewParams = parameters.unzip._1.zip(enums.map(_.map(_._1)))
       val reconstructParams = paramsWithNewParams.map(x => x._2.getOrElse(x._1))
       val reconstruct = q"$constructor(..$reconstructParams)"
       val eqList = paramsWithNewParams.foldLeft[c.Tree](q"true"){
-        (acc, x) => q"$acc && ${x._2.map(y => q"($y eq ${x._1})").get}"}
+        (acc, x) => q"$acc && ${x._2.map(y => q"($y eq ${x._1})").getOrElse(q"true")}"}
 
       val doesReconstruct = q"if ($eqList) $origin else $reconstruct"
 

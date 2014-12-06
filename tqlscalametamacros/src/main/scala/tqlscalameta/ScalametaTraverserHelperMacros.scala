@@ -38,6 +38,16 @@ class ScalametaTraverserBuilder(override val c: Context)
     buildImpl[T, A](f, allLeafs: _*)
   }
 
+  override def getParamsWithTypes(typ: c.Type): Option[(List[TermName], List[c.Type])] = {
+    //c.abort(c.enclosingPosition, show(typ.companion.typeSymbol.asLeaf))
+    val fields = typ.companion.typeSymbol.asLeaf.nontriviaFields
+    if (!fields.isEmpty){
+      Some(fields.map(x => (TermName(c.freshName), x.tpe) ).unzip)
+    }
+    else
+      None
+  }
+
   def buildFromTopSymbolOptimize[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
                                                               each symbol and the buildImpl function doesn't fail*/
