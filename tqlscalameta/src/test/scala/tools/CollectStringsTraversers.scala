@@ -9,7 +9,7 @@ import scala.meta.internal.ast.Lit
  */
 object CollectStringsTraversers {
 
-  def scala(compiler: CompilerProxy) = new  compiler.compiler.Traverser {
+  def scalaTraverser(compiler: CompilerProxy) = new compiler.compiler.Traverser {
     import compiler.compiler._
     var varNames = Set[String]()
     override def traverse(tree: Tree): Unit = tree match {
@@ -24,7 +24,7 @@ object CollectStringsTraversers {
     }
   }
 
-  val scalameta = new TraverserTableTag {
+  val scalametaTraverser = new TraverserTableTag {
     var varNames = Set[String]()
     override def traverse(tree: scala.meta.Tree) = tree match {
       case Lit.String(v) => varNames += v
@@ -38,7 +38,7 @@ object CollectStringsTraversers {
     }
   }
 
-  val scalametaOptimzed = new tools.OptimzedOrderTraverser {
+  val scalametaOptimzedTraverser = new tools.OptimzedOrderTraverser {
     var varNames = Set[String]()
 
     override def traverse(tree: meta.Tree) = tree match {

@@ -4,6 +4,7 @@ import org.scalameter._
 import org.scalameter.execution.LocalExecutor
 import org.scalameter.reporting.LoggingReporter
 import tools.ScalaToTree.CompilerProxy
+import scala.language.reflectiveCalls
 
 /**
  * Created by Eric on 20.10.2014.
@@ -29,20 +30,20 @@ object CompareBenchmarks extends PerformanceTest {
 	performance of "Variable name Collection" in {
 		measure method "Scala Traverser" in {
 			using(range) in { j =>
-        val result = CollectStringsTraversers.scala(compiler)(scalaTree)
+        val result = CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
 			}
 		}
 
 		measure method "Scala Meta Traverser" in {
       using(range) in { j =>
-        val result = CollectStringsTraversers.scalametaOptimzed(scalaMetaTree)
+        val result = CollectStringsTraversers.scalametaOptimzedTraverser(scalaMetaTree)
 			}
 		}
 
     measure method "Scala Meta Traverser Optimized" in {
 
       using(range) in { j =>
-        val result = CollectStringsTraversers.scalameta(scalaMetaTree)
+        val result = CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
     }
 
