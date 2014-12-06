@@ -9,7 +9,7 @@
 package scala
 package collection
 
-import generic._
+import scala.collection.generic._
 
 /** A template trait for all sequences which may be traversed
  *  in parallel.
@@ -30,7 +30,7 @@ import generic._
  *  Sequences are special cases of iterable collections of class `Iterable`.
  *  Unlike iterables, sequences always have a defined order of elements.
  */
-trait GenSeqLike[+A, +Repr] extends Any with GenIterableLike[A, Repr] with Equals with Parallelizable[A, parallel.ParSeq[A]] {
+trait GenSeqLike[+A, +Repr] extends Any with GenIterableLike[A, Repr] with Equals with Parallelizable[A, scala.collection.parallel.ParSeq[A]] {
   def seq: Seq[A]
 
   /** Selects an element by its index in the $coll.

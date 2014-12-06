@@ -5,6 +5,8 @@ package tql
 
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
+import scala.language.higherKinds
+import scala.language.reflectiveCalls
 
 /**
  * This trait allows to easily write simple traversals.

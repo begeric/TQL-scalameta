@@ -8,16 +8,93 @@ import org.scalameta.adt._
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context //TODO change to blackbox
 
-abstract class TraverserBuilder[T] {
+object TraverserBuilder {
 
-	protected def traverseAdt: Unit = macro TraverserMacros.buildTraverserMatcher[T]
-  protected def traverseAdt2: Unit = macro TraverserMacros.buildTraverserMatcher2[T]
+	def traverseAdt[T]: Unit = macro TraverserMacros.buildTraverserMatcher[T]
+  def traverseAdtBranchesFirst[T]: Unit = macro TraverserMacros.buildTraverserMatcherBranchesFirs[T]
+
+  def buildTraverseTable[T]: Array[(T, T => Unit) => Unit] = macro TraverserMacros.buildTraverseTable[T]
+  def buildTraverseTableWithMethod[T](traverseMethod: T => Unit): Array[T => Unit] = macro TraverserMacros.buildTraverseTableWithMethod[T]
 
 }
 
 class TraverserMacros(val c: Context) extends AdtReflection {
   val u: c.universe.type = c.universe
 	import c.universe._
+
+  def buildTraverseTable[T : c.WeakTypeTag]: c.Tree = {
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val nbLeaves = u.symbolOf[T].asRoot.allLeafs.size * 2
+    val array = TermName(c.freshName("table"))
+    val tagTerm = TermName("$tag")
+    val assigns: List[c.Tree] = u.symbolOf[T].asRoot.allLeafs.map(x =>
+      q"""
+        $array(${x.sym.companion}.$tagTerm) = ${buildFuncForCase[T](x)}
+      """
+    )
+    val res = q"""
+        val $array = new Array[($Ttpe, $Ttpe => Unit) => Unit]($nbLeaves)
+        ..$assigns
+        $array.toArray
+    """
+    res
+  }
+
+  def buildTraverseTableWithMethod[T : c.WeakTypeTag](traverseMethod: c.Tree): c.Tree = {
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val nbLeaves = u.symbolOf[T].asRoot.allLeafs.size * 2
+    val array = TermName(c.freshName("table"))
+    val tagTerm = TermName("$tag")
+    val assigns: List[c.Tree] = u.symbolOf[T].asRoot.allLeafs.map(x =>
+      q"""
+        $array(${x.sym.companion}.$tagTerm) = ${buildFuncForTraverse[T](x, traverseMethod)}
+      """
+    )
+    val res = q"""
+        val $array = new Array[$Ttpe => Unit]($nbLeaves)
+        ..$assigns
+        $array.toArray
+    """
+    res
+  }
+
+  def buildFuncForCase[T : c.WeakTypeTag](leaf: Leaf): c.Tree = {
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val treeParam = TermName(c.freshName("tree"))
+    val traverseParam = TermName(c.freshName("traverse"))
+    val cas = buildCase[T](leaf, traverseParam)
+    val mat = cas.map(x => q"$treeParam match {case $x}").getOrElse(q"()")
+    q"($treeParam: $Ttpe, $traverseParam: $Ttpe => Unit) => $mat"
+  }
+
+  def buildFuncForTraverse[T : c.WeakTypeTag](leaf: Leaf, traverseMethod: c.Tree): c.Tree = {
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val treeParam = TermName(c.freshName("tree"))
+    val tr = buildTraverse[T](leaf, treeParam, traverseMethod)
+    val mat = tr.getOrElse(q"()")
+    q"($treeParam: $Ttpe) => $mat"
+  }
+
+  def buildTraverse[T : c.WeakTypeTag](leaf: Leaf, argName: TermName, traverseMethod: c.Tree): Option[c.Tree] = {
+    val newVal = TermName("new" + c.freshName(argName.toString))
+    val cast = q"val $newVal = $argName.asInstanceOf[${leaf.sym}]"
+    val fieldsTraverse = leaf.nontriviaFields.flatMap(makeTraverseStat2[T](_, newVal, traverseMethod))
+    if (fieldsTraverse.size > 0)
+      Some(q"""$cast; ${fieldsTraverse.reduce[c.Tree]((a,b) => q"$a;$b")}""")
+    else
+      None
+  }
+  def makeTraverseStat2[T : c.WeakTypeTag](field: Field, objName: TermName, methodName: c.Tree): Option[c.Tree] = field.tpe match {
+    case t if t <:< weakTypeOf[T]           => Some(q"$methodName($objName.${field.name})")
+    case t if t <:< weakTypeOf[Seq[T]]      => Some(q"$objName.${field.name}.foreach($methodName(_))")
+    case t if t <:< weakTypeOf[Seq[Seq[T]]] => Some(q"$objName.${field.name}.foreach(_.foreach($methodName(_)))")
+    case t if t <:< weakTypeOf[Option[T]]   => Some(q"$objName.${field.name}.foreach($methodName(_))")
+    case _ => None
+  }
 
   /*Use the parameter of the enclosing method to create pattern match
   * through the whole hierarchy of T
@@ -41,7 +118,7 @@ class TraverserMacros(val c: Context) extends AdtReflection {
     res
 	}
 
-  def buildTraverserMatcher2[T : c.WeakTypeTag]: c.Tree = {
+  def buildTraverserMatcherBranchesFirs[T : c.WeakTypeTag]: c.Tree = {
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
     val (methodName, paramName) = ensureOwnerIsDelegateWithOneParam[T]
     q"""

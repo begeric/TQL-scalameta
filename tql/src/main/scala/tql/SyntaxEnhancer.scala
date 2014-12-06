@@ -5,6 +5,7 @@ package tql
  */
 
 import scala.reflect.ClassTag
+import scala.language.implicitConversions
 
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 

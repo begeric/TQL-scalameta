@@ -5,12 +5,13 @@ object BuildSettings {
 
   val buildSettings = Defaults.defaultSettings ++ Seq(
     version := "0.1-SNAPSHOT",
+    scalacOptions ++= Seq("-optimize", "-feature", /*"-Yinline-warnings",*/ "-deprecation"),
+    //javaOptions := Seq("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"),
     scalaVersion := "2.11.2",
     crossScalaVersions := Seq("2.10.2", "2.10.3", "2.10.4", "2.11.0", "2.11.1", "2.11.2", "2.11.3", "2.11.4"),
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     organization := "com.github.begeric",
     libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT",
-    scalacOptions ++= Seq(),
     publishMavenStyle := true,
     publishOnlyWhenOnMaster := publishOnlyWhenOnMasterImpl.value,
     publishTo <<= version { v: String =>
@@ -158,11 +159,12 @@ object TQLBuild extends Build {
         libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
         libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
+        libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.7-SNAPSHOT" % "test",
         libraryDependencies += "org.scalameta" % "scalahost_2.11.2" % "0.1.0-SNAPSHOT",
         libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT",
-        libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.6",
         testFrameworks += scalaMeterFramework,
         testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
+        //fork in Test := true,
         parallelExecution in Test := false,
         logBuffered := false,
         initialCommands in console := """

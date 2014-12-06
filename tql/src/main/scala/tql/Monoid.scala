@@ -4,6 +4,7 @@ package tql
  * Created by Eric on 20.10.2014.
  */
 
+import scala.language.higherKinds
 /**
  * https://en.wikipedia.org/wiki/Monoid
  * */

@@ -11,9 +11,9 @@ import java.io._
 import scala.reflect.runtime.{universe => ru}
 import scala.tools.reflect.{ToolBox, ToolBoxError}
 import scala.compat.Platform.EOL
-import scala.meta.internal.hosts.scalacompiler.scalahost.Scalahost
+import scala.meta.internal.hosts.scalac.Scalahost
 import scala.meta.semantic.{Host => PalladiumHost}
-import scala.meta.internal.hosts.scalacompiler.scalahost.{Host => OurHost}
+import scala.meta.internal.hosts.scalac.{Host => OurHost}
 
 /*
 * Lame attempt to make available the scala compiler to the user, to make use of scala and scala.meta Trees
@@ -84,13 +84,13 @@ object ScalaToTree {
 		}
 
     def scalaToMeta(tree: compiler.Tree) = {
-      import scala.meta.syntactic.ast._
+      import scala.meta.internal.ast._
       val h = Scalahost(compiler).asInstanceOf[PalladiumHost with OurHost[compiler.type]]
       tree match {
         case tree: PackageDef => h.toPalladium(tree, classOf[Source])
         case tree: TermTree => h.toPalladium(tree, classOf[Term])
         case tree: MemberDef => h.toPalladium(tree, classOf[Stat])
-        case tree => h.toPalladium(tree, classOf[scala.meta.syntactic.ast.Term.Block])
+        case tree => h.toPalladium(tree, classOf[scala.meta.internal.ast.Term.Block])
       }
     }
 
