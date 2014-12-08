@@ -38,7 +38,7 @@ object CollectStringsTraversers {
     }
   }
 
-  val scalametaOptimzedTraverser = new tools.OptimzedOrderTraverser {
+  val scalametaOptimzedTraverser = new OptimzedOrderTraverser {
     var varNames = Set[String]()
 
     override def traverse(tree: meta.Tree) = tree match {

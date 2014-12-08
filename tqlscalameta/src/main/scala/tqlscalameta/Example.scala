@@ -41,10 +41,10 @@ object Example extends App{
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collectIn[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
-  /*val test = update2{
-    case Lit.Int(a) => Lit.Int(a)
-    case x: Defn.Val => x
-  } */
+
+  val test = rewrite {
+    case Lit.Int(a) => Lit.Int(a * 2) andCollect a
+  }.down
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
@@ -53,7 +53,10 @@ object Example extends App{
   val t5 = x.up.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}
   val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
-  println(t5)
+  println(test(x))
+  /*println(t5)
   println(getAvg(x).result.map(_()))
-  println(getAllVals(x).result)
+  println(getAllVals(x).result)  */
+
+  //test[Tree]{case x @ Term.If(Lit.Int(a), b, c) => true}
 }

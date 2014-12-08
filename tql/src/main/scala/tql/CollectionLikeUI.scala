@@ -62,7 +62,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
 
-    def flatMap[B](f: T => MatcherResult[B]) = down.flatMap(f)
+    //def flatMap[B](f: T => MatcherResult[B]) = down.flatMap(f)
 
     def down      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.down(x)})
     def downBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.downBreak(x)})
@@ -102,7 +102,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
      * */
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, x, meta)
 
-    def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, self.flatMap(f), meta)
+    //def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, self.flatMap(f), meta)
   }
 
 
@@ -137,7 +137,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, m ~> x, meta)
 
-    def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
+    //def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
 
     def down =
       new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.down(x))})

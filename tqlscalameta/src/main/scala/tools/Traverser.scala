@@ -18,9 +18,9 @@ class Traverser{
 	def traverse(tree: Tree):Unit = TraverserBuilder.traverseAdt[Tree]
 }
 
-class TraverserBranchesFirst{
+/*class TraverserBranchesFirst{
   def traverse(tree: Tree):Unit = TraverserBuilder.traverseAdtBranchesFirst[Tree]
-}
+}  */
 
 class TraverserTableTag{
   val myTable = TraverserTableTag.buildTraverseTable
