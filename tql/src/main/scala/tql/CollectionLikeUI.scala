@@ -161,6 +161,6 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
   implicit class ForceResult[A : Monoid](x : EvaluatorAndThen[A]){
     def force = x.meta(x.m).apply(x.t)
     def result = force.result
-    def tree = force.tree
+    def tree = force.tree//.getOrElse(x.t) ??
   }
 }
