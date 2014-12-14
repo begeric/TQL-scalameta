@@ -52,7 +52,14 @@ class CombinatorsSugar(val c: Context) {
     }
   }
 
-  def TWithResult[T: c.WeakTypeTag](t: c.Tree): c.Tree = q"($t, tql.Monoid.Void.zero)"
+  def TWithUnitResult[T: c.WeakTypeTag](t: c.Tree): c.Tree = q"($t, tql.Monoid.Void.zero)"
+
+  def TWithResult[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree  = c.untypecheck(c.prefix.tree) match {
+    case q"$_.CTWithResult[$_]($t)" => q"($t, $a)"
+    case _ => c.abort(c.enclosingPosition, "Bad form in TWithResult " + showRaw(c.prefix.tree))
+  }
+
+  def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree = TWithResult[T, List[A]](q"scala.collection.immutable.List($a)")
 
   def rewriteSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
 

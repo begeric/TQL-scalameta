@@ -109,10 +109,10 @@ trait Combinators[T] { self: Traverser[T] =>
       guard[T]{case t => f.isDefinedAt(t)} map(t => (y() += f(t)).result)
   }
 
-  implicit def TWithResult[U <: T](t: U): (U, Unit) = macro CombinatorsSugar.TWithResult[U]//(t, Monoid.Void.zero)
-  implicit class CTWithResult[U <: T](t: U){
-    def withResult[A](a: A) = (t, a)
-    def andCollect[A](a: A) = (t, List(a))
+  implicit def TWithResult[U <: T](t: U): (U, Unit) = macro CombinatorsSugar.TWithUnitResult[U]//(t, Monoid.Void.zero)
+  implicit class CTWithResult[U <: T](t: U) {
+    def withResult[A](a: A): (U, A) = macro CombinatorsSugar.TWithResult[U, A]//(t, a)
+    def andCollect[A](a: A): (U, List[A]) = macro CombinatorsSugar.TAndCollect[U, A]//(t, List(a))
   }
 
   def rewrite(f: PartialFunction[T, (T,Any)]): Matcher[Any] = macro CombinatorsSugar.rewriteSugarImpl[T]
