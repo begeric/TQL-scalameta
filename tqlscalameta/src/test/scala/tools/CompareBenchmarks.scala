@@ -23,7 +23,7 @@ object CompareBenchmarks extends PerformanceTest {
 	val range = Gen.enumeration("size")(100)
 
 	val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/GenSeqLike.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
@@ -33,19 +33,23 @@ object CompareBenchmarks extends PerformanceTest {
         val result = CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
 			}
 		}
+    measure method "Hand written Scala Meta Traverser" in {
+      using(range) in { j =>
+        val result = CollectStringsTraversers.scalametaHandwritten(scalaMetaTree)
+      }
+    }
 
-		measure method "Scala Meta Traverser" in {
+    /*measure method "Scala Meta Traverser" in {
       using(range) in { j =>
         val result = CollectStringsTraversers.scalametaOptimzedTraverser(scalaMetaTree)
-			}
-		}
+      }
+    }
 
     measure method "Scala Meta Traverser Optimized" in {
-
       using(range) in { j =>
         val result = CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
-    }
+    } */
 
     /*measure method "TQL  CollectIn[Set]" in {
       using(range) in { j =>

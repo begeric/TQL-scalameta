@@ -31,7 +31,7 @@ object TestTraversers extends App {
       varNames
     }
   }.run(scalaTree)*/
-  println("pause")
+  /*println("pause")
   Thread.sleep(4000)
   println("starting")
   (0 until 100).foreach{i => 
@@ -64,24 +64,49 @@ object TestTraversers extends App {
         varNames
       }
     }.run(scalaMetaTree)
+  } */
+
+  println("pause")
+  Thread.sleep(3000)
+
+  var hey = 0
+  (0 until 100000).foreach { i =>
+    val scalametaHandwritten = new HandWrittenScalaMeta {
+      var varNames = Set[String]()
+
+      import scala.meta.internal.ast._
+
+      override def traverse(tree: meta.Tree) = tree match {
+        case Lit.String(v) => varNames += v
+        case _ => super.traverse(tree)
+      }
+
+      def apply(tree: meta.Tree): Set[String] = {
+        varNames = Set[String]()
+        traverse(tree)
+        hey += 1
+        varNames
+      }
+    }.apply(scalaMetaTree)
   }
 
-  /*val map = new scala.collection.mutable.HashMap[String, Int]()
-  new tools.Traverser {
-    override def traverse(tree: scala.meta.Tree) = tree match {
-      case _ =>
-        if (map.contains(tree.getClass.toString))
-          map(tree.getClass.toString) += 1
-        else
-          map += tree.getClass.toString -> 1
-       super.traverse(tree)
-    }
-  }.traverse(scalaMetaTree)
+/*val map = new scala.collection.mutable.HashMap[String, Int]()
+new tools.Traverser {
+  override def traverse(tree: scala.meta.Tree) = tree match {
+    case _ =>
+      if (map.contains(tree.getClass.toString))
+        map(tree.getClass.toString) += 1
+      else
+        map += tree.getClass.toString -> 1
+     super.traverse(tree)
+  }
+}.traverse(scalaMetaTree)
 
-  val sorted = map.toList.sortBy(_._2).reverse.mkString("\n")*/
+val sorted = map.toList.sortBy(_._2).reverse.mkString("\n")
+println(sorted)
 
 
-  //println(result1.toString + " : " + result2.toString)
-  println(count1 + " : " + count2)
+//println(result1.toString + " : " + result2.toString)
+println(count1 + " : " + count2)   */
 
 }

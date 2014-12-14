@@ -4,7 +4,7 @@ package tqlscalameta
  * Created by Eric on 20.10.2014.
  */
 
-import ScalaMetaTraverser._
+import ScalaMetaFusionTraverser._
 import scala.meta.internal.ast._
 import scala.meta.syntactic.show._
 import scala.language.reflectiveCalls
@@ -43,7 +43,7 @@ object Example extends App{
 
 
   val test = rewrite {
-    case Lit.Int(a) => Lit.Int(a * 2) andCollect a
+    case Lit.Int(a) => Lit.Int(a * 2) withResult List(a)
   }.down
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
