@@ -29,10 +29,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def \[B : Monoid] (b: Matcher[B]) = a andThen children(b)
     def \\[B : Monoid] (b: Matcher[B]) = a andThen downBreakAlias(b)
     //def >>[B] (f: T => MatcherResult[B]) = flatMap(f)
-    def apply[I <: T : ClassTag, O <: T]
+    /*def apply[I <: T : ClassTag, O <: T]
              (f: PartialFunction[I, O])
              (implicit x: ClassTag[T], y: AllowedTransformation[I, O]) =
-      transform[I, O](f)
+      transformWithResult[I, O](f)  */
 
     def collect = a.map(List(_))
     def downBreak(implicit x: Monoid[A]) = downBreakAlias(a)

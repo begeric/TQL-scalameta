@@ -55,10 +55,11 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
-      down.transform(f)
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
+      down.transformWithResult(f)
 
-    def update(f: PartialFunction[T, T]): Option[T] = macro CombinatorsSugar.updateSugarImpl[T]
+    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+      macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
 
@@ -87,11 +88,11 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
-      meta(self.transform(f)).apply(t).tree
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
+      meta(self.transformWithResult(f)).apply(t)
 
-    def update(f: PartialFunction[T, T]): Option[T] =
-      macro CombinatorsSugar.updateSugarImpl[T]
+    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+      macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       meta(self.visit(f)).apply(t)
@@ -126,11 +127,11 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
-      meta(m ~> self.transform(f)).apply(t).tree
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
+      meta(m ~> self.transformWithResult(f)).apply(t)
 
-    def update(f: PartialFunction[T, T]): Option[T] =
-      macro CombinatorsSugar.updateSugarImpl[T]
+    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+      macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       meta(m ~> self.visit(f)).apply(t)

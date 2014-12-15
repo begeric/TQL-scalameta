@@ -54,15 +54,6 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
-  def transform[I <: T : ClassTag, O <: T](f: PartialFunction[I, O])(implicit x: AllowedTransformation[I, O]) =
-    Matcher[Unit] {
-      case t: I if f.isDefinedAt(t) => Some((f(t), Monoid.Void.zero))
-      case _ => None
-    }
-
-  /**
-   *  Same as Transform, but can return a result too
-   * */
   def transformWithResult[I <: T : ClassTag, O <: T, A](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
     Matcher[A] {
       case t: I if f.isDefinedAt(t) => Some(f(t))
@@ -115,19 +106,16 @@ trait Combinators[T] { self: Traverser[T] =>
     def andCollect[A](a: A): (U, List[A]) = macro CombinatorsSugar.TAndCollect[U, A]//(t, List(a))
   }
 
-  def rewrite(f: PartialFunction[T, (T,Any)]): Matcher[Any] = macro CombinatorsSugar.rewriteSugarImpl[T]
 
-  def test[A](f: PartialFunction[A, Boolean]): Unit = macro CombinatorsSugar.testImpl
+  /**
+   * Syntactic sugar for transform combinator so that one doesn't need to type the type parameter
+   * */
+  def transform(f: PartialFunction[T, (T,Any)]): Matcher[Any] = macro CombinatorsSugar.transformSugarImpl[T]
 
   /**
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
    * */
   def filter(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
-
-  /**
-  * Syntactic sugar for transform combinator so that one doesn't need to type the type parameter
-    * */
-  def update(f: PartialFunction[T, T]): Matcher[Unit] = macro CombinatorsSugar.updateSugarImpl[T]
 
 
 }
