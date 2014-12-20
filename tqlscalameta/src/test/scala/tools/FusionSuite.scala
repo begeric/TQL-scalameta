@@ -19,7 +19,7 @@ class FusionSuite extends FunSuite {
     var result1: List[Int] = Nil
     var result2: List[Int] = Nil
     var result3: List[Int] = Nil
-
+   import scala.meta._
     {
       import tqlscalameta.ScalaMetaTraverser._
       val collectVals = down(collect{case Lit.Int(v) => v})

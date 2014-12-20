@@ -74,7 +74,7 @@ object CompareBenchmarks extends PerformanceTest {
       }
     }
 
-    import tqlscalameta.ScalaMetaTraverser._
+    import scala.meta.tqlscalameta.ScalaMetaTraverser._
     import scala.meta.internal.ast._
 
     measure method "TQL  CollectIn[Set]" in {

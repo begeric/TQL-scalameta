@@ -28,7 +28,7 @@ object FusionBenchmarks  extends PerformanceTest {
 
   performance of "Variable name Collection" in {
     measure method "ScalaMetaTraverser" in {
-      import tqlscalameta.ScalaMetaTraverser._
+      import scala.meta.tqlscalameta.ScalaMetaTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
         val twice = collectVals + collectVals
@@ -38,7 +38,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
 
     measure method "ScalaMetaFusionTraverser" in {
-      import tqlscalameta.ScalaMetaFusionTraverser._
+      import scala.meta.tqlscalameta.ScalaMetaFusionTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
         val twice = collectVals + collectVals
@@ -48,7 +48,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
 
     measure method "ScalaMetaFusionTraverser with optimize" in {
-      import tqlscalameta.ScalaMetaFusionTraverser._
+      import scala.meta.tqlscalameta.ScalaMetaFusionTraverser._
       using(range) in { j =>
         val collectVals = down(optimize(collect{case Lit.String(v) => v}))
         val twice = collectVals + collectVals

@@ -1,4 +1,4 @@
-package tqlscalameta
+package scala.meta.tqlscalameta
 
 
 /**

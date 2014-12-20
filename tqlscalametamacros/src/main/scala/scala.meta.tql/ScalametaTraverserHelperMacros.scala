@@ -1,4 +1,4 @@
-package tqlscalameta
+package scala.meta.tqlscalameta
 
 /**
  * Created by Eric on 29.10.2014.
@@ -26,7 +26,7 @@ object ScalametaTraverserHelperMacros {
 }
 
 class ScalametaTraverserBuilder(override val c: Context)
-                    extends TraverserBuilder(c)
+                    extends _root_.tql.TraverserBuilder(c)
                     with org.scalameta.adt.AdtReflection {
   val u: c.universe.type = c.universe
   import c.universe._
