@@ -37,6 +37,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def apply[A : Monoid](m: Matcher[A]): Matcher[A]
   }
 
+  //thanks to http://stackoverflow.com/questions/6909053/enforce-type-difference/17047288#17047288
   @annotation.implicitNotFound(msg = "Cannot prove that ${A} =!= ${B}.")
   trait =!=[A,B]
   object =!= {
@@ -91,8 +92,8 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
       (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
       down.transformWithResult(f)
 
-    def transform(f: PartialFunction[T, (T,Any)]): Any =
-      macro CombinatorsSugar.transformSugarImpl[T]
+    def transform[A](f: PartialFunction[T, (T,A)])(implicit r: TransformResultTr[A]): r.R =
+      macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
 
@@ -126,8 +127,8 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
       (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
       r.get(t, meta(self.transformWithResult(f)).apply(t))
 
-    def transform(f: PartialFunction[T, (T,Any)]): Any =
-      macro CombinatorsSugar.transformSugarImpl[T]
+    def transform[A](f: PartialFunction[T, (T,A)])(implicit r: TransformResultTr[A]): r.R =
+      macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       meta(self.visit(f)).apply(t)
@@ -167,8 +168,8 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
       (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
       r.get(t, meta(m ~> self.transformWithResult(f)).apply(t))
 
-    def transform(f: PartialFunction[T, (T,Any)]): Any =
-      macro CombinatorsSugar.transformSugarImpl[T]
+    def transform[A](f: PartialFunction[T, (T,A)])(implicit r: TransformResultTr[A]): r.R =
+      macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
       meta(m ~> self.visit(f)).apply(t)

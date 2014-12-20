@@ -126,7 +126,7 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Syntactic sugar for transform combinator so that one doesn't need to type the type parameter
    * */
-  def transform(f: PartialFunction[T, (T,Any)]): Matcher[Any] = macro CombinatorsSugar.transformSugarImpl[T]
+  def transform[A](f: PartialFunction[T, (T,A)]): Matcher[A] = macro CombinatorsSugar.transformSugarImpl[T]
 
   /**
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter

@@ -23,8 +23,9 @@ class CombinatorsSugar(val c: Context) {
 
   def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree = TWithResult[T, List[A]](q"scala.collection.immutable.List($a)")
 
-  def transformSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
 
+
+  def transformSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
     def getTypesFromTuple2(rhss: List[c.Type]): List[(c.Type, c.Type)] = rhss.map{
       /*It's not like I have a choice.. http://stackoverflow.com/questions/18735295/how-to-match-a-universetype-via-quasiquotes-or-deconstructors*/
       case TypeRef(_, sym, List(a, b)) if sym.fullName == "scala.Tuple2" => (a, b)
@@ -40,6 +41,7 @@ class CombinatorsSugar(val c: Context) {
     q"${c.prefix}.transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)](($f).asInstanceOf[PartialFunction[$lhs, ($rhs, $res)]]))"
   }
 
+  def transformSugarImplWithTRtype[T : c.WeakTypeTag](f: c.Tree)(r: c.Tree): c.Tree = transformSugarImpl[T](f)
 
   def getLUBsfromPFs[T : c.WeakTypeTag](f: c.Tree): (c.Type, c.Type) = {
     val tpes = getTypesFromPFS[T](f)
