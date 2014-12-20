@@ -9,6 +9,16 @@ import scala.reflect.macros.whitebox.Context
 class CombinatorsSugar(val c: Context) {
   import c.universe._
 
+  def macroCollect[T : c.WeakTypeTag]: c.Tree = {
+    val tpe = implicitly[c.WeakTypeTag[T]]
+    tpe.tpe match {
+      case TypeRef(NoPrefix, TypeName("C"), List()) => q"${c.prefix}.CollectIn[${typeOf[List[_]]}]"
+      case _ => q"${c.prefix}.CollectIn[$tpe]"
+    }
+    c.abort(c.enclosingPosition, showRaw(tpe.tpe))
+  }
+
+
   def filterSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
     val (lhs, _) =  getLUBsfromPFs[T](f)
     q"${c.prefix}.guard[$lhs]($f)"

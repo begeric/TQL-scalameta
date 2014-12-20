@@ -39,26 +39,47 @@ object Example extends App{
 
   //println(x.show[Raw])
   //val getAllInts = down(visit{case _ => println(x); List()})
-  val getAllVals = (collectIn[Set]{case x: Defn.Val => x.pats.head.toString}).down
+  val getAllVals = (collect{case x: Defn.Val => x.pats.head.toString}).down
 
   val test = transform {
     case Lit.Int(a) => Lit.Int(a * 3) withResult List(a)
   }.down
 
-  val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
+  /*val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
   val t3 = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b)}
   val t4 = x.filter{case Lit.Int(a) => true}.transform{case x: Lit.Int => Lit.Int(1)}
   val t5 = x.up.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}
-  val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
+  val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result */
 
   //val bfstest = bfs(collect{case Lit.Int(a) => a})
 
   //println(bfstest(x))
   /*println(t5)
-  println(getAvg(x).result.map(_()))
-  println(getAllVals(x).result)  */
-  println(t3)
+  println(getAvg(x).result.map(_()))*/
+  println(getAllVals(x).result)
 
   //test[Tree]{case x @ Term.If(Lit.Int(a), b, c) => true}
+
+  /*object Test {
+    trait Stuff[T] {
+      type R
+      def zero: R
+    }
+    object Stuff{
+      implicit def nothing = new Stuff[Nothing]{
+        type R = List[Int]
+        def zero = List(1,2,3)
+      }
+
+      implicit def others[A[_] <: Traversable[_]] = new Stuff[A[_]] {
+        type R = A[Int]
+        def zero = Traversable.
+      }
+    }
+    def test[T[_]](implicit ev: Stuff[T[_]]): ev.R = ev.zero
+
+    println(test)
+  }
+  Test.test  */
 }

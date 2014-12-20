@@ -75,13 +75,13 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
    * */
   implicit class Evaluator(t: T){
 
-    def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y : ClassTag[A]) =
-      down.collect(f)
+    /*def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y : ClassTag[A]) =
+      down.collect(f) */
 
-    def collectIn[C[_]] = new {
+   /* def collectIn[C[_]] = new {
       def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]], z: Monoid[C[A]])  =
         down.collectIn[C](f)
-    }
+    }  */
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = down.guard(f)
 
@@ -108,13 +108,13 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
   class EvaluatorMeta(t: T, meta: DelayedMeta){
 
-    def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y : ClassTag[A]) =
-      meta(self.collect[A](f)).apply(t).result
+    /*def collect[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y : ClassTag[A]) =
+      meta(self.collect[A](f)).apply(t).result*/
 
-    def collectIn[C[_]] = new {
+    /*def collectIn[C[_]] = new {
       def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]], z: Monoid[C[A]])  =
         meta(self.collectIn[C](f)).apply(t).result
-    }
+    } */
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new EvaluatorAndThen(t, self.guard(f), meta)
@@ -149,13 +149,13 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def map[B](f: A => B) = new EvaluatorAndThen[B](t, m map f, meta)
 
-    def collect[B >: A](f: PartialFunction[T, B])(implicit x: ClassTag[T], z : ClassTag[B]) =
-      meta(m ~> self.collect(f)).apply(t).result
+    /*def collect[B >: A](f: PartialFunction[T, B])(implicit x: ClassTag[T], z : ClassTag[B]) =
+      meta(m ~> self.collect(f)).apply(t).result*/
 
-    def collectIn[C[_]] = new {
+    /*def collectIn[C[_]] = new {
       def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]], z: Monoid[C[A]])  =
         meta(m ~> self.collectIn[C](f)).apply(t).result
-    }
+    }  */
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new EvaluatorAndThen(t, m ~> self.guard(f), meta)

@@ -24,6 +24,21 @@ object CollectStringsTraversers {
     }
   }
 
+  def basicscalametaTraverser = new Traverser {
+    var varNames = Set[String]()
+    import scala.meta.internal.ast._
+    override def traverse(tree: scala.meta.Tree) = tree match {
+      case Lit.String(v) => varNames += v
+      case _ => super.traverse(tree)
+    }
+
+    def apply(tree: scala.meta.Tree):Set[String] = {
+      varNames = Set[String]()
+      traverse(tree)
+      varNames
+    }
+  }
+
   val scalametaTraverser = new TraverserTableTag {
     var varNames = Set[String]()
     import scala.meta.internal.ast._

@@ -5,6 +5,7 @@ import org.scalameter.execution.LocalExecutor
 import org.scalameter.reporting.LoggingReporter
 import tools.ScalaToTree.CompilerProxy
 import scala.language.reflectiveCalls
+import scala.meta
 
 /**
  * Created by Eric on 20.10.2014.
@@ -28,37 +29,61 @@ object CompareBenchmarks extends PerformanceTest {
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
 	performance of "Variable name Collection" in {
-		measure method "Scala Traverser" in {
+		/*measure method "Scala Traverser" in {
 			using(range) in { j =>
         CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
-        import org.scalameta.reflection.Metadata
 			}
 		}
+
+    measure method "Basic Scala Meta Traverser" in {
+      using(range) in { j =>
+        CollectStringsTraversers.basicscalametaTraverser(scalaMetaTree)
+      }
+    }
+
     measure method "Hand written Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaHandwritten(scalaMetaTree)
       }
     }
 
-    /*measure method "Scala Meta Traverser" in {
+    measure method "Scala Meta Traverser" in {
       using(range) in { j =>
-        val result = CollectStringsTraversers.scalametaOptimzedTraverser(scalaMetaTree)
-      }
-    }
-
-    measure method "Scala Meta Traverser Optimized" in {
-      using(range) in { j =>
-        val result = CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
+        CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
     } */
 
-    /*measure method "TQL  CollectIn[Set]" in {
+    measure method "Scala Meta Traverser" in {
       using(range) in { j =>
-        def collectVals = down(collectIn[Set]{case Lit.String(v) => v})
-        collectVals(scalaMetaTree)
+        new Transformer {
+          var varNames = Set[String]()
+          import scala.meta.internal.ast._
+          override def transform(tree: meta.Tree) = tree match {
+            case x @ Lit.String(v) =>
+              varNames += v
+              x
+            case _ => super.transform(tree)
+          }
+
+          def apply(tree: meta.Tree):Set[String] = {
+            varNames = Set[String]()
+            transform(tree)
+            varNames
+          }
+        }.apply(scalaMetaTree)
       }
     }
 
+    import tqlscalameta.ScalaMetaTraverser._
+    import scala.meta.internal.ast._
+
+    measure method "TQL  CollectIn[Set]" in {
+      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      using(range) in { j =>
+        collectVals(scalaMetaTree)
+      }
+    }
+    /*
     measure method "TQL CollectionLikeUI Collect" in {
       using(range) in { j =>
         scalaMetaTree.collect{case Lit.String(v) => v}.toSet

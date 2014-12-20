@@ -25,8 +25,8 @@ object FusionExample extends App{
        """
   }
 
-  val getAllIntLT5 = down(optimize{collectIn[Set]{case Lit.Int(a) if a < 5 => a}})
-  val getAllIntGT5 = down(optimize{collectIn[Set]{case Lit.Int(a) if a > 5 => a}})
+  val getAllIntLT5 = down(optimize{collect[Set]{case Lit.Int(a) if a < 5 => a}})
+  val getAllIntGT5 = down(optimize{collect[Set]{case Lit.Int(a) if a > 5 => a}})
 
   val both = getAllIntLT5 + getAllIntGT5
 

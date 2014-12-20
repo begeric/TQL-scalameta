@@ -1,6 +1,7 @@
 package tql
 
 
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.collection.generic.CanBuildFrom
 import scala.language.experimental.macros
@@ -11,23 +12,6 @@ import scala.language.implicitConversions
  */
 
 trait Combinators[T] { self: Traverser[T] =>
-
-
-  def bfs[A : Monoid](m: Matcher[A], cont: Boolean = true): Matcher[A] = {
-    if (cont){
-      var traversed = false
-      val check = Matcher[A] {tree =>
-        traversed = true
-        //println(tree)
-        m(tree)
-      }
-      m + bfs(children(check), traversed)
-    }
-    else {
-      m
-    }
-  }
-
   /**
    * Traverse the children of the tree
    * */
@@ -94,19 +78,33 @@ trait Combinators[T] { self: Traverser[T] =>
     }
   }
 
+  trait Collector[C, A] {
+    type R
+    val builder: mutable.Builder[A, R]
+  }
+  object Collector {
+    implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]]) = new Collector[Nothing, A] {
+      type R = List[A]
+      val builder = y()
+    }
+
+    implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]]) = new Collector[C[A], A] {
+      type R = C[A]
+      val builder = y()
+    }
+  }
+
+  abstract class CollectInType[C[_]] {
+    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R]
+  }
+
   /**
    * Same as filter but puts the results into a list
    * */
-
-  def collect[A : ClassTag](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = Matcher[List[A]]{ tree =>
-    if (f.isDefinedAt(tree)) Some((tree, List(f(tree))))
-    else None
-  }
-
-  def collectIn[C[_]] = new {
-    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: CanBuildFrom[C[A], A, C[A]]) =
-      Matcher[C[A]]{ tree =>
-        if (f.isDefinedAt(tree)) Some((tree, (y() += f(tree)).result))
+  def collect[C[_]] = new CollectInType[C] {
+    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R] =
+      Matcher[y.R] { tree =>
+        if (f.isDefinedAt(tree)) Some((tree, (y.builder += f(tree)).result))
         else None
       }
   }
