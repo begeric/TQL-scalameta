@@ -81,16 +81,19 @@ trait Combinators[T] { self: Traverser[T] =>
   trait Collector[C, A] {
     type R
     val builder: mutable.Builder[A, R]
+    val monoid: Monoid[R]
   }
   object Collector {
-    implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]]) = new Collector[Nothing, A] {
+    implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]], m: Monoid[List[A]]) = new Collector[Nothing, A] {
       type R = List[A]
       val builder = y()
+      val monoid = m
     }
 
-    implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]]) = new Collector[C[A], A] {
+    implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]], m: Monoid[C[A]]) = new Collector[C[A], A] {
       type R = C[A]
       val builder = y()
+      val monoid = m
     }
   }
 
@@ -102,7 +105,7 @@ trait Combinators[T] { self: Traverser[T] =>
    * Same as filter but puts the results into a list
    * */
   def collect[C[_]] = new CollectInType[C] {
-    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R] =
+    def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R] =
       Matcher[y.R] { tree =>
         if (f.isDefinedAt(tree)) Some((tree, (y.builder += f(tree)).result))
         else None
