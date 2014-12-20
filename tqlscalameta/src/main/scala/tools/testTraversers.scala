@@ -70,7 +70,7 @@ object TestTraversers extends App {
   Thread.sleep(3000)
 
   var hey = 0
-  (0 until 100000).foreach { i =>
+  (0 until 10000).foreach { i =>
     val scalametaHandwritten = new HandWrittenScalaMeta {
       var varNames = Set[String]()
 
@@ -89,6 +89,7 @@ object TestTraversers extends App {
       }
     }.apply(scalaMetaTree)
   }
+  println(hey)
 
 /*val map = new scala.collection.mutable.HashMap[String, Int]()
 new tools.Traverser {

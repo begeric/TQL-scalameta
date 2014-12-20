@@ -37,6 +37,37 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def apply[A : Monoid](m: Matcher[A]): Matcher[A]
   }
 
+  @annotation.implicitNotFound(msg = "Cannot prove that ${A} =!= ${B}.")
+  trait =!=[A,B]
+  object =!= {
+    class Impl[A, B]
+    object Impl {
+      implicit def neq[A, B] : A Impl B = null
+      implicit def neqAmbig1[A] : A Impl A = null
+      implicit def neqAmbig2[A] : A Impl A = null
+    }
+
+    implicit def foo[A,B]( implicit e: A Impl B ): A =!= B = null
+  }
+
+  trait TransformResultTr[A]{
+    type R
+    def get(t: T, x: MatcherResult[A]): R
+  }
+
+  object TransformResultTr{
+    implicit val unitRes = new TransformResultTr[Unit] {
+      type R = T
+      def get(t: T, x: MatcherResult[Unit]): R  = x.tree.getOrElse(t)
+    }
+
+    implicit def withRes[A: Monoid](implicit ev: A =!= Unit) = new TransformResultTr[A] {
+      type R = (T, A)
+      def get(t: T, x: MatcherResult[A]): R  = (x.tree.getOrElse(t), x.result)
+    }
+  }
+
+
   /**
    * Allows to call 'combinators' directly on T
    * For documentation see Combinators.scala
@@ -55,10 +86,12 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
+      (f: PartialFunction[I, (O, A)])
+      (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
       down.transformWithResult(f)
 
-    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+    def transform(f: PartialFunction[T, (T,Any)]): Any =
       macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
@@ -88,10 +121,12 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
-      meta(self.transformWithResult(f)).apply(t)
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
+      (f: PartialFunction[I, (O, A)])
+      (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
+      r.get(t, meta(self.transformWithResult(f)).apply(t))
 
-    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+    def transform(f: PartialFunction[T, (T,Any)]): Any =
       macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
@@ -127,10 +162,12 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
-    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
-      meta(m ~> self.transformWithResult(f)).apply(t)
+    def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
+      (f: PartialFunction[I, (O, A)])
+      (implicit r: TransformResultTr[A], x: AllowedTransformation[I, O]) =
+      r.get(t, meta(m ~> self.transformWithResult(f)).apply(t))
 
-    def transform(f: PartialFunction[T, (T,Any)]): MatcherResult[Any] =
+    def transform(f: PartialFunction[T, (T,Any)]): Any =
       macro CombinatorsSugar.transformSugarImpl[T]
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =

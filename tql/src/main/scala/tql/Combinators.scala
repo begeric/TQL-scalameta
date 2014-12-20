@@ -12,6 +12,22 @@ import scala.language.implicitConversions
 
 trait Combinators[T] { self: Traverser[T] =>
 
+
+  def bfs[A : Monoid](m: Matcher[A], cont: Boolean = true): Matcher[A] = {
+    if (cont){
+      var traversed = false
+      val check = Matcher[A] {tree =>
+        traversed = true
+        //println(tree)
+        m(tree)
+      }
+      m + bfs(children(check), traversed)
+    }
+    else {
+      m
+    }
+  }
+
   /**
    * Traverse the children of the tree
    * */

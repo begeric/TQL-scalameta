@@ -14,8 +14,8 @@ import scala.language.reflectiveCalls
 object CompareBenchmarks extends PerformanceTest {
 
 	lazy val executor = LocalExecutor(
-					new Executor.Warmer.Default, 
-					Aggregator.min, 
+					new Executor.Warmer.Default,
+					Aggregator.average,
 					new Measurer.Default)
 	lazy val reporter = new LoggingReporter
 	lazy val persistor = Persistor.None
@@ -30,12 +30,13 @@ object CompareBenchmarks extends PerformanceTest {
 	performance of "Variable name Collection" in {
 		measure method "Scala Traverser" in {
 			using(range) in { j =>
-        val result = CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
+        CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
+        import org.scalameta.reflection.Metadata
 			}
 		}
     measure method "Hand written Scala Meta Traverser" in {
       using(range) in { j =>
-        val result = CollectStringsTraversers.scalametaHandwritten(scalaMetaTree)
+        CollectStringsTraversers.scalametaHandwritten(scalaMetaTree)
       }
     }
 

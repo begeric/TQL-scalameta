@@ -41,22 +41,24 @@ object Example extends App{
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collectIn[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
-
-  val test = rewrite {
-    case Lit.Int(a) => Lit.Int(a * 2) withResult List(a)
+  val test = transform {
+    case Lit.Int(a) => Lit.Int(a * 3) withResult List(a)
   }.down
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
-  val t3 = x.update{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))}
-  val t4 = x.filter{case Lit.Int(a) => true}.update{case x: Lit.Int => Lit.Int(1)}
+  val t3 = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b)}
+  val t4 = x.filter{case Lit.Int(a) => true}.transform{case x: Lit.Int => Lit.Int(1)}
   val t5 = x.up.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}
   val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
-  println(test(x))
+  //val bfstest = bfs(collect{case Lit.Int(a) => a})
+
+  //println(bfstest(x))
   /*println(t5)
   println(getAvg(x).result.map(_()))
   println(getAllVals(x).result)  */
+  println(t3)
 
   //test[Tree]{case x @ Term.If(Lit.Int(a), b, c) => true}
 }

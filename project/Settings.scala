@@ -6,7 +6,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq(
     version := "0.1-SNAPSHOT",
     scalacOptions ++= Seq("-optimize", "-feature", /*"-Yinline-warnings",*/ "-deprecation"),
-    //javaOptions := Seq("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"),
+    javaOptions := Seq("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5140"),
     scalaVersion := "2.11.2",
     crossScalaVersions := Seq("2.10.2", "2.10.3", "2.10.4", "2.11.0", "2.11.1", "2.11.2", "2.11.3", "2.11.4"),
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",

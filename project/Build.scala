@@ -44,7 +44,7 @@ object TQLBuild extends Build {
         libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT",
         testFrameworks += scalaMeterFramework,
         testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
-        //fork in Test := true,
+        fork in Test := true,
         parallelExecution in Test := false,
         logBuffered := false,
         initialCommands in console := """
