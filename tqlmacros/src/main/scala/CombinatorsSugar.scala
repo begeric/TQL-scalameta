@@ -28,11 +28,11 @@ class CombinatorsSugar(val c: Context) {
 
   def TWithResult[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree  = c.untypecheck(c.prefix.tree) match {
     case q"$_.CTWithResult[$_]($t)" => q"($t, $a)"
-    case _ => c.abort(c.enclosingPosition, "Bad form in TWithResult " + showRaw(c.prefix.tree))
+    case q"$_.CTWithResult[$_]($t).andCollect[$_]" => q"($t, $a)"
+    case _ => c.abort(c.enclosingPosition, "Bad form in TWithResult " + show(c.prefix.tree))
   }
 
-  def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree = TWithResult[T, List[A]](q"scala.collection.immutable.List($a)")
-
+  def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree)(y: c.Tree): c.Tree = TWithResult[T, List[A]](q"($y.builder += $a).result")
 
 
   def transformSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {

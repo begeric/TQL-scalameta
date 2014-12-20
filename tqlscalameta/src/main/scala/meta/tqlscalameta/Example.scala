@@ -42,7 +42,7 @@ object Example extends App{
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
   val test = transform {
-    case Lit.Int(a) => Lit.Int(a * 3) withResult List(a)
+    case Lit.Int(a) => Lit.Int(a * 3) andCollect[Set] a
   }.down
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
@@ -55,32 +55,8 @@ object Example extends App{
   //val bfstest = bfs(collect{case Lit.Int(a) => a})
 
   //println(bfstest(x))
+  //println(t1)
   /*println(t5)
   println(getAvg(x).result.map(_()))*/
-  println(t1)
-  println(t5)
-
-  //test[Tree]{case x @ Term.If(Lit.Int(a), b, c) => true}
-
-  /*object Test {
-    trait Stuff[T] {
-      type R
-      def zero: R
-    }
-    object Stuff{
-      implicit def nothing = new Stuff[Nothing]{
-        type R = List[Int]
-        def zero = List(1,2,3)
-      }
-
-      implicit def others[A[_] <: Traversable[_]] = new Stuff[A[_]] {
-        type R = A[Int]
-        def zero = Traversable.
-      }
-    }
-    def test[T[_]](implicit ev: Stuff[T[_]]): ev.R = ev.zero
-
-    println(test)
-  }
-  Test.test  */
+  println(test(x))
 }

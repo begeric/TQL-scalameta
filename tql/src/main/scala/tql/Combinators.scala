@@ -120,7 +120,9 @@ trait Combinators[T] { self: Traverser[T] =>
   implicit def TWithResult[U <: T](t: U): (U, Unit) = macro CombinatorsSugar.TWithUnitResult[U]//(t, Monoid.Void.zero)
   implicit class CTWithResult[U <: T](t: U) {
     def withResult[A](a: A): (U, A) = macro CombinatorsSugar.TWithResult[U, A]//(t, a)
-    def andCollect[A](a: A): (U, List[A]) = macro CombinatorsSugar.TAndCollect[U, A]//(t, List(a))
+    def andCollect[C[_]] = new {
+        def apply[A](a: A)(implicit y: Collector[C[A], A]): (U, y.R) = macro CombinatorsSugar.TAndCollect[U, A]
+      }
   }
 
 
