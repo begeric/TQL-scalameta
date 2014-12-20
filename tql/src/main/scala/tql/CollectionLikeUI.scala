@@ -7,6 +7,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 import scala.language.higherKinds
 import scala.language.reflectiveCalls
+import NotEquivTypes._
 
 /**
  * This trait allows to easily write simple traversals.
@@ -37,31 +38,24 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def apply[A : Monoid](m: Matcher[A]): Matcher[A]
   }
 
-  //thanks to http://stackoverflow.com/questions/6909053/enforce-type-difference/17047288#17047288
-  @annotation.implicitNotFound(msg = "Cannot prove that ${A} =!= ${B}.")
-  trait =!=[A,B]
-  object =!= {
-    class Impl[A, B]
-    object Impl {
-      implicit def neq[A, B] : A Impl B = null
-      implicit def neqAmbig1[A] : A Impl A = null
-      implicit def neqAmbig2[A] : A Impl A = null
-    }
-
-    implicit def foo[A,B]( implicit e: A Impl B ): A =!= B = null
-  }
-
+  /**
+   * System needed to recover the correct type from a 'transfrom' call.
+   * 1) x.transform{case x: T => x} : T
+   * 2) x.transform{case x: T => (x, List(1))} : (T, List[Int])
+   * */
   trait TransformResultTr[A]{
     type R
     def get(t: T, x: MatcherResult[A]): R
   }
 
   object TransformResultTr{
+    //for 1) the case where the returned type is Unit
     implicit val unitRes = new TransformResultTr[Unit] {
       type R = T
       def get(t: T, x: MatcherResult[Unit]): R  = x.tree.getOrElse(t)
     }
 
+    //for 2) the case where the returned type is not Unit
     implicit def withRes[A: Monoid](implicit ev: A =!= Unit) = new TransformResultTr[A] {
       type R = (T, A)
       def get(t: T, x: MatcherResult[A]): R  = (x.tree.getOrElse(t), x.result)
@@ -109,7 +103,6 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
       def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]) =
         meta(self.collect[C](f))(y.monoid).apply(t).result(y.monoid)
     }
-
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new EvaluatorAndThen(t, self.guard(f), meta)
