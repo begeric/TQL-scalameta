@@ -69,6 +69,6 @@ class ScalametaFusionTraverserHelperMacros(override val c: Context)
   def getAllTags(m: c.Tree): c.Tree = {
     val tpes = ExtractTypes(m)
     val tags = getTagsFromTypes(tpes)
-    q"new TagOptimized($tags, $m)"
+    q"new SetOptimized($tags, $m)"
   }
 }

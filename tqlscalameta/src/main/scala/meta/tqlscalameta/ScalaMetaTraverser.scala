@@ -1,14 +1,12 @@
 package scala.meta.tqlscalameta
 
-/**
- * Created by Eric on 20.10.2014.
- */
-
 import tql._
 import scala.meta._
 
+/**
+ * Created by Eric on 21.12.2014.
+ */
 object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with CollectionLikeUI[Tree]{
-
   import MonoidEnhencer._
   import scala.language.experimental.macros
 
@@ -23,11 +21,9 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
    *  But materializerAllowedTransformation[Tree, Lit.Int, Term.If] wouldn't work
    *
    *  Branch, Leaf  in the Adt scala.meta sense of the term
-   *
    */
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
-    macro AllowedTransformationsMaterializer.materialize[T, I, O]
-
+  macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatcherResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)

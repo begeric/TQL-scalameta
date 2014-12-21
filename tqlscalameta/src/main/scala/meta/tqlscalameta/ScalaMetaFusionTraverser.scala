@@ -1,6 +1,5 @@
 package scala.meta.tqlscalameta
 
-
 /**
  * Created by Eric on 09.12.2014.
  */
@@ -8,48 +7,25 @@ package scala.meta.tqlscalameta
 import tql._
 import scala.meta._
 
-object ScalaMetaFusionTraverser  extends Traverser[Tree]
+object ScalaMetaFusionTraverser extends Traverser[Tree]
                                   with Combinators[Tree]
                                   with SyntaxEnhancer[Tree]
                                   with CollectionLikeUI[Tree]
-                                  with Fusion[Tree] {
-
+                                  with Fusion[Tree]
+                                  with SetOptimized[Tree, Int] {
   import MonoidEnhencer._
   import scala.language.experimental.macros
+  /**
+   *  Somehow I have to put all those macros here instead of inside a BaseScalaMetaTraverser trait, otherwise some
+   *  trees are never traversed o_O'..
+   */
 
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
-
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatcherResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
 
-  class TagOptimized[+A](val elems: Set[Int], val m1: Matcher[A]) extends Matcher[A] {
-    override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      case f: TagOptimized[B] => new TagOptimized[B](elems + f.elems, m1 + f.m1)
-      case _ => super.compose(m2)
-    }
-
-    def apply(tree: Tree) =
-      if(elems contains tree.$tag)
-        m1(tree)
-      else
-        None
-  }
-
-  class MapTagOptimized[+A : Monoid](val elems: Map[Int, Matcher[A]]) extends Matcher[A] {
-    override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      case f: MapTagOptimized[B] =>
-        val newMap = elems.foldLeft(f.elems)((acc, c) => c match {
-          case e @ (i, m) =>  if (acc contains i) acc.updated(i, acc(i) + m)
-                              else acc + e
-        })
-        new MapTagOptimized[B](newMap)
-      case _ => super.compose(m2)
-    }
-
-    def apply(tree: Tree) = elems.getOrElse(tree.$tag, (_: Tree) => None).apply(tree)
-  }
-
+  def TtoU(t: Tree): Int = t.$tag
   def optimize[A](m: Matcher[A]): Matcher[A] = macro ScalametaFusionTraverserHelperMacros.getAllTags
 }
