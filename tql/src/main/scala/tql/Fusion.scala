@@ -26,6 +26,14 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case f: F[B] => newInstance(m1 compose f.m1)
       case _=> super.compose(m2)
     }
+
+    /**
+     * strategy(a) +> strategy(b) = strategy(a +> b)
+     * */
+    override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
+      case f: F[B] => newInstance(m1 composeResults f.m1)
+      case _=> super.composeResults(m2)
+    }
   }
 
   /**
