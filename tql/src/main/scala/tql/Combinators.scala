@@ -78,35 +78,29 @@ trait Combinators[T] { self: Traverser[T] =>
     }
   }
 
-  trait Collector[C, A] {
-    type R
+  trait Collector[C, A, R] {
     val builder: mutable.Builder[A, R]
-    val monoid: Monoid[R]
   }
   object Collector {
-    implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]], m: Monoid[List[A]]) = new Collector[Nothing, A] {
-      type R = List[A]
+    implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]], m: Monoid[List[A]]) = new Collector[Nothing, A, List[A]] {
       val builder = y()
-      val monoid = m
     }
 
-    implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]], m: Monoid[C[A]]) = new Collector[C[A], A] {
-      type R = C[A]
+    implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]], m: Monoid[C[A]]) = new Collector[C[A], A, C[A]] {
       val builder = y()
-      val monoid = m
     }
   }
 
   abstract class CollectInType[C[_]] {
-    def apply[A](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R]
+    def apply[A, R](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A, R]): Matcher[R]
   }
 
   /**
    * Same as filter but puts the results into a list
    * */
   def collect[C[_]] = new CollectInType[C] {
-    def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]): Matcher[y.R] =
-      Matcher[y.R] { tree =>
+    def apply[A, R](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A, R]): Matcher[R] =
+      Matcher[R] { tree =>
         if (f.isDefinedAt(tree)) Some((tree, (y.builder += f(tree)).result))
         else None
       }
@@ -121,7 +115,7 @@ trait Combinators[T] { self: Traverser[T] =>
   implicit class CTWithResult[U <: T](t: U) {
     def withResult[A](a: A): (U, A) = macro CombinatorsSugar.TWithResult[U, A]//(t, a)
     def andCollect[C[_]] = new {
-        def apply[A](a: A)(implicit y: Collector[C[A], A]): (U, y.R) = macro CombinatorsSugar.TAndCollect[U, A]
+        def apply[A, R](a: A)(implicit y: Collector[C[A], A, R]): (U, R) = macro CombinatorsSugar.TAndCollect[U, A]
       }
   }
 

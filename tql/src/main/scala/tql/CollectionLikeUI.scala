@@ -70,7 +70,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
   implicit class Evaluator(t: T){
 
    def collect[C[_]] = new  {
-     def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]) =
+     def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
        down.collect[C](f)
    }
 
@@ -100,8 +100,8 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
   class EvaluatorMeta(t: T, meta: DelayedMeta){
 
     def collect[C[_]] = new {
-      def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]) =
-        meta(self.collect[C](f))(y.monoid).apply(t).result(y.monoid)
+      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
+        meta(self.collect[C](f)).apply(t).result
     }
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
@@ -138,8 +138,8 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def map[B](f: A => B) = new EvaluatorAndThen[B](t, m map f, meta)
 
     def collect[C[_]] = new {
-      def apply[A](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A]) =
-        meta(m ~> self.collect[C](f))(y.monoid).apply(t).result(y.monoid)
+      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R])  =
+        meta(m ~> self.collect[C](f)).apply(t).result
     }
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =

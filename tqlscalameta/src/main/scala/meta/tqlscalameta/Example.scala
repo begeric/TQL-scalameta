@@ -9,7 +9,7 @@ import scala.meta.internal.ast._
 import scala.meta.syntactic.show._
 import scala.language.reflectiveCalls
 
-object Example extends App{
+object Example extends App {
 
 
   val x = {
@@ -42,7 +42,7 @@ object Example extends App{
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
   val test = transform {
-    case Lit.Int(a) => Lit.Int(a * 3) andCollect[Set] a
+    case Lit.Int(a) => Lit.Int(a * 3) andCollect[Set](a)
   }.down
 
   val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
@@ -52,11 +52,11 @@ object Example extends App{
   val t5 = x.up.collect[Set]{case x: Defn.Val => x.pats.head.toString}
   val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
-  //val bfstest = bfs(collect{case Lit.Int(a) => a})
+  /*val bfstest = bfs(collect{case Lit.Int(a) => a})
+  println(getAvg(x).result.map(_()))*/
 
   //println(bfstest(x))
-  //println(t1)
-  /*println(t5)
-  println(getAvg(x).result.map(_()))*/
+  println(t1)
+  println(t5)
   println(test(x))
 }
