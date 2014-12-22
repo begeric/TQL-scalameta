@@ -1,6 +1,7 @@
 package tql
 
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 
 /**
  * Created by Eric on 21.12.2014.
@@ -21,17 +22,31 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
     /**
      * strategy(a) + strategy(b) = strategy(a + b)
+     *
+     * note: it is safe to have the @unchecked annotation here since we know that in F[?] ? will be B since:
+     * 1) we accept a Matcher[B]
+     * 2) F[B] <: Matcher[B]
+     *
+     * since we override compose we cannot have an implicit of type ClassTag[F[B]]. It would need to be inserted in the
+     * argument list of compose.
      * */
     override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      case f: F[B] => newInstance(m1 compose f.m1)
-      case _=> super.compose(m2)
+        case f: F[B] @unchecked => newInstance[B](m1 compose f.m1)
+        case _=> super.compose(m2)
     }
 
     /**
      * strategy(a) +> strategy(b) = strategy(a +> b)
+     *
+     * note: it is safe to have the @unchecked annotation here since we know that in F[?] ? will be B since:
+     * 1) we accept a Matcher[B]
+     * 2) F[B] <: Matcher[B]
+     *
+     * since we override compose we cannot have an implicit of type ClassTag[F[B]]. It would need to be inserted in the
+     * argument list of composeResults.
      * */
     override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      case f: F[B] => newInstance(m1 composeResults f.m1)
+      case f: F[B] @unchecked => newInstance(m1 composeResults f.m1)
       case _=> super.composeResults(m2)
     }
   }
