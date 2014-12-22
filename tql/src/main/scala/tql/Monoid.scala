@@ -5,6 +5,8 @@ package tql
  */
 
 import scala.language.higherKinds
+
+import scala.collection.generic._
 /**
  * https://en.wikipedia.org/wiki/Monoid
  * */
@@ -15,7 +17,6 @@ trait Monoid[A]{
 
 object Monoid {
 
-  import scala.collection.generic._
 
   //note: http://stackoverflow.com/questions/15623585/why-is-list-a-semigroup-but-seq-is-not
   implicit def listMonoid[A] = new Monoid[List[A]] {
@@ -59,7 +60,6 @@ object Monoid {
     def append(a: Unit, b: Unit) = ()
   }
 
-  //TODO create a macro ?
   implicit def tupleMonoid[A : Monoid, B : Monoid] = new Monoid[(A, B)] {
     import MonoidEnhencer._
 

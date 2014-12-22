@@ -1,12 +1,15 @@
 package tql
+
 /**
  * Created by Eric on 16.11.2014.
  */
 
-import scala.collection.generic.CanBuildFrom
-import scala.reflect.ClassTag
 import scala.language.higherKinds
 import scala.language.reflectiveCalls
+import scala.language.experimental.macros
+
+import scala.collection.generic.CanBuildFrom
+import scala.reflect.ClassTag
 import NotEquivTypes._
 
 /**
@@ -29,8 +32,6 @@ import NotEquivTypes._
  *  Of course everything is computed lazily (like Collection View in Scala) so the resulte have to be forced.
  * */
 trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhancer[T] =>
-
-  import scala.language.experimental.macros
 
   /**Abstract class used to delay delay the time when the type parameter of
     * a meta combinator is decided*/

@@ -4,8 +4,8 @@ package tql
  * Created by Eric on 19.10.2014.
  */
 
-import scala.reflect.ClassTag
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 

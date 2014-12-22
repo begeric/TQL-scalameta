@@ -6,9 +6,22 @@ package tql
 trait MapOptimized[T, U] { self: Traverser[T] with Combinators[T] =>
 
   /**
-   * TODO doc
+   * The idea is the same as in @see SetOptimized, but this time the Matcher's are grouped by the properties they share.
+   * Instead you make it so that the 3 pfs that pattern match against Function are called only if
+   * the tree that you traverse is of type Function i.e.
+   *  traverse(tree: Tree) {
+   *       if (tree.isInstanceOf[Function] || tree.isInstanceOf[Int]) {
+   *           t1(tree)
+   *           t2(tree)
+   *           t3(tree)
+   *           t4(tree)
+   *       }
+   *       else if (tree.isInstanceOf[Int]) {
+   *           t2(tree)
+   *        }
+   *   }
    * */
-  class MapTagOptimized[+A : Monoid](val elems: Map[U, Matcher[A]]) extends Matcher[A] {
+  class MapTagOptimized[A : Monoid](val elems: Map[U, Matcher[A]]) extends Matcher[A] {
 
     override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case f: MapTagOptimized[B] =>

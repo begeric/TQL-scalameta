@@ -1,14 +1,15 @@
 package scala.meta.tqlscalameta
 
-import tql._
-import scala.meta._
-
 /**
  * Created by Eric on 21.12.2014.
  */
+
+import scala.language.experimental.macros
+import tql._
+import scala.meta._
+import MonoidEnhencer._
+
 object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with CollectionLikeUI[Tree]{
-  import MonoidEnhencer._
-  import scala.language.experimental.macros
 
   /**
    * Create an AllowedTransformation[I, O] If :

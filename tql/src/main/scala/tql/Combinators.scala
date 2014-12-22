@@ -1,15 +1,17 @@
 package tql
 
+/**
+ * Created by Eric on 20.10.2014.
+ */
+
+
+import scala.language.higherKinds
+import scala.language.implicitConversions
+import scala.language.experimental.macros
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.collection.generic.CanBuildFrom
-import scala.language.experimental.macros
-import scala.language.higherKinds
-import scala.language.implicitConversions
-/**
- * Created by Eric on 20.10.2014.
- */
 
 trait Combinators[T] { self: Traverser[T] =>
   /**

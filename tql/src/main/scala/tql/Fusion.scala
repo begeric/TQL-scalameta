@@ -1,11 +1,12 @@
 package tql
 
-import scala.language.higherKinds
-import scala.reflect.ClassTag
 
 /**
  * Created by Eric on 21.12.2014.
  */
+
+import scala.language.higherKinds
+
 trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
   /**

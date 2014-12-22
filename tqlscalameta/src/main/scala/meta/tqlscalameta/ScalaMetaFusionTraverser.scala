@@ -4,8 +4,11 @@ package scala.meta.tqlscalameta
  * Created by Eric on 09.12.2014.
  */
 
+import scala.language.experimental.macros
+
 import tql._
 import scala.meta._
+import MonoidEnhencer._
 
 object ScalaMetaFusionTraverser extends Traverser[Tree]
                                   with Combinators[Tree]
@@ -13,8 +16,6 @@ object ScalaMetaFusionTraverser extends Traverser[Tree]
                                   with CollectionLikeUI[Tree]
                                   with Fusion[Tree]
                                   with SetOptimized[Tree, Int] {
-  import MonoidEnhencer._
-  import scala.language.experimental.macros
   /**
    *  Somehow I have to put all those macros here instead of inside a BaseScalaMetaTraverser trait, otherwise some
    *  trees are never traversed o_O'..
