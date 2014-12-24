@@ -7,9 +7,9 @@ package scala.meta.tqlscalameta
 import scala.language.experimental.macros
 import tql._
 import scala.meta._
-import MonoidEnhencer._
 
 object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with CollectionLikeUI[Tree]{
+  import MonoidEnhencer._
 
   /**
    * Create an AllowedTransformation[I, O] If :

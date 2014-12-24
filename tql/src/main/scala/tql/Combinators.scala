@@ -14,6 +14,36 @@ import scala.reflect.ClassTag
 import scala.collection.generic.CanBuildFrom
 
 trait Combinators[T] { self: Traverser[T] =>
+
+
+  def bfs[A : Monoid](m: => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
+    val toVisit = new collection.mutable.Queue[T]()
+    var result = implicitly[Monoid[A]].zero
+    toVisit.enqueue(tree)
+
+    val addToStack = Matcher[A]{ tree =>
+      toVisit.enqueue(tree)
+      /*
+      In traverse we use the for construct to traverse trees, that's why we
+      can't return None.
+      This is an example of a (bad) leaking design decision.
+      */
+      Some(tree, implicitly[Monoid[A]].zero)
+    }
+
+    //vanilla bfs
+    while (!toVisit.isEmpty){
+      val top = toVisit.dequeue()
+      m(top) match {
+        case None => traverse(top, addToStack)
+        case Some((t, r)) =>
+          traverse(t, addToStack)
+          result = implicitly[Monoid[A]].append(result, r)
+      }
+    }
+    Some((tree, result))
+  }
+
   /**
    * Traverse the children of the tree
    * */
@@ -81,15 +111,15 @@ trait Combinators[T] { self: Traverser[T] =>
   }
 
   trait Collector[C, A, R] {
-    val builder: mutable.Builder[A, R]
+    def builder: mutable.Builder[A, R]
   }
   object Collector {
     implicit def nothingToList[A](implicit y: CanBuildFrom[List[A], A, List[A]], m: Monoid[List[A]]) = new Collector[Nothing, A, List[A]] {
-      val builder = y()
+      def builder = {y().clear(); y()}
     }
 
     implicit def otherToCollect[A, C[A]](implicit y: CanBuildFrom[C[A], A, C[A]], m: Monoid[C[A]]) = new Collector[C[A], A, C[A]] {
-      val builder = y()
+      def builder = {y().clear(); y()}
     }
   }
 

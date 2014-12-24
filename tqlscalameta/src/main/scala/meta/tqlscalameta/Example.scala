@@ -52,11 +52,13 @@ object Example extends App {
   val t5 = x.up.collect[Set]{case x: Defn.Val => x.pats.head.toString}
   val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
-  /*val bfstest = bfs(collect{case Lit.Int(a) => a})
-  println(getAvg(x).result.map(_()))*/
+  val bfstest = bfs(collect{case Lit.Int(a) => a})
+  val dfstest = down(collect{case Lit.Int(a) => a})
+  //println(getAvg(x).result.map(_()))
 
   //println(bfstest(x))
-  println(t1)
-  println(t5)
-  println(test(x))
+  //println(t1)
+  //println(t5)
+  println(bfstest(x).result)
+  //println(dfstest(x).result)
 }
