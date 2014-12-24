@@ -15,6 +15,7 @@ import scala.collection.generic.CanBuildFrom
 
 trait Combinators[T] { self: Traverser[T] =>
 
+  def identity[A : Monoid] = Matcher[A]{tree => Some(tree, implicitly[Monoid[A]].zero)}
 
   def bfs[A : Monoid](m: => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
     val toVisit = new collection.mutable.Queue[T]()
