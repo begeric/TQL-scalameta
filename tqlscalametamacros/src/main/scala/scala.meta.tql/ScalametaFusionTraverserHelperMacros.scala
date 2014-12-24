@@ -66,9 +66,18 @@ class ScalametaFusionTraverserHelperMacros(override val c: Context)
   }
 
 
+  //TODO put the full name for SetOptimized
   def getAllTags(m: c.Tree): c.Tree = {
     val tpes = ExtractTypes(m)
     val tags = getTagsFromTypes(tpes)
     q"new SetOptimized($tags, $m)"
+  }
+
+  def getAllTagsMap(m: c.Tree): c.Tree = {
+    val tpes = ExtractTypes(m)
+    val tags = getTagsFromTypes(tpes)
+
+    val newMap = tags.map{t => q"$t -> $m"}
+    q"new MapOptimized($newMap)"
   }
 }

@@ -45,6 +45,26 @@ trait Combinators[T] { self: Traverser[T] =>
     Some((tree, result))
   }
 
+  /*def flatChildren[A : Monoid](f: => Matcher[A]) = Matcher[A] {tree =>
+    lazy val toVisit = new collection.mutable.Queue[T]()
+    var result = implicitly[Monoid[A]].zero
+
+    val addToStack = Matcher[A]{ tree =>
+      toVisit.enqueue(tree)
+      /*
+      In traverse we use the for construct to traverse trees, that's why we
+      can't return None.
+      This is an example of a (bad) leaking design decision.
+      */
+      Some(tree, implicitly[Monoid[A]].zero)
+    }
+    while (!toVisit.isEmpty) {
+      val top = toVisit.dequeue()
+    }
+
+    Some((tree, result))
+  } */
+
   /**
    * Traverse the children of the tree
    * */
