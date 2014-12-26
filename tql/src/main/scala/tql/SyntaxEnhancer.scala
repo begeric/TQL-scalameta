@@ -28,7 +28,7 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   implicit class TreeMapperEnhancer[A](a: Matcher[A]){
     def \[B : Monoid] (b: Matcher[B]) = a andThen children(b)
     def \\[B : Monoid] (b: Matcher[B]) = a andThen downBreakAlias(b)
-    //def >>[B] (f: T => MatcherResult[B]) = flatMap(f)
+    //def >>[B] (f: T => MatchResult[B]) = flatMap(f)
     /*def apply[I <: T : ClassTag, O <: T]
              (f: PartialFunction[I, O])
              (implicit x: ClassTag[T], y: AllowedTransformation[I, O]) =
@@ -40,12 +40,12 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def upBreak(implicit x: Monoid[A]) = upBreakAlias(a)
   }
 
-  implicit class MatcherResultEnhancer[A](a: MatcherResult[A]){
+  implicit class MatcherResultEnhancer[A](a: MatchResult[A]){
     def result(implicit x: Monoid[A])  = a.map(_._2).getOrElse(x.zero)
     def tree    = a.map(_._1)
   }
 
-  implicit def MatcherResultToResult[A : Monoid](a: MatcherResult[A]): A = a.result
-  implicit def MatcherResultToTree(a : MatcherResult[_]): Option[T] = a.tree
+  implicit def MatcherResultToResult[A : Monoid](a: MatchResult[A]): A = a.result
+  implicit def MatcherResultToTree(a : MatchResult[_]): Option[T] = a.tree
 
 }

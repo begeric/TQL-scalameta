@@ -46,20 +46,20 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
    * */
   trait TransformResultTr[A]{
     type R
-    def get(t: T, x: MatcherResult[A]): R
+    def get(t: T, x: MatchResult[A]): R
   }
 
   object TransformResultTr{
     //for 1) the case where the returned type is Unit
     implicit val unitRes = new TransformResultTr[Unit] {
       type R = T
-      def get(t: T, x: MatcherResult[Unit]): R  = x.tree.getOrElse(t)
+      def get(t: T, x: MatchResult[Unit]): R  = x.tree.getOrElse(t)
     }
 
     //for 2) the case where the returned type is not Unit
     implicit def withRes[A: Monoid](implicit ev: A =!= Unit) = new TransformResultTr[A] {
       type R = (T, A)
-      def get(t: T, x: MatcherResult[A]): R  = (x.tree.getOrElse(t), x.result)
+      def get(t: T, x: MatchResult[A]): R  = (x.tree.getOrElse(t), x.result)
     }
   }
 
@@ -89,7 +89,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
 
-    //def flatMap[B](f: T => MatcherResult[B]) = down.flatMap(f)
+    //def flatMap[B](f: T => MatchResult[B]) = down.flatMap(f)
 
     def down      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.down(x)})
     def downBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.downBreak(x)})
@@ -128,7 +128,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
      * */
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, x, meta)
 
-    //def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, self.flatMap(f), meta)
+    //def flatMap[B](f: T => MatchResult[B]) = new EvaluatorAndThen[B](t, self.flatMap(f), meta)
   }
 
 
@@ -162,7 +162,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, m ~> x, meta)
 
-    //def flatMap[B](f: T => MatcherResult[B]) = new EvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
+    //def flatMap[B](f: T => MatchResult[B]) = new EvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
 
     def down =
       new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.down(x))})

@@ -183,5 +183,4 @@ trait Combinators[T] { self: Traverser[T] =>
    * */
   def filter(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
-
 }

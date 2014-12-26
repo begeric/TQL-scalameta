@@ -24,7 +24,7 @@ object ScalaMetaFusionTraverser extends Traverser[Tree]
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
-  def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatcherResult[A] =
+  def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
 
   def TtoU(t: Tree): Int = t.$tag

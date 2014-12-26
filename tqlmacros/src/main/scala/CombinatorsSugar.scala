@@ -83,4 +83,5 @@ class CombinatorsSugar(val c: Context) {
       case p => c.abort(c.enclosingPosition, "Bad format in partial function at: " + show(p))
     }
   }
+
 }

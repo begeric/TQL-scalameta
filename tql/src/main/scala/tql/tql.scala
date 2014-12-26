@@ -6,7 +6,7 @@ package tql
 
 trait Traverser[T] {
 
-  type MatcherResult[A] = Option[(T, A)]
+  type MatchResult[A] = Option[(T, A)]
 
   /**
    * A Matcher is a function or 'combinator' which takes a T and return an Option of tuple of
@@ -14,7 +14,7 @@ trait Traverser[T] {
    * - a result of type A s.t Exists Monoid[A] so that results can be combined during the traversal
    * A transformation/traversal has succeeded if the result of the application on the Matcher is not a None
    * */
-  abstract class Matcher[+A] extends (T => MatcherResult[A]) {
+  abstract class Matcher[+A] extends (T => MatchResult[A]) {
 
     /**
      * a andThen b
@@ -141,11 +141,11 @@ trait Traverser[T] {
     }
   }
 
-  def Matcher[A](f: T => MatcherResult[A]): Matcher[A] = new Matcher[A] {
-    override def apply(tree: T): MatcherResult[A] = f(tree)
+  def Matcher[A](f: T => MatchResult[A]): Matcher[A] = new Matcher[A] {
+    override def apply(tree: T): MatchResult[A] = f(tree)
   }
 
 
-  def traverse[A : Monoid](tree: T, f: Matcher[A]): MatcherResult[A]
+  def traverse[A : Monoid](tree: T, f: Matcher[A]): MatchResult[A]
 
 }
