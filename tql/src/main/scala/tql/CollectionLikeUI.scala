@@ -8,7 +8,6 @@ import scala.language.higherKinds
 import scala.language.reflectiveCalls
 import scala.language.experimental.macros
 
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 import NotEquivTypes._
 
@@ -87,10 +86,6 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def transform[A](f: PartialFunction[T, (T,A)])(implicit r: TransformResultTr[A]): r.R =
       macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
-    def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) = down.visit(f)
-
-    //def flatMap[B](f: T => MatchResult[B]) = down.flatMap(f)
-
     def down      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.down(x)})
     def downBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.downBreak(x)})
     def up        = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.up(x)})
@@ -127,17 +122,12 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
      * Allows to use other combinators which are not defined in the CollectionLikeUI framework
      * */
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, x, meta)
-
-    //def flatMap[B](f: T => MatchResult[B]) = new EvaluatorAndThen[B](t, self.flatMap(f), meta)
   }
 
 
   class EvaluatorAndThen[+A](private[CollectionLikeUI] val t: T,
                                  private[CollectionLikeUI] val m: Matcher[A],
                                  private[CollectionLikeUI] val meta: DelayedMeta){
-
-    def map[B](f: A => B) = new EvaluatorAndThen[B](t, m map f, meta)
-
     def collect[C[_]] = new {
       def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R])  =
         meta(m ~> self.collect[C](f)).apply(t).result
@@ -157,12 +147,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def transform[A](f: PartialFunction[T, (T,A)])(implicit r: TransformResultTr[A]): r.R =
       macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
-    def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
-      meta(m ~> self.visit(f)).apply(t)
-
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, m ~> x, meta)
-
-    //def flatMap[B](f: T => MatchResult[B]) = new EvaluatorAndThen[B](t, m ~> self.flatMap(f), meta)
 
     def down =
       new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.down(x))})
