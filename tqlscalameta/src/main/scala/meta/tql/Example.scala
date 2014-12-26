@@ -41,9 +41,11 @@ object Example extends App {
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
-  val test = transform {
-    case Lit.Int(a) => Lit.Int(a * 3) andCollect[Set](a)
+  val test = transform2 {
+    case Lit.Int(a) => Lit.Int(a * 3)
+    case Term.If(a, b, c) => Term.If(a, b, c)
   }.down
+
 
   val t1: List[Int] = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2: List[Int] = x.focus({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
@@ -56,11 +58,12 @@ object Example extends App {
   val dfstest = down(collect{case Lit.Int(a) => a})
   //println(getAvg(x).result.map(_()))
 
-  println(t3)
+
+  println(test(x))
 
   //println(bfstest(x))
   //println(t1)
   //println(t5)
-  println(bfstest(x).result)
+  //println(bfstest(x).result)
   //println(dfstest(x).result)
 }
