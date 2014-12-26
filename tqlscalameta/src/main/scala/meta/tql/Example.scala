@@ -41,9 +41,9 @@ object Example extends App {
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
 
-  val test = transform2 {
+  val test = transform {
     case Lit.Int(a) => Lit.Int(a * 3)
-    case Term.If(a, b, c) => Term.If(a, b, c)
+    case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }.down
 
 
@@ -53,13 +53,17 @@ object Example extends App {
   val t4: scala.meta.Tree = x.focus{case Lit.Int(a) => true}.transform{case x: Lit.Int => Lit.Int(1)}
   val t5: Set[String] = x.up.collect[Set]{case x: Defn.Val => x.pats.head.toString}
   val t6: List[Int] = x.focus({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
+  val t7: scala.meta.Tree = x.transform {
+    case Lit.Int(a) => Lit.Int(a * 3)
+    case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
+  }
 
   val bfstest = bfs(collect{case Lit.Int(a) => a})
   val dfstest = down(collect{case Lit.Int(a) => a})
   //println(getAvg(x).result.map(_()))
 
 
-  println(test(x))
+  println(t7)
 
   //println(bfstest(x))
   //println(t1)

@@ -25,7 +25,7 @@ class CombinatorsSugar(val c: Context) {
     q"${c.prefix}.guard[$lhs]($f)"
   }
 
-  def TWithUnitResult[T: c.WeakTypeTag](t: c.Tree): c.Tree = q"($t, tql.Monoid.Void.zero)"
+
 
   def TWithResult[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree  = c.untypecheck(c.prefix.tree) match {
     case q"$_.CTWithResult[$_]($t)" => q"($t, $a)"
@@ -56,7 +56,7 @@ class CombinatorsSugar(val c: Context) {
    * [error] D:\[..]\scala\meta\tql\Example.scala:44: could not find implicit
    * value for evidence parameter of type tql.Monoid[Any]
    * */
-  def transformSugarImpl2[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
+  def transformSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
     val Ttpe = implicitly[c.WeakTypeTag[T]].tpe
 
     def setTuplesForEveryOne(clauses: List[CaseDef]): List[CaseDef] = {
@@ -89,7 +89,7 @@ class CombinatorsSugar(val c: Context) {
 
     val transforms = cases.zip(lhss).zip(trhs).zip(ress).map{
       case (((cas, lhs), rhs), res) =>
-      q"${c.prefix}.transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)]({case $cas}))"
+      q"transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)]({case $cas}))"
     }
 
     if (transforms.size < 1)
@@ -99,27 +99,9 @@ class CombinatorsSugar(val c: Context) {
     transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc")
   }
 
+  def transformSugarImplWithTRtype[T : c.WeakTypeTag](f: c.Tree): c.Tree =
+    q"${c.prefix}.transforms(${transformSugarImpl[T](f)})"
 
-  /**
-   * Old method to rewrite transform. Cannot split and the input must be of type PF[T, (T, A)]
-   * */
-  def transformSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    def getTypesFromTuple2(rhss: List[c.Type]): List[(c.Type, c.Type)] = rhss.map{
-      /*It's not like I have a choice.. http://stackoverflow.com/questions/18735295/how-to-match-a-universetype-via-quasiquotes-or-deconstructors*/
-      case TypeRef(_, sym, List(a, b)) if sym.fullName == "scala.Tuple2" => (a, b)
-      case _ => c.abort(c.enclosingPosition, "There should be a Tuple2 here")
-    }
-
-    val (lhss, rhss) = getTypesFromPFS[T](f).unzip
-    val lhs = lub(lhss)
-    val (trhs, ress) = getTypesFromTuple2(rhss).unzip
-    val rhs = lub(trhs)
-    val res = lub(ress)
-
-    q"${c.prefix}.transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)](($f).asInstanceOf[PartialFunction[$lhs, ($rhs, $res)]]))"
-  }
-
-  def transformSugarImplWithTRtype[T : c.WeakTypeTag](f: c.Tree)(r: c.Tree): c.Tree = transformSugarImpl[T](f)
 
   def getLUBsfromPFs[T : c.WeakTypeTag](f: c.Tree): (c.Type, c.Type) = {
     val tpes = getTypesFromPFS[T](f)

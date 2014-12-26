@@ -164,7 +164,7 @@ trait Combinators[T] { self: Traverser[T] =>
       guard[T]{case t => f.isDefinedAt(t)} map(t => (y() += f(t)).result)
   }
 
-  implicit def TWithResult[U <: T](t: U): (U, Unit) = macro CombinatorsSugar.TWithUnitResult[U]//(t, Monoid.Void.zero)
+
   implicit class CTWithResult[U <: T](t: U) {
     def withResult[A](a: A): (U, A) = macro CombinatorsSugar.TWithResult[U, A]//(t, a)
     def andCollect[C[_]] = new {
@@ -172,13 +172,10 @@ trait Combinators[T] { self: Traverser[T] =>
       }
   }
 
-
   /**
    * Syntactic sugar for transform combinator so that one doesn't need to type the type parameter
    * */
-  def transform[A](f: PartialFunction[T, (T,A)]): Matcher[A] = macro CombinatorsSugar.transformSugarImpl[T]
-
-  def transform2(f: PartialFunction[T, Any]): Matcher[Any] = macro CombinatorsSugar.transformSugarImpl2[T]
+  def transform[A](f: PartialFunction[T, Any]): Matcher[Any] = macro CombinatorsSugar.transformSugarImpl[T]
 
   /**
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
