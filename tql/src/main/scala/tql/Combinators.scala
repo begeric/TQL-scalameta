@@ -149,7 +149,7 @@ trait Combinators[T] { self: Traverser[T] =>
   }
 
   /**
-   * Same as filter but puts the results into a list
+   * Same as focus but puts the results into a list
    * */
   def collect[C[_]] = new CollectInType[C] {
     def apply[A, R](f: PartialFunction[T, A])(implicit  x: ClassTag[T], y: Collector[C[A], A, R]): Matcher[R] =
@@ -181,6 +181,6 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
    * */
-  def filter(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
+  def focus(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
 }

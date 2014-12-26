@@ -20,9 +20,9 @@ import NotEquivTypes._
  * We can wirte instead
  *  t.collect{...}.result
  *
- *  downBreak(filter{..} ~> down{update{...}}) (t)
+ *  downBreak(focus{..} ~> down{update{...}}) (t)
  *  becomes
- *  t.downBreak.filter{..}.down.update{..}
+ *  t.downBreak.focus{..}.down.update{..}
  *  Which is essentially easier to read and to write (no parenthesis)
  *  The drawbacks:
  *    - Every combinator have to be re-written in those 'Lazy evaluator' classes (even macros)
@@ -76,7 +76,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = down.guard(f)
 
-    def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
     def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
       (f: PartialFunction[I, (O, A)])
@@ -103,7 +103,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new EvaluatorAndThen(t, self.guard(f), meta)
 
-    def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
     def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
@@ -136,7 +136,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
       new EvaluatorAndThen(t, m ~> self.guard(f), meta)
 
-    def filter(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
     def transformWithResult[I <: T : ClassTag, O <: T, A : Monoid]
