@@ -1,4 +1,4 @@
-package scala.meta.tqlscalameta
+package scala.meta.tql
 
 /**
  * Created by Eric on 09.12.2014.
@@ -21,7 +21,7 @@ object ScalaMetaFusionTraverser extends Traverser[Tree]
    *  trees are never traversed o_O'..
    */
 
-  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
+  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatcherResult[A] =

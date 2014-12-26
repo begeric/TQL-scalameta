@@ -1,4 +1,4 @@
-package scala.meta.tqlscalameta
+package scala.meta.tql
 
 /**
  * Created by Eric on 29.10.2014.

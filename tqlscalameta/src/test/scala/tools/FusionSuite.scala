@@ -10,7 +10,7 @@ import scala.meta.internal.ast._
 class FusionSuite extends FunSuite {
 
   val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tql/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
@@ -21,7 +21,7 @@ class FusionSuite extends FunSuite {
     var result3: List[Int] = Nil
    import scala.meta._
     {
-      import tqlscalameta.ScalaMetaTraverser._
+      import tql.ScalaMetaTraverser._
       val collectVals = down(collect{case Lit.Int(v) => v})
       val twice = collectVals + collectVals
       val fourtimes = twice + twice
@@ -29,7 +29,7 @@ class FusionSuite extends FunSuite {
     }
 
     {
-      import tqlscalameta.ScalaMetaFusionTraverser._
+      import tql.ScalaMetaFusionTraverser._
       val collectVals = down(collect{case Lit.Int(v) => v})
       val twice = collectVals + collectVals
       val fourtimes = twice + twice
@@ -37,7 +37,7 @@ class FusionSuite extends FunSuite {
     }
 
     {
-      import tqlscalameta.ScalaMetaFusionTraverser._
+      import tql.ScalaMetaFusionTraverser._
       val collectVals = down(optimize(collect{case Lit.Int(v) => v}))
       val twice = collectVals + collectVals
       val fourtimes = twice + twice

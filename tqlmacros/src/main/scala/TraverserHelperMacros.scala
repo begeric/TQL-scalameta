@@ -95,11 +95,11 @@ class TraverserBuilder(val c: Context) {
       case t if t <:< weakTypeOf[T] =>
         Some(q"$f($name)")
       case t if t <:< weakTypeOf[scala.collection.immutable.Seq[T]] =>
-        Some(q"tql.TraverserHelper.traverseSeq($f, $name)")
+        Some(q"_root_.tql.TraverserHelper.traverseSeq($f, $name)")
       case t if t <:< weakTypeOf[scala.collection.immutable.Seq[scala.collection.immutable.Seq[T]]] =>
-        Some(q"tql.TraverserHelper.traverseSeqofSeq($f, $name)")
+        Some(q"_root_.tql.TraverserHelper.traverseSeqofSeq($f, $name)")
       case t if t <:< weakTypeOf[scala.Option[T]] =>
-        Some(q"tql.TraverserHelper.optional($f, $name)")
+        Some(q"_root_.tql.TraverserHelper.optional($f, $name)")
       case _ => None
     }
     rhs.map(r => (newTree, newResult, fq"$lhs <- $r"))

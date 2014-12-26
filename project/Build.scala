@@ -49,10 +49,10 @@ object TQLBuild extends Build {
         logBuffered := false,
         initialCommands in console := """
           import tools.ScalaToTree._
-          import tqlscalameta.ScalaMetaTraverser._
+          import scala.meta.tql.ScalaMetaTraverser._
           import scala.meta.syntactic.ast._
           """
-        ) ++ exposeClasspaths("tqlscalameta")
+        ) ++ exposeClasspaths("tql")
   ) dependsOn(tqlscalametamacros)
 
 }

@@ -10,7 +10,7 @@ import scala.meta.internal.ast._
 object TestTraversers extends App {
 
   val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tql/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 

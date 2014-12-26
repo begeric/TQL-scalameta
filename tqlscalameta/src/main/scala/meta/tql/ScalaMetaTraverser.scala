@@ -1,4 +1,4 @@
-package scala.meta.tqlscalameta
+package scala.meta.tql
 
 /**
  * Created by Eric on 21.12.2014.
@@ -23,7 +23,7 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
    *
    *  Branch, Leaf  in the Adt scala.meta sense of the term
    */
-  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: tql.AllowedTransformation[I, O] =
+  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
   macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatcherResult[A] =

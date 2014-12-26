@@ -21,14 +21,14 @@ object FusionBenchmarks  extends PerformanceTest {
   val range = Gen.enumeration("size")(100)
 
   val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tql/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
 
   performance of "Variable name Collection" in {
     measure method "ScalaMetaTraverser" in {
-      import scala.meta.tqlscalameta.ScalaMetaTraverser._
+      import scala.meta.tql.ScalaMetaTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
         val twice = collectVals + collectVals
@@ -38,7 +38,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
 
     measure method "ScalaMetaFusionTraverser" in {
-      import scala.meta.tqlscalameta.ScalaMetaFusionTraverser._
+      import scala.meta.tql.ScalaMetaFusionTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
         val twice = collectVals + collectVals
@@ -48,7 +48,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
 
     measure method "ScalaMetaFusionTraverser with optimize" in {
-      import scala.meta.tqlscalameta.ScalaMetaFusionTraverser._
+      import scala.meta.tql.ScalaMetaFusionTraverser._
       using(range) in { j =>
         val collectVals = down(optimize(collect{case Lit.String(v) => v}))
         val twice = collectVals + collectVals

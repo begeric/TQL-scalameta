@@ -24,7 +24,7 @@ object CompareBenchmarks extends PerformanceTest {
 	val range = Gen.enumeration("size")(100)
 
 	val compiler: CompilerProxy = ScalaToTree.loadCompiler
-  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
+  val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tql/src/test/resources/Huffman.scala"))
 
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
@@ -74,7 +74,7 @@ object CompareBenchmarks extends PerformanceTest {
       }
     }
 
-    import scala.meta.tqlscalameta.ScalaMetaTraverser._
+    import scala.meta.tql.ScalaMetaTraverser._
     import scala.meta.internal.ast._
 
     measure method "TQL  CollectIn[Set]" in {
