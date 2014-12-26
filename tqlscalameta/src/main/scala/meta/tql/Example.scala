@@ -45,16 +45,18 @@ object Example extends App {
     case Lit.Int(a) => Lit.Int(a * 3) andCollect[Set](a)
   }.down
 
-  val t1 = x.collect{case Lit.Int(a) if a > 10 => a}
-  val t2 = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
-  val t3 = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b)}
-  val t4 = x.filter{case Lit.Int(a) => true}.transform{case x: Lit.Int => Lit.Int(1)}
-  val t5 = x.up.collect[Set]{case x: Defn.Val => x.pats.head.toString}
-  val t6 = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
+  val t1: List[Int] = x.collect{case Lit.Int(a) if a > 10 => a}
+  val t2: List[Int] = x.filter({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
+  val t3: (scala.meta.Tree, List[String]) = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b.toString)}
+  val t4: scala.meta.Tree = x.filter{case Lit.Int(a) => true}.transform{case x: Lit.Int => Lit.Int(1)}
+  val t5: Set[String] = x.up.collect[Set]{case x: Defn.Val => x.pats.head.toString}
+  val t6: List[Int] = x.filter({case Term.If(_,_,_) => true}).combine(down(collect{case Lit.Int(a) => a})).result
 
   val bfstest = bfs(collect{case Lit.Int(a) => a})
   val dfstest = down(collect{case Lit.Int(a) => a})
   //println(getAvg(x).result.map(_()))
+
+  println(t3)
 
   //println(bfstest(x))
   //println(t1)
