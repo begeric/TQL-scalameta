@@ -52,6 +52,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * strategy(a) +> strategy(b) = strategy(a +> b)
      * */
     override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
+      case v: MappedFused[_, B, F]  @unchecked => v.leftComposeResults(this)
       case f: F[B] @unchecked => composeResultsFused(f)
       case _=> super.composeResults(m2)
     }
@@ -96,6 +97,8 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
+    //compose
+
     def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) =
       new MappedFused(mf.m1 aggregateFused m1, (x: (U, A)) => M % mf.f(x._1) + f(x._2))
 
@@ -108,6 +111,19 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case _ => super.compose(m2)
     }
 
+    //composeResults
+
+    def composeResultsWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) =
+      new MappedFused(mf.m1 aggregateResultsFused m1, (x: (U, A)) => M % mf.f(x._1) + f(x._2))
+
+    def leftComposeResults[C >: B : Monoid](fused: Fused[C, F]) =
+      new MappedFused(fused aggregateResultsFused m1, (x: (C, A)) => M % x._1 + f(x._2))
+
+    override def composeResults[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
+      case v: MappedFused[_, C, F]  @unchecked => v.composeResultsWithMapped(this)
+      case v: F[C] @unchecked => new MappedFused(m1 aggregateResultsFused v, (x: (A, C)) => M[C](f(x._1)) + x._2)
+      case _ => super.composeResults(m2)
+    }
   }
 
 
