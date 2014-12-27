@@ -84,24 +84,15 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
-    def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
-      val newmf = mf.m1 aggregateFused m1
-      val newf  = (x: (U, A)) => M % mf.f(x._1) + f(x._2)
-      new MappedFused(newmf, newf)
-    }
+    def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) =
+      new MappedFused(mf.m1 aggregateFused m1, (x: (U, A)) => M % mf.f(x._1) + f(x._2))
 
-    def leftCompose[C >: B : Monoid](fused: Fused[C, F]) = {
-      val newmf = (fused.m1 aggregate m1).asInstanceOf[F[(C, A)]]
-      val newf  = (x: (C, A)) => M % x._1 + f(x._2)
-      new MappedFused(newmf, newf)
-    }
+    def leftCompose[C >: B : Monoid](fused: Fused[C, F]) =
+      new MappedFused(fused aggregateFused m1, (x: (C, A)) => M % x._1 + f(x._2))
 
     override def compose[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
       case v: MappedFused[_, C, F]  @unchecked => v.composeWithMapped(this) //visitor pattern here I aaaaam
-      case v: F[C] @unchecked =>
-        val newmf = (m1 aggregate v.m1).asInstanceOf[F[(A, C)]]
-        val newf = (x: (A, C)) => M[C](f(x._1)) + x._2
-        new MappedFused(newmf, newf)
+      case v: F[C] @unchecked => new MappedFused(m1 aggregateFused v, (x: (A, C)) => M[C](f(x._1)) + x._2)
       case _ => super.compose(m2)
     }
   }
