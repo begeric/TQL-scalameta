@@ -62,10 +62,24 @@ trait Traverser[T] {
           .getOrElse((u._1, (u._2, implicitly[Monoid[B]].zero)))
       } orElse(m(tree).map (u => (u._1, (implicitly[Monoid[C]].zero, u._2))))
     }
+
     /**
      * Alias for aggregate
      * */
     def ~[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = aggregate[B, C](m)
+
+    /**
+     * a aggregateResults b
+     * Same as 'aggregate' but discard the transformed trees of a and b
+     * b operates on the origin tree, not the one transformed by a
+     */
+    def aggregateResults[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
+      this(tree).map {
+        case u @ (_, a2) => m(tree)
+          .map {case (_, b2) => (tree, (a2, b2))}
+          .getOrElse((u._1, (u._2, implicitly[Monoid[B]].zero)))
+      } orElse(m(tree).map (u => (u._1, (implicitly[Monoid[C]].zero, u._2))))
+    }
 
     /**
      * a compose b

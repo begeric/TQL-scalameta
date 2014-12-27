@@ -34,6 +34,8 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * with input which cannot be composed in order to get a F[B] ?
      * */
 
+    def composeFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 compose f.m1)
+
     /**
      * strategy(a) + strategy(b) = strategy(a + b)
      * */
@@ -43,7 +45,8 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case _=> super.compose(m2)
     }
 
-    def composeFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 compose f.m1)
+
+    def composeResultsFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 composeResults f.m1)
 
     /**
      * strategy(a) +> strategy(b) = strategy(a +> b)
@@ -53,7 +56,8 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case _=> super.composeResults(m2)
     }
 
-    def composeResultsFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 composeResults f.m1)
+
+    def aggregateFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] = f.newInstance(m1 aggregate f.m1)
 
     /**
      *  strategy(a) ~ strategy(b) = strategy(a ~ b)
@@ -63,7 +67,6 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case _=> super.aggregate(m2)
     }
 
-    def aggregateFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] = f.newInstance(m1 aggregate f.m1)
 
     /**
      * strategy(x) map {a => b} + strategy(z) = strategy(x ~ z) map{case (a, z) => (b, z)}
@@ -95,6 +98,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case v: F[C] @unchecked => new MappedFused(m1 aggregateFused v, (x: (A, C)) => M[C](f(x._1)) + x._2)
       case _ => super.compose(m2)
     }
+
   }
 
 
