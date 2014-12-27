@@ -76,18 +76,27 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
-    def leftCompose[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F])/*(implicit m: Monoid[B])*/ = {
-      val newmf: F[(U, A)]    = (mf.m1 aggregate m1).asInstanceOf[F[(U, A)]] //since mf.m1 : F[U] and m1: F[A] we know it's same. It's still ugly tho
-      val newf: ((U, A)) => C = (x: (U, A)) => implicitly[Monoid[C]].append(mf.f(x._1), f(x._2))
+    def leftCompose[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
+      val newmf = (mf.m1 aggregate m1).asInstanceOf[F[(U, A)]] //since mf.m1 : F[U] and m1: F[A] we know it's same. It's still ugly tho
+      val newf  = (x: (U, A)) => implicitly[Monoid[C]].append(mf.f(x._1), f(x._2))
       new MappedFused(newmf, newf)
     }
 
     override def compose[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
       case v: MappedFused[_, C, F] @unchecked =>
-        v.leftCompose(this)//(implicitly[Monoid[A]], implicitly[Monoid[C]].asInstanceOf[Monoid[B]])
-      /*case v: F[C] @unchecked =>
-        new MappedFused(m1 aggregate v.m1, (x: (A, B)) => f(x._1) + x._2)
-      case _=> super.compose(m2)  */
+        v.leftCompose(this)
+      case v: F[C] @unchecked =>
+        import MonoidEnhencer._
+        val newmf = (m1 aggregate v.m1).asInstanceOf[F[(A, C)]]
+        val newf = (x: (A, C)) => implicitly[Monoid[C]].append(f(x._1),x._2)
+        /*why can't I just do f(x._1) + x._2 ??
+        *  Error:(91, 47) type mismatch;
+        * found   : C
+        * required: String
+        *        val newf = (x: (A, C)) => f(x._1) + x._2    //implicitly[Monoid[C]].append(f(x._1),x._2)                                       ^
+         */
+        new MappedFused(newmf, newf)
+      case _ => super.compose(m2)
     }
 
   }
