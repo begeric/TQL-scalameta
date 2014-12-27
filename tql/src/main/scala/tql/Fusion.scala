@@ -84,14 +84,43 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * */
     override def map[B](f: A => B): Matcher[B] = new MappedFused(this.asInstanceOf[F[A]], f)
 
-    /**
-     * 1) strategy(x) feed (y => strategy(z)) + strategy(w) = strategy(x) feed (y => strategy(z) + strategy(w))
-     * 2) strategy(x) feed (y => strategy(z)) + strategy(v) feed (u => strategy(w)) =
-     *    (strategy(x) ~ strategy(v)) feed {case (y,u) => strategy(z) + strategy(w)}
-     */
 
   }
 
+  /**
+   * When 'map' is applied to a strategy, this combinator ensures that the modification will only touch the
+   * elements in that traversal and not mix with the other 'composed' traversal.
+   * Sometimes this require us to use aggregate or aggregateResults instead of compose or composeResults.
+   * Some cases are handled in Fused (see 2), so all classes in this file are tightly coupled.
+   *
+   * There are several cases to consider (the example are presented with concrete traversal to be more easily readable):
+   * 1)
+   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * down(collect{case Lit.Int(x) => x})
+   * =>
+   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a.map(_ * 2) + b)
+   *
+   * 2)
+   * down(collect{case Lit.Int(x) => x}) +
+   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2))
+   * =>
+   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a + b.map(_ * 2))
+   *
+   * 3)
+   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 3))
+   * =>
+   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x})
+   *   map{case (a, b) => a.map(_ * 2) + b.map(_ * 3)}
+   *
+   * 4)
+   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * down(collect{case Lit.Int(x) => x}) +
+   * down(collect{case Lit.Int(x) => x})
+   * =>
+   * down(collect{case Lit.Int(x) => x} ~ (collect{case Lit.Int(x) => x} + collect{case Lit.Int(x) => x}))
+   *  map(case (a, b) => a.map(_ * 2) + b)
+   * */
   class MappedFused[A : Monoid, +B, F[+U] <: Fused[U, F]](val m1: F[A], val f: A => B) extends Matcher[B] {
 
     def apply(t: T) = for {
@@ -127,7 +156,13 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
     }
   }
 
-
+  /**
+   * This allows to fuse feed combinators.
+   *
+   * 1) strategy(x) feed (y => strategy(z)) + strategy(w) = strategy(x) feed (y => strategy(z) + strategy(w))
+   * 2) strategy(x) feed (y => strategy(z)) + strategy(v) feed (u => strategy(w)) =
+   *    (strategy(x) ~ strategy(v)) feed {case (y,u) => strategy(z) + strategy(w)}
+   */
   class FeedFused[A : Monoid, B : Monoid, F[+U] <: Fused[U, F]](val m1: F[A], val m2: A => F[B]) extends Matcher[B] {
 
     def apply(tree: T) = for {
