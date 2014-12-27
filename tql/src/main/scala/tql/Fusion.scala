@@ -54,6 +54,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * */
     override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case v: MappedFused[_, B, F]  @unchecked => v.leftComposeResults(this.asInstanceOf[F[A]])
+      case v: FeedFused[_, B, F] @unchecked => v.leftComposeResults(this.asInstanceOf[F[A]])
       case f: F[B] @unchecked => composeResultsFused(f)
       case _=> super.composeResults(m2)
     }
@@ -170,6 +171,8 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
        t2    <- m2(v)(t)
     } yield t2
 
+    //compose
+
     def leftCompose[C <: B : Monoid](fused: F[C]) =
       new FeedFused(m1, (x: A) => fused composeFused m2(x))
 
@@ -178,6 +181,18 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
         new FeedFused(m1 composeFused v.m1 , (x: A) => m2(x) composeFused v.m2(x))
       case v: F[C] @unchecked => new FeedFused(m1, (x: A) => m2(x) composeFused v)
       case _ => super.compose(m)
+    }
+
+    //composeResults
+
+    def leftComposeResults[C <: B : Monoid](fused: F[C]) =
+      new FeedFused(m1, (x: A) => fused composeResultsFused m2(x))
+
+    override def composeResults[C >: B : Monoid](m: => Matcher[C]): Matcher[C] = m2 match {
+      case v: FeedFused[A, C, F] @unchecked =>
+        new FeedFused(m1 composeResultsFused v.m1 , (x: A) => m2(x) composeResultsFused v.m2(x))
+      case v: F[C] @unchecked => new FeedFused(m1, (x: A) => m2(x) composeResultsFused v)
+      case _ => super.composeResults(m)
     }
   }
 
