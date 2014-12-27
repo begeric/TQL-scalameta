@@ -67,6 +67,15 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case _=> super.aggregate(m2)
     }
 
+    def aggregateResultsFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] =
+      f.newInstance(m1 aggregateResults f.m1)
+    /**
+     *  strategy(a) aggregateResults strategy(b) = strategy(a aggregateResults b)
+     * */
+    override def aggregateResults[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
+      case f: F[B] @unchecked => aggregateResultsFused(f)
+      case _=> super.aggregateResults(m2)
+    }
 
     /**
      * strategy(x) map {a => b} + strategy(z) = strategy(x ~ z) map{case (a, z) => (b, z)}
