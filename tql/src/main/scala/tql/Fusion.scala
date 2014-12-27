@@ -29,6 +29,9 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      *
      * since we override compose we cannot have an implicit of type ClassTag[F[B]]. It would need to be inserted in the
      * argument list of compose.
+     *
+     * I would love change the return type to F[B] instead of Matcher[B] but the problem is that then what do we do
+     * with input which cannot be composed in order to get a F[B] ?
      * */
 
     /**
@@ -36,31 +39,36 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * */
     override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case v: MappedFused[_, B, F]  @unchecked => v.leftCompose(this)
-      case f: F[B] @unchecked => f.newInstance(m1 compose f.m1)
+      case f: F[B] @unchecked => composeFused(f)
       case _=> super.compose(m2)
     }
 
+    def composeFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 compose f.m1)
 
     /**
      * strategy(a) +> strategy(b) = strategy(a +> b)
      * */
     override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      case f: F[B] @unchecked => f.newInstance(m1 composeResults f.m1)
+      case f: F[B] @unchecked => composeResultsFused(f)
       case _=> super.composeResults(m2)
     }
+
+    def composeResultsFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 composeResults f.m1)
 
     /**
      *  strategy(a) ~ strategy(b) = strategy(a ~ b)
      * */
     override def aggregate[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
-      case f: F[B] @unchecked => f.newInstance(m1 aggregate f.m1)
+      case f: F[B] @unchecked => aggregateFused(f)
       case _=> super.aggregate(m2)
     }
+
+    def aggregateFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] = f.newInstance(m1 aggregate f.m1)
 
     /**
      * strategy(x) map {a => b} + strategy(z) = strategy(x ~ z) map{case (a, z) => (b, z)}
      * */
-    override def map[B](f: A => B): Matcher[B] = new MappedFused(this, f)
+    override def map[B](f: A => B): Matcher[B] = new MappedFused(this.asInstanceOf[F[A]], f)
 
     /**
      * 1) strategy(x) feed (y => strategy(z)) + strategy(w) = strategy(x) feed (y => strategy(z) + strategy(w))
@@ -70,14 +78,14 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
   }
 
-  class MappedFused[A : Monoid, +B, F[A] <: Fused[A, F]](val m1: Fused[A, F], val f: A => B) extends Matcher[B] {
+  class MappedFused[A : Monoid, +B, F[A] <: Fused[A, F]](val m1: F[A], val f: A => B) extends Matcher[B] {
 
     def apply(t: T) = for {
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
     def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
-      val newmf = (mf.m1 aggregate m1).asInstanceOf[F[(U, A)]] //since mf.m1 : F[U] and m1: F[A] we know it's same. It's still ugly tho
+      val newmf = mf.m1 aggregateFused m1
       val newf  = (x: (U, A)) => M % mf.f(x._1) + f(x._2)
       new MappedFused(newmf, newf)
     }
