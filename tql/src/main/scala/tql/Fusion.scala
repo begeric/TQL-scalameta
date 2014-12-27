@@ -78,13 +78,13 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
     def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
       val newmf = (mf.m1 aggregate m1).asInstanceOf[F[(U, A)]] //since mf.m1 : F[U] and m1: F[A] we know it's same. It's still ugly tho
-      val newf  = (x: (U, A)) => implicitly[Monoid[C]].append(mf.f(x._1), f(x._2))
+      val newf  = (x: (U, A)) => M % mf.f(x._1) + f(x._2)
       new MappedFused(newmf, newf)
     }
 
     def leftCompose[C >: B : Monoid](fused: Fused[C, F]) = {
       val newmf = (fused.m1 aggregate m1).asInstanceOf[F[(C, A)]]
-      val newf  = (x: (C, A)) => implicitly[Monoid[C]].append(x._1, f(x._2))
+      val newf  = (x: (C, A)) => M % x._1 + f(x._2)
       new MappedFused(newmf, newf)
     }
 
@@ -92,13 +92,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       case v: MappedFused[_, C, F]  @unchecked => v.composeWithMapped(this) //visitor pattern here I aaaaam
       case v: F[C] @unchecked =>
         val newmf = (m1 aggregate v.m1).asInstanceOf[F[(A, C)]]
-        val newf = (x: (A, C)) => implicitly[Monoid[C]].append(f(x._1),x._2)
-        /*why can't I just do f(x._1) + x._2 ??
-        *  Error:(91, 47) type mismatch;
-        * found   : C
-        * required: String
-        *        val newf = (x: (A, C)) => f(x._1) + x._2    //implicitly[Monoid[C]].append(f(x._1),x._2)                                       ^
-         */
+        val newf = (x: (A, C)) => M[C](f(x._1)) + x._2
         new MappedFused(newmf, newf)
       case _ => super.compose(m2)
     }
