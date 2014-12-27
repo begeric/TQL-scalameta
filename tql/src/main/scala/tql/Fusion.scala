@@ -15,7 +15,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
    * It is a system-f class in order to allow the fusion to different kind of strategy (down, up..) without
    * having to duplicate the whole thing each time.
    * */
-  abstract class Fused[A : Monoid, F[A] <: Fused[A, F]](val m1: Matcher[A]) extends Matcher[A] {
+  abstract class Fused[+A : Monoid, F[A] <: Fused[A, F]](val m1: Matcher[A]) extends Matcher[A] {
     /**
      * Exists to not have to use reflection with something like f.getClass.getConstructor[..]... inside compose
      * */
@@ -35,11 +35,11 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * strategy(a) + strategy(b) = strategy(a + b)
      * */
     override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
-      /*case v: MappedFused[_, B, _] @unchecked =>
-        new MappedFused(m1 aggregate v.m1, (x: (A, B)) => v.f(x._1) + x._2) */
+      case v: MappedFused[_, B, F]  @unchecked => v.leftCompose(this)
       case f: F[B] @unchecked => f.newInstance(m1 compose f.m1)
       case _=> super.compose(m2)
     }
+
 
     /**
      * strategy(a) +> strategy(b) = strategy(a +> b)
@@ -60,7 +60,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
     /**
      * strategy(x) map {a => b} + strategy(z) = strategy(x ~ z) map{case (a, z) => (b, z)}
      * */
-    override def map[B](f: A => B): Matcher[B] = new MappedFused(newInstance(m1), f)
+    override def map[B](f: A => B): Matcher[B] = new MappedFused(this, f)
 
     /**
      * 1) strategy(x) feed (y => strategy(z)) + strategy(w) = strategy(x) feed (y => strategy(z) + strategy(w))
@@ -70,23 +70,27 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
   }
 
-  class MappedFused[A : Monoid, +B, F[A] <: Fused[A, F]](val m1: F[A], val f: A => B) extends Matcher[B] {
+  class MappedFused[A : Monoid, +B, F[A] <: Fused[A, F]](val m1: Fused[A, F], val f: A => B) extends Matcher[B] {
 
     def apply(t: T) = for {
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
-    def leftCompose[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
+    def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) = {
       val newmf = (mf.m1 aggregate m1).asInstanceOf[F[(U, A)]] //since mf.m1 : F[U] and m1: F[A] we know it's same. It's still ugly tho
       val newf  = (x: (U, A)) => implicitly[Monoid[C]].append(mf.f(x._1), f(x._2))
       new MappedFused(newmf, newf)
     }
 
+    def leftCompose[C >: B : Monoid](fused: Fused[C, F]) = {
+      val newmf = (fused.m1 aggregate m1).asInstanceOf[F[(C, A)]]
+      val newf  = (x: (C, A)) => implicitly[Monoid[C]].append(x._1, f(x._2))
+      new MappedFused(newmf, newf)
+    }
+
     override def compose[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
-      case v: MappedFused[_, C, F] @unchecked =>
-        v.leftCompose(this)
+      case v: MappedFused[_, C, F]  @unchecked => v.composeWithMapped(this) //visitor pattern here I aaaaam
       case v: F[C] @unchecked =>
-        import MonoidEnhencer._
         val newmf = (m1 aggregate v.m1).asInstanceOf[F[(A, C)]]
         val newf = (x: (A, C)) => implicitly[Monoid[C]].append(f(x._1),x._2)
         /*why can't I just do f(x._1) + x._2 ??
@@ -98,7 +102,6 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
         new MappedFused(newmf, newf)
       case _ => super.compose(m2)
     }
-
   }
 
 
