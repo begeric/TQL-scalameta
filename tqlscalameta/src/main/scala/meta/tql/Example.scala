@@ -42,7 +42,6 @@ object Example extends App {
     })
 
   )
-
   //println(x.show[Raw])
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down

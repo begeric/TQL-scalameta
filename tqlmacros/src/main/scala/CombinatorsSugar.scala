@@ -7,21 +7,39 @@ package tql
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 
+/**
+ * This class define several bundled macros used to enhance or to make less boilerplaty the usage
+ * of the combinators defined in Combinators.scala
+ * */
 class CombinatorsSugar(val c: Context) {
   import c.universe._
 
+  /**
+   * Transform focus*{case Term.If(a,b,c) => true} into guard[Term.If]{case Term.If(a,b,c) => true}
+   * as the compiler cannot infer the type in arguments of anonymous functions (see §8.5).
+   * * name can change.
+   * */
   def filterSugarImpl[T : c.WeakTypeTag](f: c.Tree): c.Tree = {
     val (lhs, _) =  getLUBsfromPFs[T](f)
-    q"${c.prefix}.guard[$lhs]($f)"
+    q"guard[$lhs]($f)"
   }
 
+  /**
+   * This allows to inline the method withResult of the CTWithResult implicit class, so as to have the power of an implicit class
+   * without the runtime performance impact.
+   * */
   def TWithResult[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree): c.Tree  = c.untypecheck(c.prefix.tree) match {
     case q"$_.CTWithResult[$_]($t)" => q"($t, $a)"
     case q"$_.CTWithResult[$_]($t).andCollect[$_]" => q"($t, $a)"
     case _ => c.abort(c.enclosingPosition, "Bad form in TWithResult " + show(c.prefix.tree))
   }
 
-  def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree)(y: c.Tree): c.Tree = TWithResult[T, List[A]](q"($y.builder += $a).result")
+  /**
+   * Inline the method andCOllect of the CTWithResult implicit class (see TWithResult macro).
+   * The second parameter is actually the implicit paramter of type Collector.
+   * */
+  def TAndCollect[T: c.WeakTypeTag, A : c.WeakTypeTag](a: c.Tree)(y: c.Tree): c.Tree =
+    TWithResult[T, List[A]](q"($y.builder += $a).result")
 
   /**
    * Rewrite
@@ -87,11 +105,9 @@ class CombinatorsSugar(val c: Context) {
     transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc")
   }
 
-  def transformSugarImplWithTRtype[T : c.WeakTypeTag](f: c.Tree): c.Tree =
-    q"${c.prefix}.transforms(${transformSugarImpl[T](f)})"
 
 
-  def getLUBsfromPFs[T : c.WeakTypeTag](f: c.Tree): (c.Type, c.Type) = {
+  protected def getLUBsfromPFs[T : c.WeakTypeTag](f: c.Tree): (c.Type, c.Type) = {
     val tpes = getTypesFromPFS[T](f)
     if (tpes.size > 1){
       val (lhs, rhs) = tpes.unzip
@@ -101,7 +117,7 @@ class CombinatorsSugar(val c: Context) {
       tpes.head //TODO guarenteed to have size > 0?
   }
 
-  def getTypesFromPFS[T : c.WeakTypeTag](f: c.Tree): List[(c.Type, c.Type)] = {
+  protected def getTypesFromPFS[T : c.WeakTypeTag](f: c.Tree): List[(c.Type, c.Type)] = {
     f match {
       case q"{case ..$cases}" =>
         cases.map(getTypesFromCase(_))
@@ -112,7 +128,7 @@ class CombinatorsSugar(val c: Context) {
     }
   }
 
-  def getTypesFromCase(cas: c.Tree): (c.Type, c.Type) = {
+  protected def getTypesFromCase(cas: c.Tree): (c.Type, c.Type) = {
     import c.universe._
     cas match {
       case cq"${lhs: c.Tree} => ${rhs:  c.Tree}" => (lhs.tpe, rhs.tpe)
@@ -126,7 +142,7 @@ class CombinatorsSugar(val c: Context) {
    * and this thing cannot be typechecked a second time. (see : https://issues.scala-lang.org/browse/SI-5465)
    * To solve this problem we have to remonve the <unapply-selector> ourselves, and here is the solution:
    * thanks Eugene : https://gist.github.com/xeno-by/7fbd422c6789299140a7*/
-  object betterUntypecheck extends Transformer {
+  protected object betterUntypecheck extends Transformer {
     override def transform(tree: Tree): Tree = tree match {
       case UnApply(Apply(Select(qual, TermName("unapply")), List(Ident(TermName("<unapply-selector>")))), args) =>
         Apply(transform(qual), transformTrees(args))
