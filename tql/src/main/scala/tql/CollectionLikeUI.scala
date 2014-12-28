@@ -69,21 +69,24 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
    * */
   implicit class Evaluator(t: T){
 
-   def collect[C[_]] = new  {
+    def collect[C[_]] = new  {
      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
        down.collect[C](f)
-   }
+    }
 
     def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = down.guard(f)
 
     def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CombinatorsSugar.filterSugarImpl[T]
 
+    /**
+    * This is required for the transform macro as it cannot access self.transformWithResult by itself
+    * */
     def transformWithResult[I <: T : ClassTag, O <: T, A]
-                          (f: PartialFunction[I, (O, A)])
-                          (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
+                        (f: PartialFunction[I, (O, A)])
+                        (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
 
     def transform(f: PartialFunction[T, Any]): Any =
-      macro CombinatorsSugar.transformSugarImplWithTRtype[T]
+    macro CombinatorsSugar.transformSugarImplWithTRtype[T]
 
     def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) = down.transforms(f)
 
@@ -94,6 +97,9 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def children  = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.children(x)})
   }
 
+  /**
+   * Evaluator at which will be applied the traversal strategy defined in 'meta'
+   * */
   class EvaluatorMeta(t: T, meta: DelayedMeta){
 
     def collect[C[_]] = new {
@@ -107,6 +113,9 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
+    /**
+     * This is required for the transform macro as it cannot access self.transformWithResult by itself
+     * */
     def transformWithResult[I <: T : ClassTag, O <: T, A]
                           (f: PartialFunction[I, (O, A)])
                           (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
@@ -128,7 +137,7 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
   }
 
 
-  class EvaluatorAndThen[+A](private[CollectionLikeUI] val t: T,
+  class EvaluatorAndThen[+A](   private[CollectionLikeUI] val t: T,
                                  private[CollectionLikeUI] val m: Matcher[A],
                                  private[CollectionLikeUI] val meta: DelayedMeta){
     def collect[C[_]] = new {
@@ -142,6 +151,9 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
       macro CombinatorsSugar.filterSugarImpl[T]
 
+    /**
+     * This is required for the transform macro as it cannot access self.transformWithResult by itself
+     * */
     def transformWithResult[I <: T : ClassTag, O <: T, A]
                             (f: PartialFunction[I, (O, A)])
                             (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)

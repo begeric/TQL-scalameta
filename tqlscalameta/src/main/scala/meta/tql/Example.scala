@@ -37,6 +37,12 @@ object Example extends App {
     }
   })
 
+  val st = down(stateful2[List[scala.meta.Tree]](x => collect{
+      case Term.If(a, b, c) => a
+    })
+
+  )
+
   //println(x.show[Raw])
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
