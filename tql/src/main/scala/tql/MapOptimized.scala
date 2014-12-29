@@ -27,7 +27,7 @@ trait MapOptimized[T, U] { self: Traverser[T] with Combinators[T] =>
       case f: MapTagOptimized[B] =>
         val newMap = elems.foldLeft(f.elems)((acc, c) => c match {
           case e @ (i, m) =>  if (acc contains i) acc.updated(i, acc(i) + m)
-          else acc + e
+                              else acc + e
         })
         new MapTagOptimized[B](newMap)
       case _ => super.compose(m2)

@@ -68,7 +68,7 @@ object Example extends App {
   //println(getAvg(x).result.map(_()))
 
 
-  println(t7)
+  println(x.collect{case Lit.Int(a) => a})
 
   //println(bfstest(x))
   //println(t1)
