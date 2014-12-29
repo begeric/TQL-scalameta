@@ -86,8 +86,10 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * */
     override def map[B](f: A => B): Matcher[B] = new MappedFused(self, f)
 
-    override def feed[B : Monoid](m: => A => Matcher[B]): Matcher[B] =
-      new FeedFused(self, m.asInstanceOf[A => F[B]])
+    override def feed[B : Monoid](m: => A => Matcher[B]): Matcher[B] = m match {
+      case v : (A => F[B]) => new FeedFused(self, v)
+      case v => super.feed(m)
+    }
 
   }
 
