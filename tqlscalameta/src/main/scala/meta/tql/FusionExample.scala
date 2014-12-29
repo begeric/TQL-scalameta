@@ -23,13 +23,14 @@ object FusionExample extends App{
        5
     """
   }
+  var i = 0
+  var j = 0
+  var k = 0
 
+  val getAllEven = down(collect{case Lit.Int(a) if a % 2 != 0 => {i += 1; println(i); a}}) map (_.map(_ * 10))
+  val getAllEven2 = down(collect{case Lit.Int(a) if a % 2 != 0 => {k += 1; println(k); a}}) map (_.map(_ * 20))
+  val getAllOdds = down(collect{case Lit.Int(a) if a % 2 != 0 => {j += 1; println(j); a}})
 
-  val getAllPairs =  down(collect[Set]{case Lit.Int(a) if a % 2 != 0 => a})
-  val getAllIntLT5 = getAllPairs feed {res => down(collect[Set]{case Lit.Int(a) if a < 5 && res.contains(a) => a})}
-  val getAllIntGT5 = down(collect[Set]{case Lit.Int(a) if a > 5 => a})
-
-  val both = getAllIntLT5 + getAllIntGT5
-
+  val both = getAllOdds + getAllOdds + getAllEven + getAllEven2 + (getAllOdds + getAllOdds)
   println(both(x).result)
 }

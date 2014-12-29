@@ -52,7 +52,7 @@ object TQLBuild extends Build {
           import scala.meta.tql.ScalaMetaTraverser._
           import scala.meta.syntactic.ast._
           """
-        ) ++ exposeClasspaths("tql")
+        ) ++ exposeClasspaths("tqlscalameta")
   ) dependsOn(tqlscalametamacros)
 
 }
