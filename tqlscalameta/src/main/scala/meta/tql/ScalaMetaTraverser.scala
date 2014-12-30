@@ -8,7 +8,10 @@ import scala.language.experimental.macros
 import tql._
 import scala.meta._
 
-object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with SyntaxEnhancer[Tree] with CollectionLikeUI[Tree]{
+object ScalaMetaTraverser extends Traverser[Tree]
+                          with Combinators[Tree]
+                          with SyntaxEnhancer[Tree]
+                          with CollectionLikeUI[Tree]{
   import MonoidEnhencer._
 
   /**
@@ -28,4 +31,20 @@ object ScalaMetaTraverser extends Traverser[Tree] with Combinators[Tree] with Sy
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
+}
+
+
+object ScalaMetaTraverser2  extends Traverser[Tree]
+                            with Combinators[Tree]
+                            with SyntaxEnhancer[Tree]
+                            with CollectionLikeUI[Tree]{
+  import MonoidEnhencer._
+
+  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
+    macro AllowedTransformationsMaterializer.materialize[T, I, O]
+
+  val traverseTable = ScalametaTraverserHelperMacros.buildTraverseTable[Tree]
+
+  def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
+    traverseTable(tree.$tag).apply[A](tree, f)
 }

@@ -74,10 +74,18 @@ object CompareBenchmarks extends PerformanceTest {
       }
     }
 
-    import scala.meta.tql.ScalaMetaTraverser._
     import scala.meta.internal.ast._
 
-    measure method "TQL  CollectIn[Set]" in {
+    measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
+      import scala.meta.tql.ScalaMetaTraverser._
+      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      using(range) in { j =>
+        collectVals(scalaMetaTree)
+      }
+    }
+
+    measure method "TQL  CollectIn[Set] ScalaMetaTraverser2" in {
+      import scala.meta.tql.ScalaMetaTraverser2._
       val collectVals = down(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)

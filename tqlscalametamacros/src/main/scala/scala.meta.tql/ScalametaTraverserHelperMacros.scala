@@ -23,6 +23,15 @@ object ScalametaTraverserHelperMacros {
    * */
   def buildFromTopSymbol[T, A](f: Traverser[T]#Matcher[A]): T => Option[(T, A)] =
     macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
+
+
+  abstract class TraversableFunc[T] {
+    def apply[A: Monoid](tree: T, f: Traverser[T]#Matcher[A]): Traverser[T]#MatchResult[A]
+  }
+
+  def buildTraverseTable[T]: Array[TraversableFunc[T]] =
+    macro ScalametaTraverserBuilder.buildTraverseTable[T]
+
 }
 
 class ScalametaTraverserBuilder(override val c: Context)
@@ -32,12 +41,109 @@ class ScalametaTraverserBuilder(override val c: Context)
   import c.universe._
 
 
+
+  def buildTraverseTable[T : c.WeakTypeTag]: c.Tree = {
+    //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val nbLeaves = u.symbolOf[T].asRoot.allLeafs.size * 2
+    val array = TermName(c.freshName("table"))
+    val tagTerm = TermName("$tag")
+
+    val assigns: List[c.Tree] = u.symbolOf[T].asRoot.allLeafs.map(x =>
+      q"""
+        $array(${x.sym.companion}.$tagTerm) = ${buildFuncForTraverse[T](x)}
+      """
+    )
+    val res = q"""
+        val $array = new Array[scala.meta.tql.ScalametaTraverserHelperMacros.TraversableFunc[$Ttpe]]($nbLeaves)
+        ..$assigns
+        $array.toArray
+    """
+    res
+  }
+
+  private def buildFuncForTraverse[T : c.WeakTypeTag](leaf: Leaf): c.Tree = {
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val TtpeName = TypeName(c.freshName)
+    val treeParam = TermName(c.freshName("tree"))
+    val f = TermName(c.freshName)
+    val cas = buildCase[T](f, leaf, treeParam)
+    val mat = cas.map(x => q"$treeParam match {case $x}")
+                 .getOrElse(q"Some(($treeParam, implicitly[Monoid[$TtpeName]].zero))")
+    q"""
+    new scala.meta.tql.ScalametaTraverserHelperMacros.TraversableFunc[$Ttpe] {
+      def apply[$TtpeName: _root_.tql.Monoid]
+      ($treeParam: $Ttpe, $f: _root_.tql.Traverser[$Ttpe]#Matcher[$TtpeName]) = $mat
+      }
+     """
+  }
+
+  private def makeTraverseStat[T : c.WeakTypeTag](f: TermName, field: Field): Option[c.Tree] = field.tpe match {
+    case t if t <:< weakTypeOf[T] =>
+      Some(q"$f(${field.name})")
+    case t if t <:< weakTypeOf[scala.collection.immutable.Seq[T]] =>
+      Some(q"_root_.tql.TraverserHelper.traverseSeq($f, ${field.name})")
+    case t if t <:< weakTypeOf[scala.collection.immutable.Seq[scala.collection.immutable.Seq[T]]] =>
+      Some(q"_root_.tql.TraverserHelper.traverseSeqofSeq($f, ${field.name})")
+    case t if t <:< weakTypeOf[scala.Option[T]] =>
+      Some(q"_root_.tql.TraverserHelper.optional($f, ${field.name})")
+    case _ => None
+  }
+
+  private def buildTraversePart(leafSym: Symbol, fields: List[(Field, c.Tree)], orig: TermName): c.Tree = {
+    val resultNamesForEachField       = fields.map(_ => (TermName(c.freshName), TermName(c.freshName)))
+    val resultsNamesWithTraverseStmt  = resultNamesForEachField.zip(fields)
+    val cqForEachField                = resultsNamesWithTraverseStmt.map(_ match {
+      case ((newTree: TermName, newResult: TermName), (field: Field, stmt: c.Tree)) =>
+        fq"($newTree: ${field.tpe}, $newResult @ _) <- $stmt"
+    })
+
+    val addMonoidResults = resultNamesForEachField.map(x => q"${x._2}").reduce[c.Tree]((a, b) => q"$a + $b")
+    val newTreeNames = resultNamesForEachField.map(_._1)
+    //it is here implied that Field.name will be the name of the variable containing the old tree
+    //maybe need to change that and give the name as parameter.
+    val newTreeWithOld = newTreeNames.zip(fields.map(_._1.name))
+
+    //hope this is optimized away
+    val eqList = newTreeWithOld.foldLeft[c.Tree](q"true")((a, b) => q"$a && (${b._1} eq ${b._2})")
+
+    val reconstruct = q"${leafSym.companion}(..$newTreeNames)"
+
+    val doesReconstruct = q"if($eqList) $orig else  $reconstruct"
+
+    q"""
+        for (
+          ..$cqForEachField
+        ) yield ($doesReconstruct, $addMonoidResults)
+      """
+  }
+
+  private def buildCase[T : c.WeakTypeTag](f: TermName, leaf: Leaf, param: TermName): Option[c.Tree] = {
+    val listOfTraverseStats = leaf.nontriviaFields.flatMap(makeTraverseStat[T](f, _))
+    if (listOfTraverseStats.size > 0) {
+      val listOfParamNames = leaf.nontriviaFields.map(p => pq"${p.name} @ _")
+      val fieldsAndStats = leaf.nontriviaFields.zip(listOfTraverseStats)
+      val traverse = buildTraversePart(leaf.sym, fieldsAndStats, param)
+      Some(cq"${leaf.sym.companion}(..$listOfParamNames) => $traverse")
+    }
+    else
+      None
+  }
+
+
+
+  /**
+   * Naive case. Construct a big pattern match with all the leaves
+   * */
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
+    //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
+    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
     val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
   }
 
+  //trick to make it work with the Name unapply.
   override def getParamsWithTypes(typ: c.Type): Option[(List[TermName], List[c.Type])] = {
     //c.abort(c.enclosingPosition, show(typ.companion.typeSymbol.asLeaf))
     val fields = typ.companion.typeSymbol.asLeaf.nontriviaFields
@@ -48,6 +154,8 @@ class ScalametaTraverserBuilder(override val c: Context)
       None
   }
 
+  /*It is useless, there are too many nested branches. So even to match the most used elements
+  * the traverser needs to 'traverse' several branches*/
   def buildFromTopSymbolOptimize[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
     u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info) /*weird hack so that the types are set in
                                                               each symbol and the buildImpl function doesn't fail*/

@@ -4,7 +4,7 @@ package scala.meta.tql
  * Created by Eric on 20.10.2014.
  */
 
-import ScalaMetaFusionTraverser._
+import ScalaMetaTraverser2._
 import scala.meta.internal.ast._
 import scala.meta.syntactic.show._
 import scala.language.reflectiveCalls
