@@ -32,7 +32,7 @@ object CollectStringsTraversers {
       case _ => super.traverse(tree)
     }
 
-    def apply(tree: scala.meta.Tree):Set[String] = {
+    def apply(tree: scala.meta.Tree): Set[String] = {
       varNames = Set[String]()
       traverse(tree)
       varNames
@@ -47,7 +47,7 @@ object CollectStringsTraversers {
       case _ => super.traverse(tree)
     }
 
-    def apply(tree: scala.meta.Tree):Set[String] = {
+    def apply(tree: scala.meta.Tree): Set[String] = {
       varNames = Set[String]()
       traverse(tree)
       varNames
@@ -58,12 +58,12 @@ object CollectStringsTraversers {
     var varNames = Set[String]()
     import scala.meta.internal.ast._
 
-    override def traverse(tree: meta.Tree) = tree match {
+    override def traverse(tree: scala.meta.Tree) = tree match {
       case Lit.String(v) => varNames += v
       case _ => super.traverse(tree)
     }
 
-    def apply(tree: meta.Tree): Set[String] = {
+    def apply(tree: scala.meta.Tree): Set[String] = {
       varNames = Set[String]()
       traverse(tree)
       varNames

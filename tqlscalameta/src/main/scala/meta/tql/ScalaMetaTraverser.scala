@@ -27,7 +27,7 @@ object ScalaMetaTraverser extends Traverser[Tree]
    *  Branch, Leaf  in the Adt scala.meta sense of the term
    */
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
-  macro AllowedTransformationsMaterializer.materialize[T, I, O]
+    macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f)(tree)
@@ -43,8 +43,16 @@ object ScalaMetaTraverser2  extends Traverser[Tree]
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
+
   val traverseTable = ScalametaTraverserHelperMacros.buildTraverseTable[Tree]
 
+
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
-    traverseTable(tree.$tag).apply[A](tree, f)
+    try {
+      traverseTable(tree.$tag).apply[A](tree, f)
+    }
+    catch {
+      //case e: Throwable => println(tree.getClass); throw e
+      case e: Exception  => println(tree.getClass); throw e
+    }
 }

@@ -40,17 +40,27 @@ class ScalametaTraverserBuilder(override val c: Context)
   val u: c.universe.type = c.universe
   import c.universe._
 
+  def getAllSubClass(root: ClassSymbol): List[Symbol] = {
+    val sub = root.sym.asClass.knownDirectSubclasses.toList
+    sub.flatMap(x => x :: getAllSubClass(x.asClass))
+  }
 
+  def getAllLeaves(root: Root) =
+    getAllSubClass(root.sym.asClass).toSet.filter(x => x.isAdt && !x.isBranch).map(_.asLeaf).toList
 
   def buildTraverseTable[T : c.WeakTypeTag]: c.Tree = {
+    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
+
     //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
-    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+    //u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
+    leaves.foreach(_.sym.owner.info)
+
     val Ttpe = implicitly[c.WeakTypeTag[T]]
-    val nbLeaves = u.symbolOf[T].asRoot.allLeafs.size * 2
+    val nbLeaves = leaves.size + 1
     val array = TermName(c.freshName("table"))
     val tagTerm = TermName("$tag")
 
-    val assigns: List[c.Tree] = u.symbolOf[T].asRoot.allLeafs.map(x =>
+    val assigns: List[c.Tree] = leaves.map(x =>
       q"""
         $array(${x.sym.companion}.$tagTerm) = ${buildFuncForTraverse[T](x)}
       """
@@ -137,10 +147,12 @@ class ScalametaTraverserBuilder(override val c: Context)
    * Naive case. Construct a big pattern match with all the leaves
    * */
   def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
+    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
     //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
-    u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
-    val allLeafs = u.symbolOf[T].asRoot.allLeafs.map(x => q"${x.sym.companion}")
+    leaves.foreach(_.sym.owner.info)
+    val allLeafs = leaves.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
+    //c.abort(c.enclosingPosition, show(u.symbolOf[T].asRoot.allLeafs.map(_.sym.fullName)))
   }
 
   //trick to make it work with the Name unapply.

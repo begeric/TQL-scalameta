@@ -53,7 +53,7 @@ object CompareBenchmarks extends PerformanceTest {
       }
     } */
 
-    measure method "Scala Meta Traverser" in {
+    measure method "Scala Meta Traverser via Transformer" in {
       using(range) in { j =>
         new Transformer {
           var varNames = Set[String]()
@@ -71,6 +71,12 @@ object CompareBenchmarks extends PerformanceTest {
             varNames
           }
         }.apply(scalaMetaTree)
+      }
+    }
+
+    measure method "Scala Meta Traverser" in {
+      using(range) in { j =>
+        CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
     }
 
