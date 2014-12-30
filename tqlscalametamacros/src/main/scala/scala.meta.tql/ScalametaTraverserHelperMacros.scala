@@ -24,6 +24,9 @@ object ScalametaTraverserHelperMacros {
   def buildFromTopSymbol[T, A](f: Traverser[T]#Matcher[A]): T => Option[(T, A)] =
     macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
 
+  def buildFromTopSymbolDelegate[T, A](f: Traverser[T]#Matcher[A]): Traverser[T]#MatchResult[A] =
+    macro ScalametaTraverserBuilder.buildFromTopSymbolDelegate[T, A]
+
 
   abstract class TraversableFunc[T] {
     def apply[A: Monoid](tree: T, f: Traverser[T]#Matcher[A]): Traverser[T]#MatchResult[A]
@@ -31,6 +34,11 @@ object ScalametaTraverserHelperMacros {
 
   def buildTraverseTable[T]: Array[TraversableFunc[T]] =
     macro ScalametaTraverserBuilder.buildTraverseTable[T]
+
+  def precalculatedTags[T]: Map[String, Int] = macro ScalametaTraverserBuilder.precalculatedTags[T]
+
+  /*def buildTraverseSwitch[T, A](f: Traverser[T]#Matcher[A]): T => Traverser[T]#MatchResult[A] =
+    macro ScalametaTraverserBuilder.buildTraverseSwitch[T, A]*/
 
 }
 
@@ -50,13 +58,12 @@ class ScalametaTraverserBuilder(override val c: Context)
 
   def buildTraverseTable[T : c.WeakTypeTag]: c.Tree = {
     val leaves = getAllLeaves(u.symbolOf[T].asRoot)
-
     //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
     //u.symbolOf[T].asRoot.allLeafs.foreach(_.sym.owner.info)
     leaves.foreach(_.sym.owner.info)
 
     val Ttpe = implicitly[c.WeakTypeTag[T]]
-    val nbLeaves = leaves.size + 1
+    val nbLeaves = leaves.size * 2
     val array = TermName(c.freshName("table"))
     val tagTerm = TermName("$tag")
 
@@ -78,7 +85,7 @@ class ScalametaTraverserBuilder(override val c: Context)
     val TtpeName = TypeName(c.freshName)
     val treeParam = TermName(c.freshName("tree"))
     val f = TermName(c.freshName)
-    val cas = buildCase[T](f, leaf, treeParam)
+    val cas = buildCase[T](q"$f", leaf, treeParam)
     val mat = cas.map(x => q"$treeParam match {case $x}")
                  .getOrElse(q"Some(($treeParam, implicitly[Monoid[$TtpeName]].zero))")
     q"""
@@ -89,7 +96,7 @@ class ScalametaTraverserBuilder(override val c: Context)
      """
   }
 
-  private def makeTraverseStat[T : c.WeakTypeTag](f: TermName, field: Field): Option[c.Tree] = field.tpe match {
+  private def makeTraverseStat[T : c.WeakTypeTag](f: c.Tree, field: Field): Option[c.Tree] = field.tpe match {
     case t if t <:< weakTypeOf[T] =>
       Some(q"$f(${field.name})")
     case t if t <:< weakTypeOf[scala.collection.immutable.Seq[T]] =>
@@ -129,7 +136,7 @@ class ScalametaTraverserBuilder(override val c: Context)
       """
   }
 
-  private def buildCase[T : c.WeakTypeTag](f: TermName, leaf: Leaf, param: TermName): Option[c.Tree] = {
+  private def buildCase[T : c.WeakTypeTag](f: c.Tree, leaf: Leaf, param: TermName): Option[c.Tree] = {
     val listOfTraverseStats = leaf.nontriviaFields.flatMap(makeTraverseStat[T](f, _))
     if (listOfTraverseStats.size > 0) {
       val listOfParamNames = leaf.nontriviaFields.map(p => pq"${p.name} @ _")
@@ -142,6 +149,50 @@ class ScalametaTraverserBuilder(override val c: Context)
   }
 
 
+  //****************************************************************************************************************
+
+
+  def precalculatedTags[T : c.WeakTypeTag] = {
+    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
+    val tagTerm = TermName("$tag")
+
+    val elems = leaves.map(x => q"${x.sym.fullName} -> ${x.sym.companion}.$tagTerm")
+    q"Map(..$elems)"
+  }
+
+  /*def buildTraverseSwitch[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
+    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
+    leaves.foreach(_.sym.owner.info) // as usual
+
+    val Ttpe = implicitly[c.WeakTypeTag[T]]
+    val parameter = TermName(c.freshName)
+    val tagTerm = TermName("$tag")
+
+    val tags = scalametaMacros.precalculatedTags[scala.meta.Tree]
+    //c.abort(c.enclosingPosition, show(scalametaMacros.precalculatedTags[scala.meta.Tree]))
+
+    val allCases = leaves.map(generateAllCases[T, A](_, f, parameter, tags))
+
+    q"""
+        ($parameter: $Ttpe) => ($parameter.$tagTerm : @scala.annotation.switch) match {
+          case ..$allCases
+        }
+    """
+  }
+
+  private def generateAllCases[T : c.WeakTypeTag, A : c.WeakTypeTag]
+                              (leaf: Leaf, f: c.Tree, param: TermName, tags: Map[String, Int]): c.Tree = {
+    val Atpe = implicitly[c.WeakTypeTag[A]]
+
+    val cas = buildCase[T](f, leaf, param)
+    val mat = cas.map(x => q"$param match {case $x}")
+      .getOrElse(q"Some(($param, implicitly[Monoid[$Atpe]].zero))")
+
+    cq"${tags(leaf.sym.fullName)} => $mat"
+  } */
+
+  //****************************************************************************************************************
+
 
   /**
    * Naive case. Construct a big pattern match with all the leaves
@@ -153,6 +204,13 @@ class ScalametaTraverserBuilder(override val c: Context)
     val allLeafs = leaves.map(x => q"${x.sym.companion}")
     buildImpl[T, A](f, allLeafs: _*)
     //c.abort(c.enclosingPosition, show(u.symbolOf[T].asRoot.allLeafs.map(_.sym.fullName)))
+  }
+
+  def buildFromTopSymbolDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
+    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
+    leaves.foreach(_.sym.owner.info)
+    val allLeafs = leaves.map(x => q"${x.sym.companion}")
+    buildImplDelegate[T, A](f, allLeafs: _*)
   }
 
   //trick to make it work with the Name unapply.

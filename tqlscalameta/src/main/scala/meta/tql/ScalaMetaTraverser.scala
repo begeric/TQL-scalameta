@@ -46,13 +46,42 @@ object ScalaMetaTraverser2  extends Traverser[Tree]
 
   val traverseTable = ScalametaTraverserHelperMacros.buildTraverseTable[Tree]
 
-
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     try {
       traverseTable(tree.$tag).apply[A](tree, f)
     }
     catch {
-      //case e: Throwable => println(tree.getClass); throw e
-      case e: Exception  => println(tree.getClass); throw e
+      case e => println(tree.getClass); throw e
     }
 }
+
+object ScalaMetaTraverser3  extends Traverser[Tree]
+with Combinators[Tree]
+with SyntaxEnhancer[Tree]
+with CollectionLikeUI[Tree]{
+  import MonoidEnhencer._
+
+  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
+  macro AllowedTransformationsMaterializer.materialize[T, I, O]
+
+
+  val traverseTable = ScalametaTraverserHelperMacros.buildTraverseTable[Tree]
+
+
+  def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
+    ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f)
+}
+
+/*object ScalaMetaTraverser3  extends Traverser[Tree]
+                            with Combinators[Tree]
+                            with SyntaxEnhancer[Tree]
+                            with CollectionLikeUI[Tree]{
+  import MonoidEnhencer._
+
+  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
+  macro AllowedTransformationsMaterializer.materialize[T, I, O]
+
+
+  def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
+    ScalametaTraverserHelperMacros.buildTraverseSwitch[Tree, A](f)(tree)
+} */

@@ -27,6 +27,7 @@ object FusionExample extends App{
   var j = 0
   var k = 0
 
+
   val getAllEven = down(collect{case Lit.Int(a) if a % 2 != 0 => {i += 1; println(i); a}}) map (_.map(_ * 10))
   val getAllEven2 = down(collect{case Lit.Int(a) if a % 2 != 0 => {k += 1; println(k); a}}) map (_.map(_ * 20))
   val getAllOdds = down(collect{case Lit.Int(a) if a % 2 != 0 => {j += 1; println(j); a}})

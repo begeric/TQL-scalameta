@@ -35,7 +35,12 @@ class TraverserBuilder(val c: Context) {
     val parameter = TermName(c.freshName)
     val cases = buildCases[T, A](f, objs.toList, parameter)
     buildFuncWith[T, A](cases, parameter)
-    //c.abort(c.enclosingPosition, show("yo"))
+  }
+
+  def buildImplDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: c.Tree*): c.Tree = {
+    val parameter = c.internal.enclosingOwner.asMethod.paramLists.head.head.name.toTermName //LOL
+    val cases = buildCases[T, A](f, objs.toList, parameter)
+    buildDelegateWith[T, A](cases, parameter)
   }
 
   def buildFuncWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
@@ -45,6 +50,15 @@ class TraverserBuilder(val c: Context) {
           case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
+  }
+
+  def buildDelegateWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
+    q"""
+      $parameter match {
+        case ..$cases
+        case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
+      }
+     """
   }
 
 
