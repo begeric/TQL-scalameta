@@ -9,10 +9,7 @@ import scala.reflect.ClassTag
 
 trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
 
-  //Convention : Operators ending with : are right assosiative
   implicit class TEnhancer(t: T){
-    def \[A : Monoid] (b: Matcher[A]) = children(b)(implicitly[Monoid[A]])(t)
-    def \\[A : Monoid](b: Matcher[A]) = downBreak(b)(implicitly[Monoid[A]])(t)
 
     def >>[A](a: Matcher[A]) = a(t)
 
@@ -24,10 +21,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   def downBreakAlias[A : Monoid](m: Matcher[A]) = downBreak(m)
   def downAlias[A : Monoid](m: Matcher[A]) = down(m)
   def upBreakAlias[A : Monoid](m: Matcher[A]) = upBreak(m)
+  def upAlias[A : Monoid](m: Matcher[A]) = up(m)
+  def childrenAlias[A : Monoid](m: Matcher[A]) = children(m)
 
   implicit class TreeMapperEnhancer[A](a: Matcher[A]){
-    def \[B : Monoid] (b: Matcher[B]) = a andThen children(b)
-    def \\[B : Monoid] (b: Matcher[B]) = a andThen downBreakAlias(b)
     //def >>[B] (f: T => MatchResult[B]) = flatMap(f)
     /*def apply[I <: T : ClassTag, O <: T]
              (f: PartialFunction[I, O])
@@ -38,6 +35,20 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
     def downBreak(implicit x: Monoid[A]) = downBreakAlias(a)
     def down(implicit x: Monoid[A]) = downAlias(a)
     def upBreak(implicit x: Monoid[A]) = upBreakAlias(a)
+    def up(implicit x: Monoid[A]) = upAlias(a)
+    def children(implicit x: Monoid[A]) = childrenAlias(a)
+  }
+
+
+  /**
+   * Convention : Operators ending with : are right assosiative
+   * Moreover a \: b is desugared to b.\:(a)
+   */
+  implicit class MatcherXPath[A : Monoid](a: Matcher[A]){
+    def \: (t: T) = downBreakAlias(a).apply(t)
+    def \\: (t: T) = downAlias(a).apply(t)
+    def \:[B] (b: Matcher[B]) = b andThen downBreakAlias(a)
+    def \\:[B] (b: Matcher[B]) = b andThen downAlias(a)
   }
 
   implicit class MatcherResultEnhancer[A](a: MatchResult[A]){

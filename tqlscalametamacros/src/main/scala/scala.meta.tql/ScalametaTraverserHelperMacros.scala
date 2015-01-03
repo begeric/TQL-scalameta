@@ -53,8 +53,10 @@ class ScalametaTraverserBuilder(override val c: Context)
     sub.flatMap(x => x :: getAllSubClass(x.asClass))
   }
 
-  def getAllLeaves(root: Root) =
-    getAllSubClass(root.sym.asClass).toSet.filter(x => x.isAdt && !x.isBranch).map(_.asLeaf).toList
+  /*def getAllLeaves(root: Root) =
+    getAllSubClass(root.sym.asClass).toSet.filter(x => x.isAdt && !x.isBranch).map(_.asLeaf).toList */
+
+  def getAllLeaves(root: Root) = root.allLeafs
 
   def buildTraverseTable[T : c.WeakTypeTag]: c.Tree = {
     val leaves = getAllLeaves(u.symbolOf[T].asRoot)

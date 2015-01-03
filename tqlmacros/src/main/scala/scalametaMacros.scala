@@ -8,11 +8,17 @@ import scala.reflect.macros.whitebox.Context
  */
 object scalametaMacros {
   def precalculatedTags[T]: Map[String, Int] = macro ScalaMetaMacrosBundle.precalculatedTags[T]
+
+  def showAST(x: Any): Unit = macro ScalaMetaMacrosBundle.showAST
 }
 
 class ScalaMetaMacrosBundle(val c: Context) extends org.scalameta.adt.AdtReflection {
   val u: c.universe.type = c.universe
   import c.universe._
+
+  def showAST(x: c.Tree): c.Tree = {
+    c.abort(c.enclosingPosition, show(x))
+  }
 
   def getAllSubClass(root: ClassSymbol): List[Symbol] = {
     val sub = root.sym.asClass.knownDirectSubclasses.toList

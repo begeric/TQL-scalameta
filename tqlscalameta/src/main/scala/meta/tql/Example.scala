@@ -51,7 +51,6 @@ object Example extends App {
     case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }.down
 
-
   val t1: List[Int] = x.collect{case Lit.Int(a) if a > 10 => a}
   val t2: List[Int] = x.focus({case Term.If(_,_,_) => true}).down.collect{case Lit.Int(a) => a}
   val t3: (scala.meta.Tree, List[String]) = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b.toString)}
@@ -66,10 +65,23 @@ object Example extends App {
   val bfstest = bfs(collect{case Lit.Int(a) => a})
   val dfstest = down(collect{case Lit.Int(a) => a})
   //println(getAvg(x).result.map(_()))
+          // \: (focus{case _: Lit => true}
+  /*val a = focus{case _: Lit => true} \ collect{case Lit.Int(a) => a}
+  val b = focus{case _: Term.If => true} \: a*/
 
+    /*implicit class Test(x: Int){
+      def :\(y: Int) = ???
+      def \:(y: Int) = ???
+    }
+  tql.scalametaMacros.showAST(5 :\ 6)  */
 
-  println(x.collect{case Lit.Int(a) => a})
+  //val hey = x \: (focus{case _: Term.If => true} \: focus{case _: Lit => true} \: collect{case Lit.Int(a) => a})
+  val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
 
+  println(hey)
+
+  //tql.scalametaMacros.showAST(5 \: 6)
+  //println(hey)
   //println(bfstest(x))
   //println(t1)
   //println(t5)

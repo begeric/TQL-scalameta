@@ -167,6 +167,8 @@ trait Combinators[T] { self: Traverser[T] =>
     }
   }
 
+  //def stateful3[A, B](init: => A)(f: ( => A) => PartialFunction[T, B])
+
   /**WIP
    * Second tentative of stateful transformation.
    * */
