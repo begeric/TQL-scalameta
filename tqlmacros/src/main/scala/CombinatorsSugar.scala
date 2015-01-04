@@ -95,14 +95,17 @@ class CombinatorsSugar(val c: Context) {
 
     val transforms = cases.zip(lhss).zip(trhs).zip(ress).map{
       case (((cas, lhs), rhs), res) =>
-      q"transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)]({case $cas}))"
+      //q"transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)]({case $cas}))"
+       q"transformWithResult[$lhs, $rhs, $res]({case $cas})"
     }
 
     if (transforms.size < 1)
       c.abort(c.enclosingPosition, "No cases found in " + show(f))
 
 
-    transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc")
+    val res = betterUntypecheck(transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc"))
+    //c.abort(c.enclosingPosition, show(res))
+    res
   }
 
 

@@ -30,7 +30,7 @@ object ScalaMetaTraverser extends Traverser[Tree]
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
-    ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f,
+    ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f/*,
       scala.meta.internal.ast.Term.Name,
       scala.meta.internal.ast.Lit.Char,
       scala.meta.internal.ast.Term.Apply,
@@ -38,12 +38,12 @@ object ScalaMetaTraverser extends Traverser[Tree]
       scala.meta.internal.ast.Type.Name,
       scala.meta.internal.ast.Term.Param,
       scala.meta.internal.ast.Type.Apply,
-      scala.meta.internal.ast.Term.ApplyInfix
-    )(tree)
+      scala.meta.internal.ast.Term.ApplyInfix */
+    )
 }
 
 
-object ScalaMetaTraverser2  extends Traverser[Tree]
+/*object ScalaMetaTraverser2  extends Traverser[Tree]
                             with Combinators[Tree]
                             with SyntaxEnhancer[Tree]
                             with CollectionLikeUI[Tree]{
@@ -65,16 +65,17 @@ object ScalaMetaTraverser2  extends Traverser[Tree]
 }
 
 object ScalaMetaTraverser3  extends Traverser[Tree]
-with Combinators[Tree]
-with SyntaxEnhancer[Tree]
-with CollectionLikeUI[Tree]{
+                            with Combinators[Tree]
+                            with SyntaxEnhancer[Tree]
+                            with CollectionLikeUI[Tree]{
   import MonoidEnhencer._
 
   implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
     macro AllowedTransformationsMaterializer.materialize[T, I, O]
 
+
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
-    ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f,
+    ScalametaTraverserHelperMacros.buildFromTopSymbol[Tree, A](f,
       scala.meta.internal.ast.Term.Name,
       scala.meta.internal.ast.Lit.Char,
       scala.meta.internal.ast.Term.Apply,
@@ -83,7 +84,7 @@ with CollectionLikeUI[Tree]{
       scala.meta.internal.ast.Term.Param,
       scala.meta.internal.ast.Type.Apply,
       scala.meta.internal.ast.Term.ApplyInfix
-    )
+    )(tree)
 }
 
 object ScalaMetaTraverser4  extends Traverser[Tree]
@@ -98,4 +99,4 @@ object ScalaMetaTraverser4  extends Traverser[Tree]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildTraverseSwitch[Tree, A](f, ScalametaTraverserHelperMacros.precalculatedTags[Tree])
-}
+}    */

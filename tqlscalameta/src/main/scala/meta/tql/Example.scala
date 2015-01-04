@@ -4,7 +4,7 @@ package scala.meta.tql
  * Created by Eric on 20.10.2014.
  */
 
-import ScalaMetaTraverser2._
+import ScalaMetaTraverser._
 import scala.meta.internal.ast._
 import scala.meta.syntactic.show._
 import scala.language.reflectiveCalls
@@ -45,6 +45,11 @@ object Example extends App {
   //println(x.show[Raw])
   //val getAllInts = down(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).down
+
+  val listToSetBool = down(transform{  //WithResult[Term.Apply, Term.Select, List[String]]
+    case tt @ Term.Apply(t @ Term.Select(Term.Apply(Term.Name("List"), _), Term.Name("toSet")), _) =>
+      t andCollect tt.toString
+  })
 
   val test = transform {
     case Lit.Int(a) => Lit.Int(a * 3)

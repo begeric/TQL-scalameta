@@ -21,7 +21,7 @@ object CompareBenchmarks extends PerformanceTest {
 	lazy val reporter = new LoggingReporter
 	lazy val persistor = Persistor.None
 
-	val range = Gen.enumeration("size")(100)
+	val range = Gen.enumeration("size")(10)
 
 	val compiler: CompilerProxy = ScalaToTree.loadCompiler
   val scalaTree = compiler.parseAndType(ScalaToTree.loadSource(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Huffman.scala"))
@@ -33,7 +33,7 @@ object CompareBenchmarks extends PerformanceTest {
 			using(range) in { j =>
         CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
 			}
-		}
+		}*/
 
     measure method "Basic Scala Meta Traverser" in {
       using(range) in { j =>
@@ -41,18 +41,24 @@ object CompareBenchmarks extends PerformanceTest {
       }
     }
 
+    /*
+
     measure method "Hand written Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaHandwritten(scalaMetaTree)
       }
     }
-
+    */
+    /*measure method "Scala Meta Traverser" in {
+      using(range) in { j =>
+        CollectStringsTraversers.scalametaOptimzedTraverser(scalaMetaTree)
+      }
+    }*/
     measure method "Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
-    } */
-
+    }
     /*measure method "Scala Meta Traverser via Transformer" in {
       using(range) in { j =>
         new Transformer {
@@ -74,7 +80,7 @@ object CompareBenchmarks extends PerformanceTest {
       }
     } */
 
-    measure method "Scala Meta Traverser" in {
+    /*measure method "Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
@@ -83,12 +89,12 @@ object CompareBenchmarks extends PerformanceTest {
     import scala.meta.internal.ast._
 
     measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
-      import scala.meta.tql.ScalaMetaTraverser2._
+      import scala.meta.tql.ScalaMetaTraverser._
       val collectVals = down(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }
-    }
+    } */
 
     /*measure method "TQL  CollectIn[Set] ScalaMetaTraverser3" in {
       import scala.meta.tql.ScalaMetaTraverser3._

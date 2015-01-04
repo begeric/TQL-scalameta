@@ -71,7 +71,6 @@ trait Combinators[T] { self: Traverser[T] =>
       case _ => None
     }
 
-
   /**
    *  Traverse the data structure and return a result
    * */
