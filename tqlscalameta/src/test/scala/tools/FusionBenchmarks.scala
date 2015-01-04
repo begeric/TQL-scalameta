@@ -30,7 +30,7 @@ object FusionBenchmarks  extends PerformanceTest {
       import scala.meta.tql.ScalaMetaTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
-        val twice = collectVals + collectVals
+        val twice = collectVals + collectVals + collectVals + collectVals
         val fourtimes = twice + twice
         fourtimes(scalaMetaTree).result
       }
@@ -40,7 +40,7 @@ object FusionBenchmarks  extends PerformanceTest {
       import scala.meta.tql.ScalaMetaFusionTraverser._
       using(range) in { j =>
         val collectVals = down(collect{case Lit.String(v) => v})
-        val twice = collectVals + collectVals + collectVals
+        val twice = collectVals + collectVals + collectVals + collectVals
         val fourtimes = twice + twice
         fourtimes(scalaMetaTree).result
       }

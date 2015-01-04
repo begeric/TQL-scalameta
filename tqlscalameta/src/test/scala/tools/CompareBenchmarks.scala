@@ -33,7 +33,7 @@ object CompareBenchmarks extends PerformanceTest {
 			using(range) in { j =>
         CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
 			}
-		}*/
+		} */
 
     measure method "Basic Scala Meta Traverser" in {
       using(range) in { j =>
@@ -53,13 +53,13 @@ object CompareBenchmarks extends PerformanceTest {
       using(range) in { j =>
         CollectStringsTraversers.scalametaOptimzedTraverser(scalaMetaTree)
       }
-    }*/
-    measure method "Scala Meta Traverser" in {
+    } */
+    /*measure method "Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
-    }
-    /*measure method "Scala Meta Traverser via Transformer" in {
+    }*/
+    measure method "Scala Meta Traverser via Transformer" in {
       using(range) in { j =>
         new Transformer {
           var varNames = Set[String]()
@@ -78,18 +78,25 @@ object CompareBenchmarks extends PerformanceTest {
           }
         }.apply(scalaMetaTree)
       }
-    } */
+    }
 
     /*measure method "Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.scalametaTraverser(scalaMetaTree)
       }
-    }
+    }*/
 
     import scala.meta.internal.ast._
 
-    measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
+   /* measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser._
+      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      using(range) in { j =>
+        collectVals(scalaMetaTree)
+      }
+    } */
+    /*measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
+      import scala.meta.tql.ScalaMetaTraverser2._
       val collectVals = down(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
