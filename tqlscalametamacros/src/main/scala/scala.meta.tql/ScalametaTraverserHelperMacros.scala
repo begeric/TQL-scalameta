@@ -37,7 +37,7 @@ object ScalametaTraverserHelperMacros {
 
   def precalculatedTags[T]: Map[String, Int] = macro ScalametaTraverserBuilder.precalculatedTags[T]
 
-  def buildTraverseSwitch[T, A](f: Traverser[T]#Matcher[A], tags: Map[String, Int]): T => Traverser[T]#MatchResult[A] =
+  def buildTraverseSwitch[T, A](f: Traverser[T]#Matcher[A], tags: Map[String, Int]): Traverser[T]#MatchResult[A] =
     macro ScalametaTraverserBuilder.buildTraverseSwitch[T, A]
 
 }
@@ -168,7 +168,7 @@ class ScalametaTraverserBuilder(override val c: Context)
     leaves.foreach(_.sym.owner.info) // as usual
 
     val Ttpe = implicitly[c.WeakTypeTag[T]]
-    val parameter = TermName(c.freshName)
+    val parameter = c.internal.enclosingOwner.asMethod.paramLists.head.head.name.toTermName //LOL
     val tagTerm = TermName("$tag")
 
 
@@ -176,8 +176,9 @@ class ScalametaTraverserBuilder(override val c: Context)
 
     val allCases = leaves.map(generateAllCases[T, A](_, f, parameter, tagsMap))
 
+
     q"""
-        ($parameter: $Ttpe) => ($parameter.$tagTerm : @scala.annotation.switch) match {
+        ($parameter.$tagTerm : @scala.annotation.switch) match {
           case ..$allCases
         }
     """
@@ -197,8 +198,10 @@ class ScalametaTraverserBuilder(override val c: Context)
   //****************************************************************************************************************
 
   def changeOrderOf(firsts: List[Symbol], allLeafs: List[Symbol]): List[Symbol] = {
-    val rest = for {leaf <- allLeafs if !(firsts contains leaf)} yield leaf
-    firsts ++ rest
+    val tmp = firsts.map(_.fullName)
+    val rest = for {leaf <- allLeafs if !(tmp contains leaf.fullName)} yield leaf
+    val leafFist = firsts.map(x => allLeafs.find(_.fullName == x.fullName).get)
+    leafFist ++ rest
   }
 
   def getAllLeafsOrderedInTree[T : c.WeakTypeTag](firsts: c.Tree*): List[c.Tree] = {
