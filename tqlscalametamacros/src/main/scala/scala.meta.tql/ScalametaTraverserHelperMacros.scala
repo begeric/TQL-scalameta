@@ -21,10 +21,10 @@ object ScalametaTraverserHelperMacros {
    * Use the Adt reflexion from https://github.com/scalameta/scalameta/blob/master/foundation/adt/Reflection.scala
    * to generate the whole traverser from a root (here root = scala.meta.Tree)
    * */
-  def buildFromTopSymbol[T, A](f: Traverser[T]#Matcher[A]): T => Option[(T, A)] =
+  def buildFromTopSymbol[T, A](f: Traverser[T]#Matcher[A], firsts: Any*): T => Option[(T, A)] =
     macro ScalametaTraverserBuilder.buildFromTopSymbol[T, A]
 
-  def buildFromTopSymbolDelegate[T, A](f: Traverser[T]#Matcher[A]): Traverser[T]#MatchResult[A] =
+  def buildFromTopSymbolDelegate[T, A](f: Traverser[T]#Matcher[A], firsts: Any*): Traverser[T]#MatchResult[A] =
     macro ScalametaTraverserBuilder.buildFromTopSymbolDelegate[T, A]
 
 
@@ -37,8 +37,8 @@ object ScalametaTraverserHelperMacros {
 
   def precalculatedTags[T]: Map[String, Int] = macro ScalametaTraverserBuilder.precalculatedTags[T]
 
-  /*def buildTraverseSwitch[T, A](f: Traverser[T]#Matcher[A]): T => Traverser[T]#MatchResult[A] =
-    macro ScalametaTraverserBuilder.buildTraverseSwitch[T, A]*/
+  def buildTraverseSwitch[T, A](f: Traverser[T]#Matcher[A], tags: Map[String, Int]): T => Traverser[T]#MatchResult[A] =
+    macro ScalametaTraverserBuilder.buildTraverseSwitch[T, A]
 
 }
 
@@ -158,11 +158,12 @@ class ScalametaTraverserBuilder(override val c: Context)
     val leaves = getAllLeaves(u.symbolOf[T].asRoot)
     val tagTerm = TermName("$tag")
 
+
     val elems = leaves.map(x => q"${x.sym.fullName} -> ${x.sym.companion}.$tagTerm")
     q"Map(..$elems)"
   }
 
-  /*def buildTraverseSwitch[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
+  def buildTraverseSwitch[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, tags: c.Tree): c.Tree = {
     val leaves = getAllLeaves(u.symbolOf[T].asRoot)
     leaves.foreach(_.sym.owner.info) // as usual
 
@@ -170,10 +171,10 @@ class ScalametaTraverserBuilder(override val c: Context)
     val parameter = TermName(c.freshName)
     val tagTerm = TermName("$tag")
 
-    val tags = scalametaMacros.precalculatedTags[scala.meta.Tree]
-    //c.abort(c.enclosingPosition, show(scalametaMacros.precalculatedTags[scala.meta.Tree]))
 
-    val allCases = leaves.map(generateAllCases[T, A](_, f, parameter, tags))
+    val tagsMap = c.eval(c.Expr[Map[String, Int]](c.untypecheck(tags)))
+
+    val allCases = leaves.map(generateAllCases[T, A](_, f, parameter, tagsMap))
 
     q"""
         ($parameter: $Ttpe) => ($parameter.$tagTerm : @scala.annotation.switch) match {
@@ -191,27 +192,34 @@ class ScalametaTraverserBuilder(override val c: Context)
       .getOrElse(q"Some(($param, implicitly[Monoid[$Atpe]].zero))")
 
     cq"${tags(leaf.sym.fullName)} => $mat"
-  } */
+  }
 
   //****************************************************************************************************************
 
+  def changeOrderOf(firsts: List[Symbol], allLeafs: List[Symbol]): List[Symbol] = {
+    val rest = for {leaf <- allLeafs if !(firsts contains leaf)} yield leaf
+    firsts ++ rest
+  }
+
+  def getAllLeafsOrderedInTree[T : c.WeakTypeTag](firsts: c.Tree*): List[c.Tree] = {
+    val leaves: List[Leaf] = getAllLeaves(u.symbolOf[T].asRoot)
+    //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
+    leaves.foreach(_.sym.owner.info)
+    val leafsWithOrder = changeOrderOf(firsts.map(_.symbol).toList, leaves.map(_.sym))
+    //c.abort(c.enclosingPosition, leaves.size + " : " + leafsWithOrder.size)
+    leafsWithOrder.map(x => q"${x.companion}")
+  }
 
   /**
    * Naive case. Construct a big pattern match with all the leaves
    * */
-  def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
-    //weird hack so that the types are set in each symbol and the buildImpl function doesn't fail
-    leaves.foreach(_.sym.owner.info)
-    val allLeafs = leaves.map(x => q"${x.sym.companion}")
+  def buildFromTopSymbol[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, firsts: c.Tree*): c.Tree = {
+    val allLeafs = getAllLeafsOrderedInTree[T](firsts: _*)
     buildImpl[T, A](f, allLeafs: _*)
-    //c.abort(c.enclosingPosition, show(u.symbolOf[T].asRoot.allLeafs.map(_.sym.fullName)))
   }
 
-  def buildFromTopSymbolDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree): c.Tree = {
-    val leaves = getAllLeaves(u.symbolOf[T].asRoot)
-    leaves.foreach(_.sym.owner.info)
-    val allLeafs = leaves.map(x => q"${x.sym.companion}")
+  def buildFromTopSymbolDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, firsts: c.Tree*): c.Tree = {
+    val allLeafs = getAllLeafsOrderedInTree[T](firsts: _*)
     buildImplDelegate[T, A](f, allLeafs: _*)
   }
 
