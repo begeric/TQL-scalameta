@@ -77,7 +77,8 @@ class ScalametaFusionTraverserHelperMacros(override val c: Context)
     val tpes = ExtractTypes(m)
     val tags = getTagsFromTypes(tpes)
 
-    val newMap = tags.map{t => q"$t -> $m"}
-    q"new MapOptimized($newMap)"
+    val newMap = tags.toList.map{t => q"$t -> $m"}
+    //c.abort(c.enclosingPosition, show(newMap))
+    q"new MapTagOptimized(Map(..$newMap))"
   }
 }
