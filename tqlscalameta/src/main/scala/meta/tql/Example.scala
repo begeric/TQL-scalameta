@@ -21,6 +21,8 @@ object Example extends App {
        if (3 == 17) {
         val c = 1
         while (a != c) {println(78)}
+        val x = 14
+        while (a != c) {println(85)}
        }
        else 2
        5
@@ -88,7 +90,13 @@ object Example extends App {
 
   val testUntil = until(collect{case Lit.Int(a) => a}, focus{case _:Term.While => true})
 
-  println(testUntil(x))
+  val testAggregateUntil = aggregateUntil(
+    collect{case Lit.Int(a) => a},
+    focus{case _:Term.While => true} ~> down(collect[Set]{case Lit.Int(a) => a * 2})
+  )
+
+
+  println(testAggregateUntil(x))
   //tql.scalametaMacros.showAST(5 \: 6)
   //println(hey)
   //println(bfstest(x))
