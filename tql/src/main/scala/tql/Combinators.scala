@@ -54,6 +54,9 @@ trait Combinators[T] { self: Traverser[T] =>
   def up[A : Monoid](m: => Matcher[A]): Matcher[A] =
     children(up[A](m)) + m
 
+  def until[A : Monoid, B](m1: => Matcher[A], m2: Matcher[B]): Matcher[A] =
+    m2 |> (m1 + children(until(m1, m2)))
+
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
    * */

@@ -143,6 +143,20 @@ trait Traverser[T] {
      * */
     def |[B >: A : Monoid](m: => Matcher[B]) = orElse(m)
 
+    /**
+     * a orThen b
+     * Apply b only if a failed but return a result of type b whaterver happens
+     * */
+    def orThen[B : Monoid](m: => Matcher[B]) = Matcher[B] { tree  =>
+      this(tree)
+        .map (_ => (tree, implicitly[Monoid[B]].zero))
+        .orElse(m(tree))
+    }
+
+    /**
+     * Alias for orThen
+     * */
+    def |>[B : Monoid](m: => Matcher[B]) = orThen(m)
 
     /**
      * a feed {resa => b}

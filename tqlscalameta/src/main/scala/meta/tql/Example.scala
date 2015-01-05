@@ -20,6 +20,7 @@ object Example extends App {
        c = 5
        if (3 == 17) {
         val c = 1
+        while (a != c) {println(78)}
        }
        else 2
        5
@@ -83,8 +84,11 @@ object Example extends App {
   //val hey = x \: (focus{case _: Term.If => true} \: focus{case _: Lit => true} \: collect{case Lit.Int(a) => a})
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
 
-  println(hey)
+  //println(hey)
 
+  val testUntil = until(collect{case Lit.Int(a) => a}, focus{case _:Term.While => true})
+
+  println(testUntil(x))
   //tql.scalametaMacros.showAST(5 \: 6)
   //println(hey)
   //println(bfstest(x))

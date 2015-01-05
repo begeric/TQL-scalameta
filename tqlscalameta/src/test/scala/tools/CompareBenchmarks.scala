@@ -29,17 +29,22 @@ object CompareBenchmarks extends PerformanceTest {
   val scalaMetaTree:scala.meta.Tree = compiler.scalaToMeta(scalaTree)
 
 	performance of "Variable name Collection" in {
-		/*measure method "Scala Traverser" in {
+		measure method "Scala Traverser" in {
 			using(range) in { j =>
         CollectStringsTraversers.scalaTraverser(compiler).apply(scalaTree)
 			}
-		} */
+		}
 
-    measure method "Basic Scala Meta Traverser" in {
+    measure method "Scala Transformer" in {
+      using(range) in { j =>
+        CollectStringsTraversers.scalaTransformerTraverser(compiler).apply(scalaTree)
+      }
+    }
+    /*measure method "Basic Scala Meta Traverser" in {
       using(range) in { j =>
         CollectStringsTraversers.basicscalametaTraverser(scalaMetaTree)
       }
-    }
+    }*/
 
     /*
 

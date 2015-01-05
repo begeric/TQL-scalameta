@@ -24,6 +24,23 @@ object CollectStringsTraversers {
     }
   }
 
+  def scalaTransformerTraverser(compiler: CompilerProxy) = new compiler.compiler.Transformer {
+    import compiler.compiler._
+    var varNames = Set[String]()
+    override def transform(tree: Tree): Tree = tree match {
+      case x @ Literal(Constant(v: String)) =>
+        varNames += v
+        x
+      case _ => super.transform(tree)
+    }
+
+    def apply(tree: Tree):Set[String] = {
+      varNames = Set[String]()
+      transform(tree)
+      varNames
+    }
+  }
+
   def basicscalametaTraverser = new Traverser {
     var varNames = Set[String]()
     import scala.meta.internal.ast._
