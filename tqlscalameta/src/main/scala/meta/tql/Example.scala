@@ -95,8 +95,11 @@ object Example extends App {
     focus{case _:Term.While => true} ~> down(collect[Set]{case Lit.Int(a) => a * 2})
   )
 
+  val fixtest = fix[List[Int]]{r =>
+    collect{case Lit.Int(x) => x}
+  }.down
 
-  println(testAggregateUntil(x))
+  //println(fixtest(x))
   //tql.scalametaMacros.showAST(5 \: 6)
   //println(hey)
   //println(bfstest(x))

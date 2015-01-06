@@ -70,6 +70,19 @@ trait Combinators[T] { self: Traverser[T] =>
   }
 
   /**
+   * Alias for focus{case t: U => some((t,t)}
+   * */
+  def select[U <: T: ClassTag] = Matcher[U]{
+    case t: U => Some((t, t))
+    case _ => None
+  }
+
+  /**
+   * Alias for select
+   * */
+  def @@[U <: T: ClassTag] = select[U]
+
+  /**
    *  Transform a I into a T where both I and O are subtypes of T and where a transformation from I to O is authorized
    * */
   def transformWithResult[I <: T : ClassTag, O <: T, A](f: PartialFunction[I, (O, A)])(implicit x: AllowedTransformation[I, O]) =
@@ -161,6 +174,13 @@ trait Combinators[T] { self: Traverser[T] =>
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
    * */
   def focus(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
+
+  /**
+   * The infamous fix point combinator
+   * */
+  def fix[A](f: Matcher[A] => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
+    f(fix(f))(tree)
+  }
 
   /** WIP
    * Tentative of stateful transformation. The problem is that it doesn't work with collect.

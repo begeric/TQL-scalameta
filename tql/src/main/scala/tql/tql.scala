@@ -153,6 +153,9 @@ trait Traverser[T] {
         .orElse(m(tree))
     }
 
+    def either[B : Monoid, C >: A : Monoid](m2: Matcher[B]): Matcher[(C, B)] =
+      map(x => (x, implicitly[Monoid[B]].zero)).orElse(m2.map(x => (implicitly[Monoid[C]].zero, x)))
+
     /**
      * Alias for orThen
      * */

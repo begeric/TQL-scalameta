@@ -30,6 +30,15 @@ class TQLSuite extends FunSuite {
       ).map(x => Map(defn.name.toString -> x)) + getValsInFunc).children
     }).downBreak
 
+  val getValsInFunc3 = fix[Map[String, List[String]]]{r =>
+    @@[Defn.Def] feed { defn =>
+      (r either collect{case Defn.Val(_, (b: Term.Name):: Nil,_, _) => b.name.toString})
+      .downBreak
+      .children
+      .map{case (m, x) => Map(defn.name.toString -> x) ++ m}
+    }
+  }.downBreak
+
   //rule taken from the Obey project
   val listToSetBool = down(transform {
     case tt @ Term.Apply(t@Term.Select(Term.Apply(Term.Name("List"), _), Term.Name("toSet")), _) =>
@@ -42,13 +51,21 @@ class TQLSuite extends FunSuite {
       assert(newCode != propaganda)
   }
 
+  val propagandaFuncs = Map("main" -> List("u","v"), "test" -> List("x"), "test2" -> List("y"))
+
   test("getValsInFunc") {
     val res = getValsInFunc(propaganda).result
-    assert(res == Map("main" -> List("u","v"), "test" -> List("x"), "test2" -> List("y")))
+    assert(res == propagandaFuncs)
   }
 
   test("getValsInFunc2") {
     val res = getValsInFunc2(propaganda).result
-    assert(res == Map("main" -> List("u","v"), "test" -> List("x"), "test2" -> List("y")))
+    assert(res == propagandaFuncs)
+  }
+
+
+  test("getValsInFunc3") {
+    val res = getValsInFunc3(propaganda).result
+    assert(res == propagandaFuncs)
   }
 }
