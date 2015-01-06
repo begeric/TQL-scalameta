@@ -1,4 +1,4 @@
-TQL (Traversable data structure Query Language)
+TQL (Traversal Query Language)
 ===
 
 Combinatorial Query/Transformation language for Traversable data structures in Scala and in particular [scala.meta](http://scalameta.org) Trees.
