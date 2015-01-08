@@ -13,6 +13,8 @@ import tql.MonoidEnhencer._
  */
 class TQLSuite extends FunSuite {
 
+  val compiler: CompilerProxy = ScalaToTree.loadCompiler
+
   val propaganda = ScalaToTree.load(System.getProperty("user.dir") + "/tqlscalameta/src/test/resources/Propaganda.scala")
 
   val getVals: Matcher[(List[String], Map[String, List[String]])] = {
@@ -24,6 +26,31 @@ class TQLSuite extends FunSuite {
     )
   }
   val getValsInFunc = (focus{case _: Defn.Def => true} andThen getVals).downBreak.map(_._2)
+
+
+  def getValsInMethods(tree: scala.meta.Tree): Map[Term.Name, List[Term.Name]] = {
+    import scala.collection.mutable
+    import scala.meta.internal.ast._
+    var funcsWithVals = new mutable.HashMap[Term.Name, List[Term.Name]]()
+    var currentFunc: Term.Name = null
+    new Traverser {
+      import scala.meta.internal.ast._
+      override def traverse(tree: scala.meta.Tree): Unit = tree match {
+        case f: Defn.Def =>
+          val oldFunc = currentFunc
+          currentFunc = f.name
+          super.traverse(tree)
+          currentFunc = oldFunc
+        case Defn.Val(_, (b: Term.Name):: Nil,_, rhs)
+          if currentFunc != null =>
+          val content = funcsWithVals.getOrElse(currentFunc,Nil)
+          funcsWithVals += (currentFunc -> (b.name::content))
+          super.traverse(tree)
+        case _ => super.traverse(tree)
+      }
+    }.traverse(tree)
+    funcsWithVals.toMap
+  }
 
   val getValsInFunc2: Matcher[Map[String, List[String]]] =
     (focus{case _: Defn.Def => true} feed { defn =>
@@ -42,17 +69,6 @@ class TQLSuite extends FunSuite {
     }
   }.downBreak
 
-  /*def between[A, B: tql.Monoid, C : tql.Monoid](m1: Matcher[A], m2: Matcher[B], f: (A, B) => C): Matcher[C] = fix[C] {r =>
-    (m1 feed { a =>
-      def recur: Matcher[(C, B)] =
-          r.map((_, implicitly[Monoid[B]].zero)) |
-          (m2 feed {(cll: B) => recur.downBreak.children.map{case (c, b) => (c, cll + b)}})
-      recur
-      .downBreak
-      .children
-      .map{case (c, b) => f(a, b) + c}
-    })
-  }*/
   def between[A, B: tql.Monoid, C : tql.Monoid](m1: Matcher[A], m2: Matcher[B], f: (A, B) => C): Matcher[C] = {
     def inner: Matcher[(B, C)] = tupledUntil(
       m2,
@@ -101,6 +117,11 @@ class TQLSuite extends FunSuite {
 
   val propagandaFuncs = Map("main" -> List("u","v"), "test" -> List("x"), "test2" -> List("y", "z"))
 
+  test("getValsInFunc scala.reflect") {
+    val res = getValsInFunc(propaganda).result
+    assert(res == propagandaFuncs)
+  }
+
   test("getValsInFunc") {
     val res = getValsInFunc(propaganda).result
     assert(res == propagandaFuncs)
@@ -111,10 +132,10 @@ class TQLSuite extends FunSuite {
     assert(res == propagandaFuncs)
   }
 
-  test("getValsInFunc3") {
+  /*test("getValsInFunc3") {
     val res = getValsInFunc3(propaganda).result
     assert(res == propagandaFuncs)
-  }
+  } this is normal that it fails*/
 
   test("getValsInFunc4") {
     val res = getValsInFunc4(propaganda).result

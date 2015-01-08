@@ -2,6 +2,7 @@ package tools
 
 import tools.ScalaToTree.CompilerProxy
 
+import scala.collection.mutable
 import scala.meta._
 
 /**
@@ -40,6 +41,7 @@ object CollectStringsTraversers {
       varNames
     }
   }
+
 
   def basicscalametaTraverser = new Traverser {
     var varNames = Set[String]()
