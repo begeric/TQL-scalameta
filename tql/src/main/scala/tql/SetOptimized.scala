@@ -27,9 +27,9 @@ trait SetOptimized[T, U] { self: Traverser[T] with Combinators[T] =>
    * */
   class SetOptimized[+A](val elems: Set[U], val m1: Matcher[A]) extends Matcher[A] {
 
-    override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
+    override def aggregate[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case f: SetOptimized[B] => new SetOptimized[B](elems ++ f.elems, m1 + f.m1)
-      case _ => super.compose(m2)
+      case _ => super.aggregate(m2)
     }
 
     def apply(t: T) =

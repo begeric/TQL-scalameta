@@ -82,7 +82,7 @@ trait Traverser[T] {
     }
 
     /**
-     * a compose b
+     * a aggregate b
      * Apply a and apply b on the result of the application of a. This means:
      *  - b is applied on the transformed T from a
      *  - the results of a and b are composed
@@ -90,7 +90,7 @@ trait Traverser[T] {
      * If a fails then b is applied
      * If b fails then only the result of a is used
      * */
-    def compose[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
+    def aggregate[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
       this(tree) map {
         case t @ (a1, a2)  => m(a1)
           .map{case (b1, b2) => (b1, implicitly[Monoid[B]].append(a2, b2))}
@@ -99,16 +99,16 @@ trait Traverser[T] {
     }
 
     /**
-     * Alias for compose
+     * Alias for aggregate
      * */
-    def +[B >: A : Monoid](m: => Matcher[B]) = compose(m)
+    def +[B >: A : Monoid](m: => Matcher[B]) = aggregate(m)
 
     /**
-     * a composeResults b
-     * Same as 'compose' but discard the transformed trees of a and b
+     * a aggregateResults b
+     * Same as 'aggregate' but discard the transformed trees of a and b
      * b operates on the origin tree, not the one transformed by a
      */
-    def composeResults[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
+    def aggregateResults[B >: A : Monoid](m: => Matcher[B]) = Matcher[B] { tree =>
       this(tree) map {
         case t @ (_, a2) => m(tree)
           .map{case (_, b2) => (tree, implicitly[Monoid[B]].append(a2, b2))}
@@ -117,9 +117,9 @@ trait Traverser[T] {
     }
     
     /**
-     * Alias for composeResults
+     * Alias for aggregateResults
      * */
-    def +> [B >: A : Monoid](m: => Matcher[B]) = composeResults[B](m)
+    def +> [B >: A : Monoid](m: => Matcher[B]) = aggregateResults[B](m)
 
     /**
      * Transform the result of the Matcher, will probably change

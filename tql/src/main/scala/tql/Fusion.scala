@@ -18,7 +18,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
   abstract class Fused[+A : Monoid, F[+U] <: Fused[U, F]](val m1: Matcher[A]) extends Matcher[A] {
     self : F[A] =>  //thanks http://blog.originate.com/blog/2014/02/27/types-inside-types-in-scala/
     /**
-     * Exists to not have to use reflection with something like f.getClass.getConstructor[..]... inside compose
+     * Exists to not have to use reflection with something like f.getClass.getConstructor[..]... inside aggregate
      * */
     def newInstance[B : Monoid](m: Matcher[B]): F[B]
 
@@ -28,36 +28,36 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
      * 1) we accept a Matcher[B]
      * 2) F[B] <: Matcher[B]
      *
-     * since we override compose we cannot have an implicit of type ClassTag[F[B]]. It would need to be inserted in the
-     * argument list of compose.
+     * since we override aggregate we cannot have an implicit of type ClassTag[F[B]]. It would need to be inserted in the
+     * argument list of aggregate.
      *
      * I would love change the return type to F[B] instead of Matcher[B] but the problem is that then what do we do
      * with input which cannot be composed in order to get a F[B] ?
      * */
 
-    def composeFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 compose f.m1)
+    def composeFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 aggregate f.m1)
 
     /**
      * strategy(a) + strategy(b) = strategy(a + b)
      * */
-    override def compose[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
+    override def aggregate[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case v: MappedFused[_, B, F] @unchecked => v.leftCompose(self)
       case v: FeedFused[_, B, F] @unchecked => v.leftCompose(self)
       case f: F[B] @unchecked => composeFused(f)
-      case _=> super.compose(m2)
+      case _=> super.aggregate(m2)
     }
 
 
-    def composeResultsFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 composeResults f.m1)
+    def composeResultsFused[B >: A : Monoid](f: => F[B]) = f.newInstance(m1 aggregateResults f.m1)
 
     /**
      * strategy(a) +> strategy(b) = strategy(a +> b)
      * */
-    override def composeResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
+    override def aggregateResults[B >: A : Monoid](m2: => Matcher[B]): Matcher[B] = m2 match {
       case v: MappedFused[_, B, F]  @unchecked => v.leftComposeResults(self)
       case v: FeedFused[_, B, F] @unchecked => v.leftComposeResults(self)
       case f: F[B] @unchecked => composeResultsFused(f)
-      case _=> super.composeResults(m2)
+      case _=> super.aggregateResults(m2)
     }
 
 
@@ -96,7 +96,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
   /**
    * When 'map' is applied to a strategy, this combinator ensures that the modification will only touch the
    * elements in that traversal and not mix with the other 'composed' traversal.
-   * Sometimes this require us to use tupledWith or tupledResultsWith instead of compose or composeResults.
+   * Sometimes this require us to use tupledWith or tupledResultsWith instead of aggregate or aggregateResults.
    * Some cases are handled in Fused (see 2), so all classes in this file are tightly coupled.
    *
    * There are several cases to consider (the example are presented with concrete traversal to be more easily readable):
@@ -133,7 +133,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
       (v, t) <- m1(t)
     } yield ((v, f(t)))
 
-    //compose
+    //aggregate
 
     def composeWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) =
       new MappedFused(mf.m1 aggregateFused m1, (x: (U, A)) => M % mf.f(x._1) + f(x._2))
@@ -141,13 +141,13 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
     def leftCompose[C >: B : Monoid](fused: F[C]) =
       new MappedFused(fused aggregateFused m1, (x: (C, A)) => M % x._1 + f(x._2))
 
-    override def compose[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
+    override def aggregate[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
       case v: MappedFused[_, C, F] @unchecked => v.composeWithMapped(this) //visitor pattern here I aaaaam
       case v: F[C] @unchecked => new MappedFused(m1 aggregateFused v, (x: (A, C)) => M[C](f(x._1)) + x._2)
-      case _ => super.compose(m2)
+      case _ => super.aggregate(m2)
     }
 
-    //composeResults
+    //aggregateResults
 
     def composeResultsWithMapped[U : Monoid, C >: B : Monoid](mf: MappedFused[U, C, F]) =
       new MappedFused(mf.m1 aggregateResultsFused m1, (x: (U, A)) => M % mf.f(x._1) + f(x._2))
@@ -155,10 +155,10 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
     def leftComposeResults[C >: B : Monoid](fused: F[C]) =
       new MappedFused(fused aggregateResultsFused m1, (x: (C, A)) => M % x._1 + f(x._2))
 
-    override def composeResults[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
+    override def aggregateResults[C >: B : Monoid](m2: => Matcher[C]): Matcher[C] = m2 match {
       case v: MappedFused[_, C, F] @unchecked => v.composeResultsWithMapped(this)
       case v: F[C] @unchecked => new MappedFused(m1 aggregateResultsFused v, (x: (A, C)) => M[C](f(x._1)) + x._2)
-      case _ => super.composeResults(m2)
+      case _ => super.aggregateResults(m2)
     }
   }
 
@@ -176,30 +176,30 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
        t2    <- m2(v)(t)
     } yield t2
 
-    //compose
+    //aggregate
 
     def leftCompose[C <: B : Monoid](fused: F[C]) =
       new FeedFused(m1, (x: A) => fused composeFused m2(x))
 
-    override def compose[C >: B : Monoid](m: => Matcher[C]): Matcher[C] = m match {
+    override def aggregate[C >: B : Monoid](m: => Matcher[C]): Matcher[C] = m match {
       case v: FeedFused[A, C, F] @unchecked =>
         new FeedFused(m1 composeFused v.m1 , (x: A) => m2(x) composeFused v.m2(x))
       case v: F[C] @unchecked =>
         new FeedFused(m1, (x: A) => m2(x) composeFused v)
       case _ =>
-        super.compose(m)
+        super.aggregate(m)
     }
 
-    //composeResults
+    //aggregateResults
 
     def leftComposeResults[C <: B : Monoid](fused: F[C]) =
       new FeedFused(m1, (x: A) => fused composeResultsFused m2(x))
 
-    override def composeResults[C >: B : Monoid](m: => Matcher[C]): Matcher[C] = m match {
+    override def aggregateResults[C >: B : Monoid](m: => Matcher[C]): Matcher[C] = m match {
       case v: FeedFused[A, C, F] @unchecked =>
         new FeedFused(m1 composeResultsFused v.m1 , (x: A) => m2(x) composeResultsFused v.m2(x))
       case v: F[C] @unchecked => new FeedFused(m1, (x: A) => m2(x) composeResultsFused v)
-      case _ => super.composeResults(m)
+      case _ => super.aggregateResults(m)
     }
   }
 
