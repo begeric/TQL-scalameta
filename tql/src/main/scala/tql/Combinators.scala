@@ -57,9 +57,9 @@ trait Combinators[T] { self: Traverser[T] =>
   def until[A : Monoid, B](m1: => Matcher[A], m2: Matcher[B]): Matcher[A] =
     m2 |> (m1 + children(until(m1, m2)))
 
-  def aggregateUntil[A : Monoid, B: Monoid](m1: Matcher[A], m2: Matcher[B]): Matcher[(A, B)] =
+  def tupledUntil[A : Monoid, B: Monoid](m1: Matcher[A], m2: Matcher[B]): Matcher[(A, B)] =
     m2.map(x => (implicitly[Monoid[A]].zero, x)) |
-    (m1.map(x => (x, implicitly[Monoid[B]].zero)) + children(aggregateUntil(m1, m2)))
+    (m1.map(x => (x, implicitly[Monoid[B]].zero)) + children(tupledUntil(m1, m2)))
 
   /**
    * Succeed if the partial function f applied on the tree is defined and return true

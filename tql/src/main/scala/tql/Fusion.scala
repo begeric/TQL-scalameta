@@ -61,24 +61,24 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
     }
 
 
-    def aggregateFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] = f.newInstance(m1 aggregate f.m1)
+    def aggregateFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] = f.newInstance(m1 tupledWith f.m1)
 
     /**
      *  strategy(a) ~ strategy(b) = strategy(a ~ b)
      * */
-    override def aggregate[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
+    override def tupledWith[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
       case f: F[B] @unchecked => aggregateFused(f)
-      case _=> super.aggregate(m2)
+      case _=> super.tupledWith(m2)
     }
 
     def aggregateResultsFused[B : Monoid, C >: A : Monoid](f: => F[B]): F[(C, B)] =
-      f.newInstance(m1 aggregateResults f.m1)
+      f.newInstance(m1 tupledResultsWith f.m1)
     /**
-     *  strategy(a) aggregateResults strategy(b) = strategy(a aggregateResults b)
+     *  strategy(a) tupledResultsWith strategy(b) = strategy(a tupledResultsWith b)
      * */
-    override def aggregateResults[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
+    override def tupledResultsWith[B : Monoid, C >: A : Monoid](m2: => Matcher[B]): Matcher[(C, B)] = m2 match {
       case f: F[B] @unchecked => aggregateResultsFused(f)
-      case _=> super.aggregateResults(m2)
+      case _=> super.tupledResultsWith(m2)
     }
 
     /**
@@ -96,7 +96,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
   /**
    * When 'map' is applied to a strategy, this combinator ensures that the modification will only touch the
    * elements in that traversal and not mix with the other 'composed' traversal.
-   * Sometimes this require us to use aggregate or aggregateResults instead of compose or composeResults.
+   * Sometimes this require us to use tupledWith or tupledResultsWith instead of compose or composeResults.
    * Some cases are handled in Fused (see 2), so all classes in this file are tightly coupled.
    *
    * There are several cases to consider (the example are presented with concrete traversal to be more easily readable):

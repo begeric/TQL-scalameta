@@ -12,7 +12,10 @@ object Propaganda {
     }
 
     def test2 {
-    	val y = 1
+    	val y = {
+            val z = 19
+            1
+        }
     }
 
     var c = 3

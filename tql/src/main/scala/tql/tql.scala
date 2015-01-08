@@ -55,7 +55,7 @@ trait Traverser[T] {
      * The order is important, as the the second transformation is applied on the
      * result of the first one.
      * */
-    def aggregate[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
+    def tupledWith[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
       this(tree).map {
         case u @ (a1, a2) => m(a1)
           .map {case (b1, b2) => (b1, (a2, b2))}
@@ -64,16 +64,16 @@ trait Traverser[T] {
     }
 
     /**
-     * Alias for aggregate
+     * Alias for tupledWith
      * */
-    def ~[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = aggregate[B, C](m)
+    def ~[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = tupledWith[B, C](m)
 
     /**
-     * a aggregateResults b
-     * Same as 'aggregate' but discard the transformed trees of a and b
+     * a tupledResultsWith b
+     * Same as 'tupledWith' but discard the transformed trees of a and b
      * b operates on the origin tree, not the one transformed by a
      */
-    def aggregateResults[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
+    def tupledResultsWith[B : Monoid, C >: A : Monoid](m: => Matcher[B]) = Matcher[(C, B)] { tree =>
       this(tree).map {
         case u @ (_, a2) => m(tree)
           .map {case (_, b2) => (tree, (a2, b2))}

@@ -90,7 +90,7 @@ object Example extends App {
 
   val testUntil = until(collect{case Lit.Int(a) => a}, focus{case _:Term.While => true})
 
-  val testAggregateUntil = aggregateUntil(
+  val testAggregateUntil = tupledUntil(
     collect{case Lit.Int(a) => a},
     focus{case _:Term.While => true} ~> down(collect[Set]{case Lit.Int(a) => a * 2})
   )

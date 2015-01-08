@@ -57,7 +57,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
   }
 
-  performance of "Fused map" in {
+ /* performance of "Fused map" in {
     measure method "ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser._
       using(range) in { j =>
@@ -132,7 +132,7 @@ object FusionBenchmarks  extends PerformanceTest {
         both(scalaMetaTree)
       }
     }
-  }
+  }  */
 
 
 }
