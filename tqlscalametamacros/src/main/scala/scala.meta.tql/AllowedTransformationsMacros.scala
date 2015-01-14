@@ -15,22 +15,25 @@ class AllowedTransformationsMaterializer(val c: Context) extends org.scalameta.a
 
   def materialize[T : c.WeakTypeTag, I : c.WeakTypeTag, O : c.WeakTypeTag]: c.Expr[tql.AllowedTransformation[I, O]] = {
     val brlhs = getBranch[I]
-    val brrhs = getBranch[O]
-    if (brrhs.exists(x => brlhs.exists(y => x.info <:< y.info))) {
+    val Tout = u.symbolOf[O].asType
+    if (brlhs.exists(x => Tout.toType <:< x.info.typeSymbol.asType.toType))
       c.Expr(q"new tql.AllowedTransformation[${implicitly[c.WeakTypeTag[I]]}, ${implicitly[c.WeakTypeTag[O]]}] {}")
-    }
     else
       c.abort(c.enclosingPosition,
         "impossible to materialize AllowedTransformations[" +
-          show(implicitly[c.WeakTypeTag[I]]) + ", " +
-          show(implicitly[c.WeakTypeTag[O]]) + "]" + "\n" +
-          "because " + show(brrhs) + " is not a subtype of " + show(brlhs) + "\n" +
-          "info : \n" + show(brrhs.map(_.asClass.baseClasses.filter(_.isBranch))))
+          show(implicitly[c.WeakTypeTag[I]].tpe) + ", " +
+          show(implicitly[c.WeakTypeTag[O]].tpe) + "]" + "\n" +
+          "because " + show(Tout.sym.fullName) + " is not a subtype of any in " + show(brlhs) + "\n")
   }
 
   private def getBranch[A : c.WeakTypeTag]: List[TypeSymbol] = {
-    if (u.symbolOf[A].isBranch) List(u.symbolOf[A].asType)
-    else if (u.symbolOf[A].isLeaf) u.symbolOf[A].asLeaf.sym.asClass.baseClasses.filter(_.isBranch).map(_.asType)
+    val Asym = u.symbolOf[A]
+    if (Asym.isBranch) List(Asym.asType)
+    else if (Asym.isLeaf)
+      Asym.asLeaf.sym.asClass.baseClasses
+        .filter(_.isBranch)
+        .filter(_.asBranch.leafs.exists(x => x.sym.fullName == Asym.asLeaf.sym.fullName))//gotta find a better solution
+        .map(_.asType)
     else c.abort(c.enclosingPosition, show("impossible to get branch from  "  + show(implicitly[c.WeakTypeTag[A]])))
   }
 

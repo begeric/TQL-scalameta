@@ -101,6 +101,10 @@ object Example extends App {
     collect{case Lit.Int(x) => x}
   }.topDown
 
+  val sdfgjh = transform{
+    case _: Defn.Val => (Type.Name("hdey"), tql.Monoid.Void)
+  }
+  println(sdfgjh(x))
   //println(fixtest(x))
   //tql.scalametaMacros.showAST(5 \: 6)
   //println(hey)

@@ -43,7 +43,6 @@ object ScalaMetaTraverser extends Traverser[Tree]
 }
 
 
-
 /*object ScalaMetaTraverser2  extends Traverser[Tree]
                           with Combinators[Tree]
                           with SyntaxEnhancer[Tree]
