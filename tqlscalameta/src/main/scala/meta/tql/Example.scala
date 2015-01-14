@@ -6,8 +6,10 @@ package scala.meta.tql
 
 import ScalaMetaTraverser._
 import scala.meta.internal.ast._
-import scala.meta.syntactic.show._
+import scala.meta.ui._
+import scala.meta.syntactic._
 import scala.language.reflectiveCalls
+import scala.meta.dialects.Scala211
 
 object Example extends App {
 

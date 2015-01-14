@@ -7,6 +7,9 @@ package scala.meta.tql
 import scala.language.reflectiveCalls
 import ScalaMetaFusionTraverser._
 import scala.meta.internal.ast._
+import scala.meta.ui._
+import scala.meta.syntactic._
+import scala.meta.dialects.Scala211
 
 object FusionExample extends App{
 

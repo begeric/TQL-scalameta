@@ -6,6 +6,10 @@ package tools
 import org.scalatest._
 import scala.collection.mutable.ListBuffer
 import scala.meta.internal.ast._
+import scala.meta.ui._
+import scala.meta.syntactic._
+import scala.meta.dialects.Scala211
+
 
 class TransformerSuite extends FunSuite {
   val code = {

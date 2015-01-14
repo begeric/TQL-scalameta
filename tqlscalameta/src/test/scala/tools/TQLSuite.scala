@@ -5,8 +5,11 @@ import tools.ScalaToTree.CompilerProxy
 import tql.Monoid
 import scala.meta.tql.ScalaMetaTraverser._
 import scala.meta.internal.ast._
-import scala.meta.syntactic.show._
 import tql.MonoidEnhencer._
+import scala.meta.ui._
+import scala.meta.syntactic._
+import scala.meta.dialects.Scala211
+
 
 /**
  * Created by Eric on 04.01.2015.
