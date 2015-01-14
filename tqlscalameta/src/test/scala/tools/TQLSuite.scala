@@ -28,10 +28,10 @@ class TQLSuite extends FunSuite {
   val getValsInFunc = (focus{case _: Defn.Def => true} andThen getVals).downBreak.map(_._2)
 
 
-  def getValsInMethods(tree: scala.meta.Tree): Map[Term.Name, List[Term.Name]] = {
+  def getValsInMethods(tree: scala.meta.Tree) = {
     import scala.collection.mutable
     import scala.meta.internal.ast._
-    var funcsWithVals = new mutable.HashMap[Term.Name, List[Term.Name]]()
+    val funcsWithVals = new mutable.HashMap[Term.Name, List[Term.Name]]()
     var currentFunc: Term.Name = null
     new Traverser {
       import scala.meta.internal.ast._

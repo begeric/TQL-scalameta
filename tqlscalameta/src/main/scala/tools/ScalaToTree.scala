@@ -75,7 +75,7 @@ object ScalaToTree {
       phase = run.typerPhase
       globalPhase = run.typerPhase
       val typer = newTyper(rootContext(unit))
-      typer.context.setReportErrors() // need to manually set context mode, otherwise typer.silent will throw exceptions
+      //typer.context.setReportErrors() // need to manually set context mode, otherwise typer.silent will throw exceptions
       unit.body = typer.typed(unit.body).asInstanceOf[compiler.Tree]
       for (workItem <- unit.toCheck) workItem()
       throwIfErrors()
@@ -85,12 +85,13 @@ object ScalaToTree {
     def scalaToMeta(tree: compiler.Tree) = {
       import scala.meta.internal.ast._
       val h = Scalahost(compiler).asInstanceOf[PalladiumHost with OurHost[compiler.type]]
-      tree match {
+      /*tree match {
         case tree: PackageDef => h.toPalladium(tree, classOf[Source])
         case tree: TermTree => h.toPalladium(tree, classOf[Term])
         case tree: MemberDef => h.toPalladium(tree, classOf[Stat])
         case tree => h.toPalladium(tree, classOf[scala.meta.internal.ast.Term.Block])
-      }
+      } */
+      h.toPalladium(tree, classOf[Source])
     }
 
     def parseToMeta(code: String) = scalaToMeta(parseAndType(code))
