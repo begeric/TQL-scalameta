@@ -22,7 +22,7 @@ class FusionSuite extends FunSuite {
    import scala.meta._
     {
       import tql.ScalaMetaTraverser._
-      val collectVals = down(collect{case Lit.Int(v) => v})
+      val collectVals = topDown(collect{case Lit.Int(v) => v})
       val twice = collectVals + collectVals
       val fourtimes = twice + twice
       result1 = fourtimes(scalaMetaTree).result
@@ -30,7 +30,7 @@ class FusionSuite extends FunSuite {
 
     {
       import tql.ScalaMetaFusionTraverser._
-      val collectVals = down(collect{case Lit.Int(v) => v})
+      val collectVals = topDown(collect{case Lit.Int(v) => v})
       val twice = collectVals + collectVals
       val fourtimes = twice + twice
       result2 = fourtimes(scalaMetaTree).result
@@ -38,7 +38,7 @@ class FusionSuite extends FunSuite {
 
     {
       import tql.ScalaMetaFusionTraverser._
-      val collectVals = down(optimize(collect{case Lit.Int(v) => v}))
+      val collectVals = topDown(optimize(collect{case Lit.Int(v) => v}))
       val twice = collectVals + collectVals
       val fourtimes = twice + twice
       result3 = fourtimes(scalaMetaTree).result

@@ -30,9 +30,9 @@ object OptimizeBenchmarks extends PerformanceTest{
     measure method "ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser._
       using(range) in { j =>
-        val collectStrings = down(collect{case Lit.String(v) => v})
-        val collectInts = down(collect{case Lit.Int(v) => v.toString})
-        val collectVals = down(collect{case v: Decl.Val => "val"})
+        val collectStrings = topDown(collect{case Lit.String(v) => v})
+        val collectInts = topDown(collect{case Lit.Int(v) => v.toString})
+        val collectVals = topDown(collect{case v: Decl.Val => "val"})
         val twice = collectStrings + collectInts + collectVals
         val fourtimes = twice + twice + twice
         fourtimes(scalaMetaTree).result
@@ -42,9 +42,9 @@ object OptimizeBenchmarks extends PerformanceTest{
     measure method "ScalaMetaFusionTraverser" in {
       import scala.meta.tql.ScalaMetaFusionTraverser._
       using(range) in { j =>
-        val collectStrings = down(collect{case Lit.String(v) => v})
-        val collectInts = down(collect{case Lit.Int(v) => v.toString})
-        val collectVals = down(collect{case v: Decl.Val => "val"})
+        val collectStrings = topDown(collect{case Lit.String(v) => v})
+        val collectInts = topDown(collect{case Lit.Int(v) => v.toString})
+        val collectVals = topDown(collect{case v: Decl.Val => "val"})
         val twice = collectStrings + collectInts + collectVals
         val fourtimes = twice + twice + twice
         fourtimes(scalaMetaTree).result
@@ -54,9 +54,9 @@ object OptimizeBenchmarks extends PerformanceTest{
     measure method "ScalaMetaFusionTraverser with optimize" in {
       import scala.meta.tql.ScalaMetaFusionTraverser2._
       using(range) in { j =>
-        val collectStrings = down(optimize(collect{case Lit.String(v) => v}))
-        val collectInts = down(optimize(collect{case Lit.Int(v) => v.toString}))
-        val collectVals = down(optimize(collect{case v: Decl.Val => "val"}))
+        val collectStrings = topDown(optimize(collect{case Lit.String(v) => v}))
+        val collectInts = topDown(optimize(collect{case Lit.Int(v) => v.toString}))
+        val collectVals = topDown(optimize(collect{case v: Decl.Val => "val"}))
         val twice = collectStrings + collectInts + collectVals
         val fourtimes = twice + twice + twice
         fourtimes(scalaMetaTree).result

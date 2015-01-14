@@ -28,7 +28,7 @@ class TQLSuite extends FunSuite {
       }
     )
   }
-  val getValsInFunc = (focus{case _: Defn.Def => true} andThen getVals).downBreak.map(_._2)
+  val getValsInFunc = (focus{case _: Defn.Def => true} andThen getVals).topDownBreak.map(_._2)
 
 
   def getValsInMethods(tree: scala.meta.Tree) = {
@@ -61,16 +61,16 @@ class TQLSuite extends FunSuite {
         collect{case Defn.Val(_, (b: Term.Name):: Nil,_, _) => b.name.toString},
         focus{case _: Defn.Def => true}
       ).map(x => Map(defn.name.toString -> x)) + getValsInFunc).children
-    }).downBreak
+    }).topDownBreak
 
   val getValsInFunc3 = fix[Map[String, List[String]]]{r =>
     @@[Defn.Def] feed { defn =>
       (r either collect{case Defn.Val(_, (b: Term.Name):: Nil,_, _) => b.name.toString})
-      .downBreak
+      .topDownBreak
       .children
       .map{case (m, x) => Map(defn.name.toString -> x) ++ m}
     }
-  }.downBreak
+  }.topDownBreak
 
   def between[A, B: tql.Monoid, C : tql.Monoid](m1: Matcher[A], m2: Matcher[B], f: (A, B) => C): Matcher[C] = {
     def inner: Matcher[(B, C)] = tupledUntil(
@@ -79,7 +79,7 @@ class TQLSuite extends FunSuite {
         inner.children.map{case (b, c) => f(a, b) + c}
       }
     )
-    (m1 andThen inner).downBreak.map(_._2)
+    (m1 andThen inner).topDownBreak.map(_._2)
   }
 
   def repsep[A, B: tql.Monoid](m1: Matcher[A], m2: Matcher[B]): Matcher[Map[A, B]] =
@@ -88,7 +88,7 @@ class TQLSuite extends FunSuite {
   val getValsInFunc4 = repsep(
     visit{case f: Defn.Def => f.name.toString},
     collect{case Defn.Val(_, (b: Term.Name):: Nil,_, _) => b.name.toString}
-  ).downBreak
+  ).topDownBreak
 
 
   def group[K, V: tql.Monoid](key: Matcher[K], values: Matcher[V]) = {
@@ -98,7 +98,7 @@ class TQLSuite extends FunSuite {
         inner.children.map{case (v, m) => Map(k -> v) ++ m}
       }
     )
-    (key andThen inner).downBreak.map(_._2)
+    (key andThen inner).topDownBreak.map(_._2)
   }
 
   val getValsInFunc5 = group(
@@ -107,7 +107,7 @@ class TQLSuite extends FunSuite {
   )
 
   //rule taken from the Obey project
-  val listToSetBool = down(transform {
+  val listToSetBool = topDown(transform {
     case tt @ Term.Apply(t@Term.Select(Term.Apply(Term.Name("List"), _), Term.Name("toSet")), _) =>
       t andCollect tt.toString
   })

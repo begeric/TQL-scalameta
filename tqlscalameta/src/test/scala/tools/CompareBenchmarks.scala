@@ -95,14 +95,14 @@ object CompareBenchmarks extends PerformanceTest {
 
    /* measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser._
-      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      val collectVals = topDown(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }
     } */
     /*measure method "TQL  CollectIn[Set] ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser2._
-      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      val collectVals = topDown(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }
@@ -110,7 +110,7 @@ object CompareBenchmarks extends PerformanceTest {
 
     /*measure method "TQL  CollectIn[Set] ScalaMetaTraverser3" in {
       import scala.meta.tql.ScalaMetaTraverser3._
-      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      val collectVals = topDown(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }
@@ -118,7 +118,7 @@ object CompareBenchmarks extends PerformanceTest {
 
     measure method "TQL  CollectIn[Set] ScalaMetaTraverser2" in {
       import scala.meta.tql.ScalaMetaTraverser2._
-      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      val collectVals = topDown(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }
@@ -126,7 +126,7 @@ object CompareBenchmarks extends PerformanceTest {
 
     /*measure method "TQL  CollectIn[Set] ScalaMetaTraverser4" in {
       import scala.meta.tql.ScalaMetaTraverser4._
-      val collectVals = down(collect[Set]{case Lit.String(v) => v})
+      val collectVals = topDown(collect[Set]{case Lit.String(v) => v})
       using(range) in { j =>
         collectVals(scalaMetaTree)
       }

@@ -15,14 +15,14 @@ import NotEquivTypes._
  * This trait allows to easily write simple traversals.
  * Instead of writing:
  *  t : T
- *  val x = down(collect{...})
+ *  val x = topDown(collect{...})
  *  val result = x(t).result
  * We can wirte instead
  *  t.collect{...}.result
  *
- *  downBreak(focus{..} ~> down{update{...}}) (t)
+ *  topDownBreak(focus{..} ~> topDown{update{...}}) (t)
  *  becomes
- *  t.downBreak.focus{..}.down.update{..}
+ *  t.topDownBreak.focus{..}.topDown.update{..}
  *  Which is essentially easier to read and to write (no parenthesis)
  *  The drawbacks:
  *    - Every combinator have to be re-written in those 'Lazy evaluator' classes (even macros)
@@ -71,10 +71,10 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def collect[C[_]] = new  {
      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
-       down.collect[C](f)
+       topDown.collect[C](f)
     }
 
-    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = down.guard(f)
+    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = topDown.guard(f)
 
     def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CollectionLikeUISugar.filterSugarImpl[T]
 
@@ -88,12 +88,12 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
     def transform(f: PartialFunction[T, Any]): Any =
       macro CollectionLikeUISugar.transformSugarImplWithTRtype[T]
 
-    def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) = down.transforms(f)
+    def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) = topDown.transforms(f)
 
-    def down      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.down(x)})
-    def downBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.downBreak(x)})
-    def up        = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.up(x)})
-    def upBreak   = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.upBreak(x)})
+    def topDown      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDown(x)})
+    def topDownBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDownBreak(x)})
+    def bottomUp        = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUp(x)})
+    def bottomUpBreak   = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUpBreak(x)})
     def children  = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.children(x)})
   }
 
@@ -166,14 +166,14 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
 
     def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, m ~> x, meta)
 
-    def down =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.down(x))})
-    def downBreak =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.downBreak(x))})
-    def up =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.up(x))})
-    def upBreak =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.upBreak(x))})
+    def topDown =
+      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDown(x))})
+    def topDownBreak =
+      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDownBreak(x))})
+    def bottomUp =
+      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUp(x))})
+    def bottomUpBreak =
+      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUpBreak(x))})
     def children =
       new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.children(x))})
   }

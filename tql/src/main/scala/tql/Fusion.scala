@@ -12,7 +12,7 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
 
   /**
    * Abstract class to allow two strategy to fuse.
-   * It is a system-f class in order to allow the fusion to different kind of strategy (down, up..) without
+   * It is a system-f class in order to allow the fusion to different kind of strategy (topDown, bottomUp..) without
    * having to duplicate the whole thing each time.
    * */
   abstract class Fused[+A : Monoid, F[+U] <: Fused[U, F]](val m1: Matcher[A]) extends Matcher[A] {
@@ -101,30 +101,30 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
    *
    * There are several cases to consider (the example are presented with concrete traversal to be more easily readable):
    * 1)
-   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
-   * down(collect{case Lit.Int(x) => x})
+   * topDown(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * topDown(collect{case Lit.Int(x) => x})
    * =>
-   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a.map(_ * 2) + b)
+   * topDown(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a.map(_ * 2) + b)
    *
    * 2)
-   * down(collect{case Lit.Int(x) => x}) +
-   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2))
+   * topDown(collect{case Lit.Int(x) => x}) +
+   * topDown(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2))
    * =>
-   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a + b.map(_ * 2))
+   * topDown(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x}) map(case (a, b) => a + b.map(_ * 2))
    *
    * 3)
-   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
-   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 3))
+   * topDown(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * topDown(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 3))
    * =>
-   * down(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x})
+   * topDown(collect{case Lit.Int(x) => x} ~ collect{case Lit.Int(x) => x})
    *   map{case (a, b) => a.map(_ * 2) + b.map(_ * 3)}
    *
    * 4)
-   * down(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
-   * down(collect{case Lit.Int(x) => x}) +
-   * down(collect{case Lit.Int(x) => x})
+   * topDown(collect{case Lit.Int(x) => x}) map(a => a.map(_ * 2)) +
+   * topDown(collect{case Lit.Int(x) => x}) +
+   * topDown(collect{case Lit.Int(x) => x})
    * =>
-   * down(collect{case Lit.Int(x) => x} ~ (collect{case Lit.Int(x) => x} + collect{case Lit.Int(x) => x}))
+   * topDown(collect{case Lit.Int(x) => x} ~ (collect{case Lit.Int(x) => x} + collect{case Lit.Int(x) => x}))
    *  map(case (a, b) => a.map(_ * 2) + b)
    * */
   class MappedFused[A : Monoid, +B, F[+U] <: Fused[U, F]](val m1: F[A], val f: A => B) extends Matcher[B] {
@@ -204,13 +204,13 @@ trait Fusion[T] { self: Traverser[T] with Combinators[T] =>
   }
 
   /**
-   * Create a fuser for the TopDown strategy (down)
+   * Create a fuser for the TopDown strategy (topDown)
    * */
   class FusedTopDown[+A : Monoid](override val m1: Matcher[A]) extends Fused[A, FusedTopDown](m1) {
     def newInstance[B : Monoid](m: Matcher[B]) = new FusedTopDown[B](m)
     def apply(t: T) = (m1 + children(this)).apply(t)
   }
 
-  override def down[A : Monoid](m: Matcher[A]): Matcher[A] = new FusedTopDown[A](m)
+  override def topDown[A : Monoid](m: Matcher[A]): Matcher[A] = new FusedTopDown[A](m)
 
 }

@@ -31,9 +31,9 @@ object FusionExample extends App{
   var k = 0
 
 
-  val getAllEven = down(collect{case Lit.Int(a) if a % 2 != 0 => {i += 1; println(i); a}}) map (_.map(_ * 10))
-  val getAllEven2 = down(collect{case Lit.Int(a) if a % 2 != 0 => {k += 1; println(k); a}}) map (_.map(_ * 20))
-  val getAllOdds = down(collect{case Lit.Int(a) if a % 2 != 0 => {j += 1; println(j); a}})
+  val getAllEven = topDown(collect{case Lit.Int(a) if a % 2 != 0 => {i += 1; println(i); a}}) map (_.map(_ * 10))
+  val getAllEven2 = topDown(collect{case Lit.Int(a) if a % 2 != 0 => {k += 1; println(k); a}}) map (_.map(_ * 20))
+  val getAllOdds = topDown(collect{case Lit.Int(a) if a % 2 != 0 => {j += 1; println(j); a}})
 
   val both = getAllOdds + getAllOdds + getAllEven + getAllEven2 + (getAllOdds + getAllOdds)
   println(both(x).result)

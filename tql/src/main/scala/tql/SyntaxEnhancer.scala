@@ -18,10 +18,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
   }
 
   /*Required for things inside TreeMapperEnhancer*/
-  def downBreakAlias[A : Monoid](m: Matcher[A]) = downBreak(m)
-  def downAlias[A : Monoid](m: Matcher[A]) = down(m)
-  def upBreakAlias[A : Monoid](m: Matcher[A]) = upBreak(m)
-  def upAlias[A : Monoid](m: Matcher[A]) = up(m)
+  def topDownBreakAlias[A : Monoid](m: Matcher[A]) = topDownBreak(m)
+  def topDownAlias[A : Monoid](m: Matcher[A]) = topDown(m)
+  def bottomUpBreakAlias[A : Monoid](m: Matcher[A]) = bottomUpBreak(m)
+  def bottomUpAlias[A : Monoid](m: Matcher[A]) = bottomUp(m)
   def childrenAlias[A : Monoid](m: Matcher[A]) = children(m)
 
   implicit class TreeMapperEnhancer[A](a: Matcher[A]){
@@ -32,10 +32,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
       transformWithResult[I, O](f)  */
 
     def collect = a.map(List(_))
-    def downBreak(implicit x: Monoid[A]) = downBreakAlias(a)
-    def down(implicit x: Monoid[A]) = downAlias(a)
-    def upBreak(implicit x: Monoid[A]) = upBreakAlias(a)
-    def up(implicit x: Monoid[A]) = upAlias(a)
+    def topDownBreak(implicit x: Monoid[A]) = topDownBreakAlias(a)
+    def topDown(implicit x: Monoid[A]) = topDownAlias(a)
+    def bottomUpBreak(implicit x: Monoid[A]) = bottomUpBreakAlias(a)
+    def bottomUp(implicit x: Monoid[A]) = bottomUpAlias(a)
     def children(implicit x: Monoid[A]) = childrenAlias(a)
   }
 
@@ -45,10 +45,10 @@ trait SyntaxEnhancer[T] { self: Combinators[T] with Traverser[T] =>
    * Moreover a \: b is desugared to b.\:(a)
    */
   implicit class MatcherXPath[A : Monoid](a: Matcher[A]){
-    def \: (t: T) = downBreakAlias(a).apply(t)
-    def \\: (t: T) = downAlias(a).apply(t)
-    def \:[B] (b: Matcher[B]) = b andThen downBreakAlias(a)
-    def \\:[B] (b: Matcher[B]) = b andThen downAlias(a)
+    def \: (t: T) = topDownBreakAlias(a).apply(t)
+    def \\: (t: T) = topDownAlias(a).apply(t)
+    def \:[B] (b: Matcher[B]) = b andThen topDownBreakAlias(a)
+    def \\:[B] (b: Matcher[B]) = b andThen topDownAlias(a)
   }
 
   implicit class MatcherResultEnhancer[A](a: MatchResult[A]){

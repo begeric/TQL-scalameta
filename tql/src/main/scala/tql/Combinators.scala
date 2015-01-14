@@ -33,26 +33,26 @@ trait Combinators[T] { self: Traverser[T] =>
   /**
    * Traverse the tree in a TopDown manner, stop when a transformation/traversal has succeeded
    * */
-  def downBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
-    m | children(downBreak[A](m))
+  def topDownBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
+    m | children(topDownBreak[A](m))
 
   /**
    * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
    * */
-  def upBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
-    children(upBreak[A](m)) | m
+  def bottomUpBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
+    children(bottomUpBreak[A](m)) | m
 
   /**
    * Same as TopDown, but does not sop when a transformation/traversal has succeeded
    * */
-  def down[A : Monoid](m: Matcher[A]): Matcher[A] =
-    m + children(down[A](m))
+  def topDown[A : Monoid](m: Matcher[A]): Matcher[A] =
+    m + children(topDown[A](m))
 
   /**
-   * Same as upBreak, but does not sop when a transformation/traversal has succeeded
+   * Same as bottomUpBreak, but does not sop when a transformation/traversal has succeeded
    * */
-  def up[A : Monoid](m: => Matcher[A]): Matcher[A] =
-    children(up[A](m)) + m
+  def bottomUp[A : Monoid](m: => Matcher[A]): Matcher[A] =
+    children(bottomUp[A](m)) + m
 
   def until[A : Monoid, B](m1: => Matcher[A], m2: Matcher[B]): Matcher[A] =
     m2 |> (m1 + children(until(m1, m2)))
@@ -208,7 +208,7 @@ trait Combinators[T] { self: Traverser[T] =>
 
   /** WIP
     * Tentative to make a bfs traversal combinator. Currently it works in the same way
-    * as the down combinator but in a bfs manner.
+    * as the topDown combinator but in a bfs manner.
     * */
   def bfs[A : Monoid](m: => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
     val toVisit = new collection.mutable.Queue[T]()
