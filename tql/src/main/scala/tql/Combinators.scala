@@ -182,4 +182,55 @@ trait Combinators[T] { self: Traverser[T] =>
     f(fix(f))(tree)
   }
 
+  /** WIP
+    * Tentative to make a bfs traversal combinator. Currently it works in the same way
+    * as the topDown combinator but in a bfs manner.
+    * */
+  def bfs[A : Monoid](m: => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
+    val toVisit = new collection.mutable.Queue[T]()
+    var result = implicitly[Monoid[A]].zero
+    toVisit.enqueue(tree)
+
+    val addToStack = Matcher[A]{ tree =>
+      toVisit.enqueue(tree)
+      /*
+      In traverse we use the for construct to traverse trees, that's why we
+      can't return None.
+      This is an example of a (bad) leaking design decision.
+      */
+      Some(tree, implicitly[Monoid[A]].zero)
+    }
+
+    //vanilla bfs
+    while (!toVisit.isEmpty){
+      val top = toVisit.dequeue()
+      m(top) match {
+        case None => traverse(top, addToStack)
+        case Some((t, r)) =>
+          traverse(t, addToStack)
+          result = implicitly[Monoid[A]].append(result, r)
+      }
+    }
+    Some((tree, result))
+  }
+
+  /*def flatChildren[A : Monoid](f: => Matcher[A]) = Matcher[A] {tree =>
+    lazy val toVisit = new collection.mutable.Queue[T]()
+    var result = implicitly[Monoid[A]].zero
+
+    val addToStack = Matcher[A]{ tree =>
+      toVisit.enqueue(tree)
+      /*
+      In traverse we use the for construct to traverse trees, that's why we
+      can't return None.
+      This is an example of a (bad) leaking design decision.
+      */
+      Some(tree, implicitly[Monoid[A]].zero)
+    }
+    while (!toVisit.isEmpty) {
+      val top = toVisit.dequeue()
+    }
+
+    Some((tree, result))
+  } */
 }

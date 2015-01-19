@@ -79,4 +79,6 @@ object Example extends App {
     collect{case Lit.Int(x) => x}
   }.topDown
 
+  val bfstest = bfs(collect{case Lit.Int(a) => a})
+  val dfstest = topDown(collect{case Lit.Int(a) => a})
 }
