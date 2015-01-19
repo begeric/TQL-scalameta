@@ -19,8 +19,8 @@ q"""
 """
 val getAllVals = topDown(collectIn[Set]{
   case x: Defn.Val => x.pats.head.toString
-}).result
-println(getAllVals(x)) //Set(a, c)
+})
+println(getAllVals(x).result) //Set(a, c)
 ```
 
 When we know that we will only use the traversal once for a specific tree, we can use this more conveniant way of writing traversals:
