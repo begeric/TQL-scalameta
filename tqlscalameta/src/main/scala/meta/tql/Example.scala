@@ -14,8 +14,7 @@ import scala.meta.dialects.Scala211
 object Example extends App {
 
 
-  val x = {
-    import scala.meta._
+  val x =
     q"""
        val a = 5
        val c = 3
@@ -29,10 +28,8 @@ object Example extends App {
        else 2
        5
        """
-  }
 
-  val tree = {
-    import scala.meta._
+  val tree =
     q"""
        val a = 5
        val c = 3
@@ -43,26 +40,7 @@ object Example extends App {
        else 2
        5
        """
-  }
 
-  val getMin = topDown(stateful(Int.MaxValue){state =>
-    visit{case Lit.Int(a) => (List(() => state), Math.min(state,a))}
-  })
-
-
-  val getAvg = topDown(stateful((0, 0)){state => {
-      lazy val avg = state._1 / state._2
-      visit{case Lit.Int(a) => (List(() => avg), (state._1 + a, state._2 + 1))}
-    }
-  })
-
-  val st = topDown(stateful2[List[scala.meta.Tree]](x => collect{
-      case Term.If(a, b, c) => a
-    })
-
-  )
-  //println(x.show[Raw])
-  //val getAllInts = topDown(visit{case _ => println(x); List()})
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).topDown
 
   val listToSetBool = topDown(transform{  //WithResult[Term.Apply, Term.Select, List[String]]
@@ -86,25 +64,9 @@ object Example extends App {
     case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }
 
-  val bfstest = bfs(collect{case Lit.Int(a) => a})
-  val dfstest = topDown(collect{case Lit.Int(a) => a})
-
   println(t4)
-  //println(getAvg(x).result.map(_()))
-          // \: (focus{case _: Lit => true}
-  /*val a = focus{case _: Lit => true} \ collect{case Lit.Int(a) => a}
-  val b = focus{case _: Term.If => true} \: a*/
 
-    /*implicit class Test(x: Int){
-      def :\(y: Int) = ???
-      def \:(y: Int) = ???
-    }
-  tql.scalametaMacros.showAST(5 :\ 6)  */
-
-  //val hey = x \: (focus{case _: Term.If => true} \: focus{case _: Lit => true} \: collect{case Lit.Int(a) => a})
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
-
-  //println(hey)
 
   val testUntil = until(collect{case Lit.Int(a) => a}, focus{case _:Term.While => true})
 
@@ -117,21 +79,4 @@ object Example extends App {
     collect{case Lit.Int(x) => x}
   }.topDown
 
-
-
-  /*val listToSet = transform {
-    case _: Term.If => Type.Name("hey")
-  } */
-  /*val sdfgjh = transform{
-    case _: Defn.Val => (Type.Name("hdey"), tql.Monoid.Void)
-  }
-  println(sdfgjh(x))*/
-  //println(fixtest(x))
-  //tql.scalametaMacros.showAST(5 \: 6)
-  //println(hey)
-  //println(bfstest(x))
-  //println(t1)
-  //println(t5)
-  //println(bfstest(x).result)
-  //println(dfstest(x).result)
 }

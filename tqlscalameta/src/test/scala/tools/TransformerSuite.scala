@@ -41,7 +41,7 @@ class TransformerSuite extends FunSuite {
   test("Change Lit.Int(_) to Lit.Int(1)") {
     val buffer = new ListBuffer[Int]()
     val transformedCode = new Transformer {
-      override def transform(tree: meta.Tree) = tree match {
+      override def transform(tree: scala.meta.Tree) = tree match {
         case Lit.Int(a) => Lit.Int(1)
         case _ => super.transform(tree)
       }

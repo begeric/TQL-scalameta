@@ -23,7 +23,7 @@ import scala.reflect.macros.whitebox.Context
 * */
 
 object TraverserHelperMacros {
-  def build[T, A](f: Any /*temporary*/, objs: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
+  def build[T, A](f: Any , objs: Any*): (T => Option[(T, A)]) = macro TraverserBuilder.buildImpl[T, A]
 
 }
 
@@ -37,12 +37,6 @@ class TraverserBuilder(val c: Context) {
     buildFuncWith[T, A](cases, parameter)
   }
 
-  def buildImplDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: c.Tree*): c.Tree = {
-    val parameter = c.internal.enclosingOwner.asMethod.paramLists.head.head.name.toTermName //LOL
-    val cases = buildCases[T, A](f, objs.toList, parameter)
-    buildDelegateWith[T, A](cases, parameter)
-  }
-
   def buildFuncWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
     q"""
         ($parameter: ${implicitly[c.WeakTypeTag[T]]}) => $parameter match {
@@ -50,6 +44,12 @@ class TraverserBuilder(val c: Context) {
           case v => Some((v, implicitly[Monoid[${implicitly[c.WeakTypeTag[A]]}]].zero))
         }
     """
+  }
+
+  def buildImplDelegate[T : c.WeakTypeTag, A : c.WeakTypeTag](f: c.Tree, objs: c.Tree*): c.Tree = {
+    val parameter = c.internal.enclosingOwner.asMethod.paramLists.head.head.name.toTermName //LOL
+    val cases = buildCases[T, A](f, objs.toList, parameter)
+    buildDelegateWith[T, A](cases, parameter)
   }
 
   def buildDelegateWith[T : c.WeakTypeTag, A : c.WeakTypeTag](cases: List[c.Tree], parameter: TermName): c.Tree = {
@@ -60,7 +60,6 @@ class TraverserBuilder(val c: Context) {
       }
      """
   }
-
 
   def buildCases[T : c.WeakTypeTag, A : c.WeakTypeTag]
                 (f: c.Tree, objs: List[c.Tree],

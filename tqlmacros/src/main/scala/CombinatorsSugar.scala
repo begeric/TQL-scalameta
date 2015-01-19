@@ -95,7 +95,6 @@ class CombinatorsSugar(val c: Context) {
 
     val transforms = cases.zip(lhss).zip(trhs).zip(ress).map{
       case (((cas, lhs), rhs), res) =>
-      //q"transformWithResult[$lhs, $rhs, $res](PartialFunction[$lhs, ($rhs, $res)]({case $cas}))"
        q"transformWithResult[$lhs, $rhs, $res]({case $cas})"
     }
 
@@ -104,7 +103,6 @@ class CombinatorsSugar(val c: Context) {
 
 
     val res = betterUntypecheck(transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc"))
-    //c.abort(c.enclosingPosition, show(res))
     res
   }
 

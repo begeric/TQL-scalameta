@@ -13,8 +13,7 @@ import scala.meta.dialects.Scala211
 
 object FusionExample extends App{
 
-  val x = {
-    import scala.meta._
+  val x =
     q"""
        val a = 1
        val c = 3
@@ -25,7 +24,6 @@ object FusionExample extends App{
        else 2
        5
     """
-  }
   var i = 0
   var j = 0
   var k = 0
