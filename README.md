@@ -17,13 +17,15 @@ q"""
  }
  else 2
 """
-val getAllVals = down(collectIn[Set]{case x: Defn.Val => x.pats.head.toString}).result
+val getAllVals = topDown(collectIn[Set]{
+  case x: Defn.Val => x.pats.head.toString
+}).result
 println(getAllVals(x)) //Set(a, c)
 ```
 
 When we know that we will only use the traversal once for a specific tree, we can use this more conveniant way of writing traversals:
 ```scala
-val getAllVals = x.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}.result //down is implicit
+val getAllVals = x.collectIn[Set]{case x: Defn.Val => x.pats.head.toString}.result //topDown is implicit
 println(getAllVals)
 ```
 Of course we lose the combining power of combinators. 
