@@ -53,7 +53,7 @@ object OptimizeBenchmarks extends PerformanceTest{
     }
 
     measure method "ScalaMetaFusionTraverser with optimize" in {
-      import scala.meta.tql.ScalaMetaFusionTraverser._
+      import scala.meta.tql.ScalaMetaFusionTraverser2._
       using(range) in { j =>
         val collectStrings = topDown(optimize(collect{case Lit.String(v) => v}))
         val collectInts = topDown(optimize(collect{case Lit.Int(v) => v.toString}))

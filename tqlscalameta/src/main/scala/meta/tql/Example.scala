@@ -65,8 +65,8 @@ object Example extends App {
   }
 
   println(t4)
-
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
+
 
   val testUntil = until(collect{case Lit.Int(a) => a}, focus{case _:Term.While => true})
 
