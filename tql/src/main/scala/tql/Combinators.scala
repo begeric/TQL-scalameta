@@ -182,4 +182,27 @@ trait Combinators[T] { self: Traverser[T] =>
     f(fix(f))(tree)
   }
 
+  /** WIP
+    * Tentative of stateful transformation. The problem is that it doesn't work with collect.
+    * */
+  def stateful[A, B](init: => A)(f: ( => A) => Matcher[(B, A)]): Matcher[B] = {
+    var state = init
+    f(state) map {case (res, s) =>
+      state = s
+      res
+    }
+  }
+
+  //def stateful3[A, B](init: => A)(f: ( => A) => PartialFunction[T, B])
+
+  /**WIP
+    * Second tentative of stateful transformation.
+    * */
+  def stateful2[A : Monoid](f: (=> A) => Matcher[A]): Matcher[A] = {
+    var state = implicitly[Monoid[A]].zero
+    f(state) map {s =>
+      state = s
+      s
+    }
+  }
 }
