@@ -41,22 +41,6 @@ object Example extends App {
        5
        """
 
-  val getMin = topDown(stateful(Int.MaxValue){state =>
-    visit{case Lit.Int(a) => (List(() => state), Math.min(state,a))}
-  })
-
-
-  val getAvg = topDown(stateful((0, 0)){state => {
-    lazy val avg = state._1 / state._2
-    visit{case Lit.Int(a) => (List(() => avg), (state._1 + a, state._2 + 1))}
-  }
-  })
-
-  val st = topDown(stateful2[List[scala.meta.Tree]](x => collect{
-    case Term.If(a, b, c) => a
-  })
-
-  )
   val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).topDown
 
   val listToSetBool = topDown(transform{  //WithResult[Term.Apply, Term.Select, List[String]]
