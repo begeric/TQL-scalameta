@@ -1,8 +1,9 @@
-package tools
+package meta.tql
 
 import org.scalameter.reporting.LoggingReporter
 import org.scalameter._
 import org.scalameter.execution.LocalExecutor
+import tools.ScalaToTree
 import tools.ScalaToTree.CompilerProxy
 import scala.meta.internal.ast._
 

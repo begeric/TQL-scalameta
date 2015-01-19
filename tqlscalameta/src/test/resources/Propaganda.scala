@@ -16,6 +16,7 @@ object Propaganda {
             val z = 19
             1
         }
+        var yo = 2
     }
 
     var c = 3

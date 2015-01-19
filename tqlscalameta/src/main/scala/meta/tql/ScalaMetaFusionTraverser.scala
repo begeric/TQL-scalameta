@@ -21,8 +21,8 @@ object ScalaMetaFusionTraverser extends Traverser[Tree]
    *  trees are never traversed o_O'..
    */
 
-  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
-    macro AllowedTransformationsMaterializer.materialize[T, I, O]
+  implicit def materializerAllowedTransformation[I <: Tree, O <: Tree]: AllowedTransformation[I, O] =
+    macro AllowedTransformationsMaterializer.materialize[scala.meta.internal.ast.Tree, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f,
@@ -52,8 +52,8 @@ object ScalaMetaFusionTraverser2 extends Traverser[Tree]
    *  trees are never traversed o_O'..
    */
 
-  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
-  macro AllowedTransformationsMaterializer.materialize[T, I, O]
+  implicit def materializerAllowedTransformation[I <: Tree, O <: Tree]: AllowedTransformation[I, O] =
+    macro AllowedTransformationsMaterializer.materialize[scala.meta.internal.ast.Tree, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f,

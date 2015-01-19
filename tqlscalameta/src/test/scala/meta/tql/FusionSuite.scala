@@ -1,6 +1,7 @@
-package tools
+package meta.tql
 
 import org.scalatest.FunSuite
+import tools.ScalaToTree
 import tools.ScalaToTree.CompilerProxy
 import scala.meta.internal.ast._
 

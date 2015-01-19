@@ -26,8 +26,8 @@ object ScalaMetaTraverser extends Traverser[Tree]
    *
    *  Branch, Leaf  in the Adt scala.meta sense of the term
    */
-  implicit def materializerAllowedTransformation[T, I <: T, O <: T]: AllowedTransformation[I, O] =
-    macro AllowedTransformationsMaterializer.materialize[T, I, O]
+  implicit def materializerAllowedTransformation[I <: Tree, O <: Tree]: AllowedTransformation[I, O] =
+    macro AllowedTransformationsMaterializer.materialize[scala.meta.internal.ast.Tree, I, O]
 
   def traverse[A : Monoid](tree: Tree, f: Matcher[A]): MatchResult[A] =
     ScalametaTraverserHelperMacros.buildFromTopSymbolDelegate[Tree, A](f,
@@ -41,7 +41,6 @@ object ScalaMetaTraverser extends Traverser[Tree]
       scala.meta.internal.ast.Term.ApplyInfix */
     )
 }
-
 
 /*object ScalaMetaTraverser2  extends Traverser[Tree]
                           with Combinators[Tree]

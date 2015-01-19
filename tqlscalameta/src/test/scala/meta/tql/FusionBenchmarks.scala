@@ -1,8 +1,9 @@
-package tools
+package meta.tql
 
 import org.scalameter.reporting.LoggingReporter
 import org.scalameter._
 import org.scalameter.execution.LocalExecutor
+import tools.ScalaToTree
 import tools.ScalaToTree.CompilerProxy
 import scala.meta.internal.ast._
 
@@ -57,7 +58,7 @@ object FusionBenchmarks  extends PerformanceTest {
     }
   }
 
- /* performance of "Fused map" in {
+  performance of "Fused map" in {
     measure method "ScalaMetaTraverser" in {
       import scala.meta.tql.ScalaMetaTraverser._
       using(range) in { j =>
@@ -132,7 +133,7 @@ object FusionBenchmarks  extends PerformanceTest {
         both(scalaMetaTree)
       }
     }
-  }  */
+  }
 
 
 }
