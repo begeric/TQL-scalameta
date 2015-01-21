@@ -101,7 +101,6 @@ class CombinatorsSugar(val c: Context) {
     if (transforms.size < 1)
       c.abort(c.enclosingPosition, "No cases found in " + show(f))
 
-
     val res = betterUntypecheck(transforms.reduceRight[c.Tree]((c, acc) => q"$c | $acc"))
     res
   }
@@ -146,6 +145,9 @@ class CombinatorsSugar(val c: Context) {
   protected object betterUntypecheck extends Transformer {
     override def transform(tree: Tree): Tree = tree match {
       case UnApply(Apply(Select(qual, TermName("unapply")), List(Ident(TermName("<unapply-selector>")))), args) =>
+        Apply(transform(qual), transformTrees(args))
+      case UnApply(Apply(TypeApply(Select(qual, TermName("unapplySeq")),List(TypeTree())), List(Ident(TermName("<unapply-selector>")))), args) =>
+        //this is funny
         Apply(transform(qual), transformTrees(args))
       case _ => super.transform(tree)
     }
