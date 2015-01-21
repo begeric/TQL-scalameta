@@ -30,13 +30,10 @@ trait Combinators[T] { self: Traverser[T] =>
     traverse(tree, f)
   }
 
-  /**
-   * Traverse the tree in a TopDown manner, stop when a transformation/traversal has succeeded
-   * */
-  def topDownBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
-    m | children(topDownBreak[A](m))
-
-
+  /*
+  * Is successful if at least one of the children is successful
+  * TODO currently using a var, change that when stateful transformation are working
+  * */
   def oneOfChildren[A: Monoid](m: => Matcher[A]) = Matcher[A] { tree =>
     var oneSuccess = false
     def wrapper = Matcher[A] { t =>
@@ -44,21 +41,15 @@ trait Combinators[T] { self: Traverser[T] =>
         case x @ Some(_) =>
           oneSuccess = true
           x
-        case x => identity.apply(t)
+        case None => identity.apply(t)
       }
     }
-    val tmp = children(wrapper).apply(tree)
+    val traverseChildren = children(wrapper).apply(tree)
     if (oneSuccess)
-      tmp
+      traverseChildren
     else
       None
   }
-
-  /**
-   * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
-   * */
-  def bottomUpBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
-    oneOfChildren(bottomUpBreak[A](m)) | m
 
   /**
    * Same as TopDown, but does not sop when a transformation/traversal has succeeded
@@ -72,12 +63,39 @@ trait Combinators[T] { self: Traverser[T] =>
   def bottomUp[A : Monoid](m: => Matcher[A]): Matcher[A] =
     children(bottomUp[A](m)) + m
 
+  /**
+   * Traverse the tree in a TopDown manner, stop when a transformation/traversal has succeeded
+   * */
+  def topDownBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
+    m | children(topDownBreak[A](m))
+
+  /**
+   * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
+   * */
+  def bottomUpBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
+    oneOfChildren(bottomUpBreak[A](m)) | m
+
+
+  /*
+  * Traverse the structure and apply m1 until m2 matches. Then return only the result aggregated by m1
+  * */
   def until[A : Monoid, B](m1: => Matcher[A], m2: Matcher[B]): Matcher[A] =
     m2 |> (m1 + children(until(m1, m2)))
 
+  /*
+  * Traverse the structure and apply m1 until m2 matches. Return a tuple of the result of m1 and m2,
+  * TODO find a better name
+  * */
   def tupledUntil[A : Monoid, B: Monoid](m1: Matcher[A], m2: Matcher[B]): Matcher[(A, B)] =
     m2.map(x => (implicitly[Monoid[A]].zero, x)) |
     (m1.map(x => (x, implicitly[Monoid[B]].zero)) + children(tupledUntil(m1, m2)))
+
+  /**
+   * The infamous fix point combinator
+   * */
+  def fix[A](f: Matcher[A] => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
+    f(fix(f))(tree)
+  }
 
   /**
    * Succeed if the partial function f applied on the tree is defined and return true
@@ -192,12 +210,5 @@ trait Combinators[T] { self: Traverser[T] =>
    * Syntactic sugar for guard combinator so that one doesn't need to type the type parameter
    * */
   def focus(f: PartialFunction[T, Boolean]): Matcher[T] = macro CombinatorsSugar.filterSugarImpl[T]
-
-  /**
-   * The infamous fix point combinator
-   * */
-  def fix[A](f: Matcher[A] => Matcher[A]): Matcher[A] = Matcher[A]{ tree =>
-    f(fix(f))(tree)
-  }
 
 }
