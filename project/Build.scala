@@ -26,7 +26,7 @@ object TQLBuild extends Build {
   lazy val tqlscalametamacros: Project = Project(
     "tqlscalametamacros",
     file("tqlscalametamacros"),
-    settings = buildSettings ++ publishableSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
+    settings = buildSettings ++ publishableSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-M0")
   ) dependsOn(tql)
 
   lazy val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
@@ -40,7 +40,7 @@ object TQLBuild extends Build {
         libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
         libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.7-SNAPSHOT" % "test",
-        libraryDependencies += "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
+        libraryDependencies += "org.scalameta" % "scalahost" % "0.1.0-M0" cross CrossVersion.full,
         testFrameworks += scalaMeterFramework,
         testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
         //fork in Test := true,

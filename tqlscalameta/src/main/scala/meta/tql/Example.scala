@@ -35,13 +35,16 @@ object Example extends App {
        val c = 3
        c = 5
        if (3 == 17) {
-        val c = 1
+        val c = {
+          val d = "hey"
+          22
+        }
        }
-       else 2
+       else "2"
        5
        """
 
-  val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).topDown
+  /*val getAllVals = (collect[Set]{case x: Defn.Val => x.pats.head.toString}).topDown
 
   val listToSetBool = topDown(transform{  //WithResult[Term.Apply, Term.Select, List[String]]
     case tt @ Term.Apply(t @ Term.Select(Term.Apply(Term.Name("List"), _), Term.Name("toSet")), _) =>
@@ -64,7 +67,7 @@ object Example extends App {
     case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }
 
-  println(t4)
+  //println(t4)
 
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
 
@@ -77,6 +80,15 @@ object Example extends App {
 
   val fixtest = fix[List[Int]]{r =>
     collect{case Lit.Int(x) => x}
-  }.topDown
+  }.topDown         */
+
+  val yoyo = bottomUpBreak(collect{case x: Defn.Val => println(x);x.pats.head.toString})
+  println(yoyo(tree))
+
+  /*println(tree.collect{case Lit.Int(a) => a})
+  println(tree.topDown.collect{case Lit.Int(a) => a}) //equiv to the above
+  println(tree.topDownBreak.collect{case Lit.Int(a) => a})
+  println(tree.bottomUp.collect{case Lit.Int(a) => a})
+  println(tree.bottomUpBreak.collect{case Lit.Int(a) => a} )    */
 
 }

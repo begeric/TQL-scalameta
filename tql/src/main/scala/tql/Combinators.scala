@@ -36,11 +36,29 @@ trait Combinators[T] { self: Traverser[T] =>
   def topDownBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
     m | children(topDownBreak[A](m))
 
+
+  def oneOfChildren[A: Monoid](m: => Matcher[A]) = Matcher[A] { tree =>
+    var oneSuccess = false
+    def wrapper = Matcher[A] { t =>
+      m(t) match {
+        case x @ Some(_) =>
+          oneSuccess = true
+          x
+        case x => identity.apply(t)
+      }
+    }
+    val tmp = children(wrapper).apply(tree)
+    if (oneSuccess)
+      tmp
+    else
+      None
+  }
+
   /**
    * Traverse the tree in a BottomUp manner, stop when a transformation/traversal has succeeded
    * */
   def bottomUpBreak[A : Monoid](m: Matcher[A]): Matcher[A] =
-    children(bottomUpBreak[A](m)) | m
+    oneOfChildren(bottomUpBreak[A](m)) | m
 
   /**
    * Same as TopDown, but does not sop when a transformation/traversal has succeeded
