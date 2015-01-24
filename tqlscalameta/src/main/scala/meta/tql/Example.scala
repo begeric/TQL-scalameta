@@ -99,5 +99,4 @@ object Example extends App {
 
   println(tree.transform{case Defn.Val(a, b @ List(name: Term.Name), c, d) => Defn.Var(a,b,c,Some(d)) andCollect name})
   println(tree.transform{case Lit.Int(a) => Lit.Int(a * 2)})
-
 }
