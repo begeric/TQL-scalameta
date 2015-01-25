@@ -35,12 +35,9 @@ object Example extends App {
        val c = 3
        c = 5
        if (3 == 17) {
-        val c = {
-          val d = "hey"
-          22
-        }
+        val c = 1
        }
-       else "2"
+       else 2
        5
        """
 
@@ -56,18 +53,25 @@ object Example extends App {
     case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }.topDown
 
+
   val t1: List[Int] = x.collect{case Lit.Int(a) if a > 10 => a}
+
   val t2: List[Int] = x.focus({case Term.If(_,_,_) => true}).topDown.collect{case Lit.Int(a) => a}
   val t3: (scala.meta.Tree, List[String]) = x.transform{case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d)) andCollect(b.toString)}
   val t4: scala.meta.Tree = tree.transform{case Lit.Int(x) => Lit.Int(x * 2)}
   val t5: Set[String] = x.bottomUp.collect[Set]{case x: Defn.Val => x.pats.head.toString}
-  val t6: List[Int] = x.focus({case Term.If(_,_,_) => true}).combine(topDown(collect{case Lit.Int(a) => a})).result
+  //val t6: List[Int] = x.focus({case Term.If(_,_,_) => true}).combine(topDown(collect{case Lit.Int(a) => a})).result
   val t7: scala.meta.Tree = x.transform {
     case Lit.Int(a) => Lit.Int(a * 3)
     case Defn.Val(a, b, c, d) => Defn.Var(a,b,c,Some(d))
   }
 
-  //println(t4)
+  val xOpt: Option[scala.meta.Tree] = Some(x)
+  val t8 = xOpt.transform{case Lit.Int(x) => Lit.Int(x * 2)}
+  val xs = List(x, tree)
+  val t9 = xs.topDown.collect{case Lit.Int(a) => a} //here we need topDown since collect already exists on Lists
+
+  println(t9)
 
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
 
@@ -82,21 +86,4 @@ object Example extends App {
     collect{case Lit.Int(x) => x}
   }.topDown
 
-  /*val yoyo = bottomUpBreak(collect{case x: Defn.Val => println(x);x.pats.head.toString})
-  println(yoyo(tree))*/
-
-  println(tree.collect{case Defn.Val(_, List(name: Term.Name), _, _) => name})
-  println(tree.topDown.collect{case Defn.Val(_, List(name: Term.Name), _, _) => name}) //equiv to the above
-  println(tree.topDownBreak.collect{case Defn.Val(_, List(name: Term.Name), _, _) => name})
-  println(tree.bottomUp.collect{case Defn.Val(_, List(name: Term.Name), _, _) => name})
-  println(tree.bottomUpBreak.collect{case Defn.Val(_, List(name: Term.Name), _, _) => name})
-
-
-  println(tree.collect[Set]{case Lit.Int(a) => a})
-  println(tree.collect{case Lit.Int(a) => a})
-
-  println(tree.focus{case Term.If(a, b, c) => true}.topDown.collect{case Lit.Int(a) => a})
-
-  println(tree.transform{case Defn.Val(a, b @ List(name: Term.Name), c, d) => Defn.Var(a,b,c,Some(d)) andCollect name})
-  println(tree.transform{case Lit.Int(a) => Lit.Int(a * 2)})
 }

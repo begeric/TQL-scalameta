@@ -18,22 +18,33 @@ import NotEquivTypes._
  *  val x = topDown(collect{...})
  *  val result = x(t).result
  * We can wirte instead
- *  t.collect{...}.result
+ *  t.collect{...}
  *
- *  topDownBreak(focus{..} ~> topDown{update{...}}) (t)
+ *  topDownBreak(focus{..} ~> topDown{transform{...}}) (t)
  *  becomes
- *  t.topDownBreak.focus{..}.topDown.update{..}
- *  Which is essentially easier to read and to write (no parenthesis)
+ *  t.topDownBreak.focus{..}.topDown.transform{..}
+ *  Which is essentially easier to read and to write
+ *
+ *  - transform return either
+ *    - just a T => x: T = t.transform{case Lit.Int(a) => Lit.Int(a * 2)}
+ *    - a tuple (T, A) => (x: T, y: List[Int]) = t.transform{case Lit.Int(a) => Lit.Int(a * 2) andCollect a}
+ *  - it is possible to use it on
+ *    - t: T => t.transform{case Lit.Int(a) => Lit.Int(a * 2)}: T
+ *    - t: Option[T] => t.transform{case Lit.Int(a) => Lit.Int(a * 2)}: Option[T]
+ *    - t: List[T] => t.transform{case Lit.Int(a) => Lit.Int(a * 2)}: List[T]
+ *
  *  The drawbacks:
- *    - Every combinator have to be re-written in those 'Lazy evaluator' classes (even macros)
+ *    - Every combinator have to be re-written in those 'Evaluator' classes (even macros)
  *    - Composition is lost.
  *
- *  Of course everything is computed lazily (like Collection View in Scala) so the resulte have to be forced.
+ * /!\ Beware: this code contains a lot of implcit magic tricks
  * */
 trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEnhancer[T] =>
 
   /**Abstract class used to delay delay the time when the type parameter of
-    * a meta combinator is decided*/
+    * a meta combinator is decided.
+    * Anonymous functions can't take type parameter, so this ugly stuff is required
+    * */
   abstract class DelayedMeta{
     def apply[A : Monoid](m: Matcher[A]): Matcher[A]
   }
@@ -43,113 +54,131 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
    * 1) x.transform{case x: T => x} : T
    * 2) x.transform{case x: T => (x, List(1))} : (T, List[Int])
    * */
-  trait TransformResultTr[A]{
-    type R
+  trait TransformResultTr[A, R]{
     def get(t: T, x: MatchResult[A]): R
   }
 
   object TransformResultTr{
     //for 1) the case where the returned type is Unit
-    implicit val unitRes = new TransformResultTr[Unit] {
-      type R = T
-      def get(t: T, x: MatchResult[Unit]): R  = x.tree.getOrElse(t)
+    implicit val unitRes = new TransformResultTr[Unit, T] {
+      def get(t: T, x: MatchResult[Unit]): T  = x.tree.getOrElse(t)
     }
 
     //for 2) the case where the returned type is not Unit
-    implicit def withRes[A: Monoid](implicit ev: A =!= Unit) = new TransformResultTr[A] {
-      type R = (T, A)
-      def get(t: T, x: MatchResult[A]): R  = (x.tree.getOrElse(t), x.result)
+    implicit def withRes[A: Monoid](implicit ev: A =!= Unit) = new TransformResultTr[A, (T, A)] {
+      def get(t: T, x: MatchResult[A]): (T, A)  = (x.tree.getOrElse(t), x.result)
     }
   }
 
+
+  /**
+   * Make it possible to use the collection like ui api inside different structures
+   * A := Result of the Matcher
+   * R := Some anonymous type which represents the result of a transformation on each MatchResult
+   * V := T | Option[T] | List[T]
+   * L := R | Option[R] | List[R]
+   * */
+  trait MatcherApply[A, R, V, L] {
+    def apply(value: V)(m: Matcher[A])(f: (T, MatchResult[A]) => R): L
+  }
+
+  object MatcherApply {
+    //Base case
+    implicit def direct[A, R, U <: T, L] = new MatcherApply[A, R, U, R] {
+      def apply(value: U)(m: Matcher[A])(f: (T, MatchResult[A]) => R): R = f(value, m.apply(value))
+    }
+
+    //Make generic to Monad, Functor, Applicative, Monoid.. ?
+    implicit def toOpt[A, R, U <: T, L] = new MatcherApply[A, R, Option[U], Option[R]] {
+      def apply(value: Option[U])(m: Matcher[A])(f: (T, MatchResult[A]) => R): Option[R] =
+        value.map(x => f(x, m.apply(x)))
+    }
+
+    //TODO make more generic (if needed?) to take into account, Set, Seq, Vector..
+    implicit def toList[A, R, U <: T, L] = new MatcherApply[A, R, List[U], List[R]] {
+      def apply(value: List[U])(m: Matcher[A])(f: (T, MatchResult[A]) => R): List[R] =
+        value.map(x => f(x, m.apply(x)))
+    }
+  }
 
   /**
    * Allows to call 'combinators' directly on T
    * For documentation see Combinators.scala
    * */
-  implicit class Evaluator(t: T){
+  implicit class Evaluator[V](value: V) {
 
+    //combinator interfaces (see documentation for combinators)
     def collect[C[_]] = new  {
-     def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
+     def apply[A, R, L](f: PartialFunction[T, A])
+                       (implicit x: ClassTag[T],
+                        y: Collector[C[A], A, R],
+                        z: Monoid[R],
+                        l: MatcherApply[R, R, V, L]) =
        topDown.collect[C](f)
     }
 
-    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = topDown.guard(f)
-
-    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] = macro CollectionLikeUISugar.filterSugarImpl[T]
-
-    /**
-    * This is required for the transform macro as it cannot access self.transformWithResult by itself
-    * */
-    def transformWithResult[I <: T : ClassTag, O <: T, A]
-                        (f: PartialFunction[I, (O, A)])
-                        (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[V, T] = macro CollectionLikeUISugar.filterSugarImpl[T]
 
     def transform(f: PartialFunction[T, Any]): Any =
       macro CollectionLikeUISugar.transformSugarImplWithTRtype[T]
 
-    def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) = topDown.transforms(f)
+    /**
+     * Allows to use other combinators which are not defined in the CollectionLikeUI framework
+     * */
+    def combine[B](x: Matcher[B]) = topDown.combine(x)
 
-    def topDown      = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDown(x)})
-    def topDownBreak = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDownBreak(x)})
-    def bottomUp        = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUp(x)})
-    def bottomUpBreak   = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUpBreak(x)})
-    def children  = new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.children(x)})
+    //traversal strategies
+    def topDown =
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDown(x)})
+    def topDownBreak =
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.topDownBreak(x)})
+    def bottomUp =
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUp(x)})
+    def bottomUpBreak =
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.bottomUpBreak(x)})
+    def children =
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = self.children(x)})
+
+    //methods required to implement the above interface
+    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) = topDown.guard(f)
+    /**
+     * This is required for the transform macro as it cannot access self.transformWithResult by itself
+     * */
+    def transformWithResult[I <: T : ClassTag, O <: T, A]
+                            (f: PartialFunction[I, (O, A)])
+                            (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
+
+    def transforms[A : Monoid, R, L]
+                  (f: Matcher[A])
+                  (implicit r: TransformResultTr[A, R],
+                  l: MatcherApply[A, R, V, L]) = topDown.transforms(f)
+
   }
 
   /**
    * Evaluator at which will be applied the traversal strategy defined in 'meta'
    * */
-  class EvaluatorMeta(t: T, meta: DelayedMeta){
+  class EvaluatorMeta[V](value: V, meta: DelayedMeta){
 
     def collect[C[_]] = new {
-      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R]) =
-        meta(self.collect[C](f)).apply(t).result
+      def apply[A, R, L](f: PartialFunction[T, A])
+                        (implicit x: ClassTag[T],
+                         y: Collector[C[A], A, R],
+                         z: Monoid[R],
+                         l: MatcherApply[R, R, V, L])  =
+        l(value)(meta(self.collect[C](f)))((t, m) => m.result)
     }
-
-    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
-      new EvaluatorAndThen(t, self.guard(f), meta)
-
-    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
-      macro CollectionLikeUISugar.filterSugarImpl[T]
-
-    /**
-     * This is required for the transform macro as it cannot access self.transformWithResult by itself
-     * */
-    def transformWithResult[I <: T : ClassTag, O <: T, A]
-                          (f: PartialFunction[I, (O, A)])
-                          (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
-
-    def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) =
-      r.get(t, meta(f).apply(t))
 
     def transform(f: PartialFunction[T, Any]): Any =
       macro CollectionLikeUISugar.transformSugarImplWithTRtype[T]
 
-    def visit[A : Monoid](f: PartialFunction[T, A])(implicit x: ClassTag[T]) =
-      meta(self.visit(f)).apply(t)
-
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[V, T] =
+      macro CollectionLikeUISugar.filterSugarImpl[T]
 
     /**
      * Allows to use other combinators which are not defined in the CollectionLikeUI framework
      * */
-    def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, x, meta)
-  }
-
-
-  class EvaluatorAndThen[+A](   private[CollectionLikeUI] val t: T,
-                                 private[CollectionLikeUI] val m: Matcher[A],
-                                 private[CollectionLikeUI] val meta: DelayedMeta){
-    def collect[C[_]] = new {
-      def apply[A, R](f: PartialFunction[T, A])(implicit x: ClassTag[T], y: Collector[C[A], A, R], z: Monoid[R])  =
-        meta(m ~> self.collect[C](f)).apply(t).result
-    }
-
-    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
-      new EvaluatorAndThen(t, m ~> self.guard(f), meta)
-
-    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[T] =
-      macro CollectionLikeUISugar.filterSugarImpl[T]
+    def combine[B](x: Matcher[B]) = new EvaluatorAndThen[V, B](value, x, meta)
 
     /**
      * This is required for the transform macro as it cannot access self.transformWithResult by itself
@@ -158,24 +187,70 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
                             (f: PartialFunction[I, (O, A)])
                             (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
 
-    def transforms[A : Monoid](f: Matcher[A])(implicit r: TransformResultTr[A]) =
-      r.get(t, meta(m ~> f).apply(t))
+    def transforms[A : Monoid, R, L]
+                  (f: Matcher[A])
+                  (implicit r: TransformResultTr[A, R],
+                   l: MatcherApply[A, R, V, L]) =
+                    l(value)(meta(f))((t, m) => r.get(t, m))
+
+    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
+      new EvaluatorAndThen(value, self.guard(f), meta)
+  }
+
+
+  /**
+   * Evaluator at which will be applied m andThen the traversal strategy defined in 'meta'
+   * */
+  class EvaluatorAndThen[V, +A]( private[CollectionLikeUI] val value: V,
+                                 private[CollectionLikeUI] val m: Matcher[A],
+                                 private[CollectionLikeUI] val meta: DelayedMeta){
+    def collect[C[_]] = new {
+      def apply[A, R, L](f: PartialFunction[T, A])
+                        (implicit x: ClassTag[T],
+                         y: Collector[C[A], A, R],
+                         z: Monoid[R],
+                         l: MatcherApply[R, R, V, L])  =
+        l(value)(meta(self.collect[C](f)))((t, m) => m.result)
+    }
+
+
+    def focus(f: PartialFunction[T, Boolean]): EvaluatorAndThen[V, T] =
+      macro CollectionLikeUISugar.filterSugarImpl[T]
+
 
     def transform(f: PartialFunction[T, Any]): Any =
       macro CollectionLikeUISugar.transformSugarImplWithTRtype[T]
 
-    def combine[B](x: Matcher[B]) = new EvaluatorAndThen[B](t, m ~> x, meta)
+    def combine[B](x: Matcher[B]) = new EvaluatorAndThen[V, B](value, m ~> x, meta)
+
 
     def topDown =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDown(x))})
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDown(x))})
     def topDownBreak =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDownBreak(x))})
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.topDownBreak(x))})
     def bottomUp =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUp(x))})
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUp(x))})
     def bottomUpBreak =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUpBreak(x))})
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.bottomUpBreak(x))})
     def children =
-      new EvaluatorMeta(t, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.children(x))})
+      new EvaluatorMeta(value, new DelayedMeta{def apply[A : Monoid](x: Matcher[A]) = meta(m ~> self.children(x))})
+
+
+    /**
+     * This is required for the transform macro as it cannot access self.transformWithResult by itself
+     * */
+    def transformWithResult[I <: T : ClassTag, O <: T, A]
+                          (f: PartialFunction[I, (O, A)])
+                          (implicit x: AllowedTransformation[I, O]) = self.transformWithResult(f)
+
+    def transforms[A : Monoid, R, L]
+                  (f: Matcher[A])
+                  (implicit r: TransformResultTr[A, R],
+                   l: MatcherApply[A, R, V, L]) =
+      l(value)(meta(f))((t, m) => r.get(t, m))
+
+    def guard[U <: T : ClassTag](f: PartialFunction[U, Boolean]) =
+      new EvaluatorAndThen(value, m ~> self.guard(f), meta)
   }
 
   /**
@@ -185,9 +260,9 @@ trait CollectionLikeUI[T] { self: Combinators[T] with Traverser[T] with SyntaxEn
    * which is not possible (in part because it is not logical and because contravarient stuff does not work well
    * with implicits)
    * */
-  implicit class ForceResult[A : Monoid](x : EvaluatorAndThen[A]){
-    def force = x.meta(x.m).apply(x.t)
-    def result = force.result
-    def tree = force.tree//.getOrElse(x.t) ??
+  implicit class ForceResult[V, A : Monoid, R](x : EvaluatorAndThen[V, A]){
+    def force[L](implicit l: MatcherApply[A, MatchResult[A], V, L]) = l(x.value)(x.meta(x.m))((t, m) => m)
+    def result[L](implicit l: MatcherApply[A, A, V, L]) = l(x.value)(x.meta(x.m))((t, m) => m.result)
+    def tree[L](implicit l: MatcherApply[A, T, V, L]) = l(x.value)(x.meta(x.m))((t, m) => m.tree.getOrElse(t))
   }
 }
