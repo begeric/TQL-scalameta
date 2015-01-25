@@ -68,8 +68,10 @@ object Example extends App {
 
   val xOpt: Option[scala.meta.Tree] = Some(x)
   val t8 = xOpt.transform{case Lit.Int(x) => Lit.Int(x * 2)}
+  val xs = List(x, tree)
+  val t9 = xs.topDown.collect{case Lit.Int(a) => a} //here we need topDown since collect already exists on Lists
 
-  println(t8)
+  println(t9)
 
   val hey = x \: focus{case _: Term.If => true} \: focus{case Lit.Int(x) => x > 2} \: collect{case Lit.Int(a) => a}
 
