@@ -26,7 +26,8 @@ object TQLBuild extends Build {
   lazy val tqlscalametamacros: Project = Project(
     "tqlscalametamacros",
     file("tqlscalametamacros"),
-    settings = buildSettings ++ publishableSettings ++ macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % "0.1.0-SNAPSHOT")
+    settings = buildSettings ++ publishableSettings ++
+                macroSettings ++ Seq(libraryDependencies += "org.scalameta" % "scalameta_2.11" % metaVersion)
   ) dependsOn(tql)
 
   lazy val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
@@ -40,7 +41,7 @@ object TQLBuild extends Build {
         libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
         libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.7-SNAPSHOT" % "test",
-        libraryDependencies += "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
+        libraryDependencies += "org.scalameta" % "scalahost" % metaVersion cross CrossVersion.full,
         testFrameworks += scalaMeterFramework,
         testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
         //fork in Test := true,
@@ -50,6 +51,8 @@ object TQLBuild extends Build {
           import tools.ScalaToTree._
           import scala.meta.tql.ScalaMetaTraverser._
           import scala.meta.syntactic.ast._
+          import scala.meta.syntactic._
+          import scala.meta.dialects.Scala211
           """
         ) ++ exposeClasspaths("tqlscalameta")
   ) dependsOn(tqlscalametamacros)
