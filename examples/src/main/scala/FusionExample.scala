@@ -1,11 +1,11 @@
-package scala.meta.tql
+package examples
 
 /**
  * Created by Eric on 09.12.2014.
  */
 
 import scala.language.reflectiveCalls
-import ScalaMetaFusionTraverser._
+import scala.meta.tql.ScalaMetaFusionTraverser._
 import scala.meta.internal.ast._
 import scala.meta.ui._
 import scala.meta.syntactic._

@@ -8,8 +8,8 @@ object TQLBuild extends Build {
     "root",
     file("."),
     settings = buildSettings ++ Seq(
-      run <<= run in Compile in tqlscalameta)
-  ) aggregate(tqlmacros, tql, tqlscalametamacros, tqlscalameta)
+      run <<= run in Compile in examples)
+  ) aggregate(tqlmacros, tql, tqlscalametamacros, tqlscalameta, examples)
 
   lazy val tqlmacros: Project = Project(
     "tqlmacros",
@@ -57,4 +57,11 @@ object TQLBuild extends Build {
         ) ++ exposeClasspaths("tqlscalameta")
   ) dependsOn(tqlscalametamacros)
 
+  lazy val examples: Project = Project(
+    "examples",
+    file("examples"),
+    settings = buildSettings ++ Seq(
+        libraryDependencies += "org.scalameta" % "scalahost" % metaVersion cross CrossVersion.full
+    )
+  ) dependsOn(tqlscalameta)
 }
