@@ -6,6 +6,8 @@ Combinatorial Query/Transformation language for Traversable data structures in S
 The library comprises a set of combinators that you can compose in order to traverse or transform your data structures.
 For more information about its inner workings or an exhaustive list of combinators, please take a look at the [Wiki](https://github.com/begeric/TQL-scalameta/wiki).
 
+The report can be found [here](http://infoscience.epfl.ch/record/204789). Some ideas to improve TQL are presented [here](/todo.md).  
+
 ### Examples
 Get all different variable names in a scala.meta AST
 ```scala
